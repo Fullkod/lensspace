@@ -16,6 +16,7 @@ Read relevant entries only. Store decisions with dates and evidence.
 
 ## Project decisions
 
+- [2026-10-19 — Product usage and organization activity (LEN0002)](project/2026-10-19-organization-activity.md)
 - [2026-10-19 — Error log with WhatsApp alerts (LEN0001)](project/2026-10-19-error-log.md)
 - [2026-10-11 — Archive/delete organizations and the platform guide](project/2026-10-11-archive-delete-platform-guide.md)
 - [2026-10-10 — Multi-branch: admin-managed branches and operational rule](project/2026-10-10-multi-branch-admin-only.md)
