@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -2278,6 +2278,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      complete_platform_alert: {
+        Args: {
+          target_alert_id: number
+          target_failure_code: string
+          target_failure_message: string
+          target_message_id: string
+          target_outcome: string
+        }
+        Returns: undefined
+      }
       complete_subscription_notice: {
         Args: {
           target_failure_code: string
@@ -2395,6 +2405,7 @@ export type Database = {
         Args: { target_dispatch_id: number }
         Returns: Json
       }
+      get_error_group: { Args: { target_group_id: number }; Returns: Json }
       get_my_subscription_notices: { Args: never; Returns: Json }
       get_navigation_counters: { Args: never; Returns: Json }
       get_openwa_runtime_config: { Args: never; Returns: Json }
@@ -2419,6 +2430,10 @@ export type Database = {
         }
         Returns: Json
       }
+      get_platform_alert_payload: {
+        Args: { target_alert_id: number }
+        Returns: Json
+      }
       get_platform_usage: { Args: never; Returns: Json }
       get_subscription_notice_payload: {
         Args: { target_notice_id: number }
@@ -2436,6 +2451,10 @@ export type Database = {
         | { Args: never; Returns: Json }
         | { Args: { finished_since: string }; Returns: Json }
       list_accessible_production_jobs: { Args: never; Returns: Json }
+      list_error_groups: {
+        Args: { target_limit?: number; target_status?: string }
+        Returns: Json
+      }
       list_my_pending_invitations: { Args: never; Returns: Json }
       list_subscription_notices: {
         Args: { target_organization_id: number }
@@ -2469,6 +2488,10 @@ export type Database = {
         Args: { target_order_id: number; target_template_key: string }
         Returns: Json
       }
+      record_server_error: {
+        Args: { ingest_secret: string; report: Json }
+        Returns: undefined
+      }
       record_subscription_payment: {
         Args: { payment_note: string; target_organization_id: number }
         Returns: Json
@@ -2484,6 +2507,7 @@ export type Database = {
         }
         Returns: Json
       }
+      report_client_error: { Args: { report: Json }; Returns: undefined }
       report_production_incident: {
         Args: {
           cost_responsibility: string
@@ -2532,6 +2556,10 @@ export type Database = {
           target_branch_id: number
         }
         Returns: boolean
+      }
+      set_error_group_status: {
+        Args: { target_group_id: number; target_status: string }
+        Returns: undefined
       }
       set_primary_branch: {
         Args: { change_reason: string; target_branch_id: number }
