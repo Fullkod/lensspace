@@ -2420,6 +2420,10 @@ export type Database = {
         Returns: Json
       }
       get_order_timeline: { Args: { target_order_id: number }; Returns: Json }
+      get_organization_activity: {
+        Args: { target_days?: number; target_organization_id?: number }
+        Returns: Json
+      }
       get_owner_dashboard: {
         Args: {
           date_from?: string
