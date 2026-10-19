@@ -1,8 +1,11 @@
+import { connectivityPattern } from './error-report'
+import { reportClientError } from './report-client-error'
+
 type AppError = { code?: string; message?: string } | null | undefined
 
 // supabase-js reports a dropped connection as an error without a Postgres code.
 export function isNetworkError(error: AppError) {
-  return Boolean(error) && !error?.code && /fetch|network|load failed|aborted|timeout|timed out/i.test(error?.message ?? '')
+  return Boolean(error) && !error?.code && connectivityPattern.test(error?.message ?? '')
 }
 
 // Our RPCs raise Spanish messages meant for users; Postgres/PostgREST internals are
@@ -17,6 +20,10 @@ export function friendlyError(error: AppError, fallback = 'No pudimos completar 
   if (isNetworkError(error)) return offlineMessage
   const message = error.message?.trim() ?? ''
   if (permissionPattern.test(message)) return 'No tienes permiso para esta acción o la organización está en solo lectura.'
-  if (!message || technicalPattern.test(message)) return fallback
+  if (!message || technicalPattern.test(message)) {
+    // LEN0001: the user sees the fallback; the platform admin gets the real error.
+    reportClientError('client_handled', error)
+    return fallback
+  }
   return message
 }

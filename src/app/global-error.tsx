@@ -1,7 +1,13 @@
 'use client'
 
+import { useEffect } from 'react'
+
+import { reportClientError } from '@/shared/lib/report-client-error'
+
 // Replaces the root layout when it fails, so it cannot rely on the app's CSS.
-export default function GlobalError({ retry }: { error: Error & { digest?: string }; retry: () => void }) {
+export default function GlobalError({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
+  // A digest means the server already recorded it (LEN0001).
+  useEffect(() => { if (!error.digest) reportClientError('client', error) }, [error])
   return (
     <html lang="es">
       <body style={{ margin: 0, minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f4f8f7', fontFamily: 'system-ui, sans-serif', color: '#07322f' }}>
