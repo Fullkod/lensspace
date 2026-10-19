@@ -16,6 +16,7 @@ Read relevant entries only. Store decisions with dates and evidence.
 
 ## Project decisions
 
+- [2026-10-19 — Error log with WhatsApp alerts (LEN0001)](project/2026-10-19-error-log.md)
 - [2026-10-11 — Archive/delete organizations and the platform guide](project/2026-10-11-archive-delete-platform-guide.md)
 - [2026-10-10 — Multi-branch: admin-managed branches and operational rule](project/2026-10-10-multi-branch-admin-only.md)
 - [2026-10-10 — License pricing, contracts and founder partner](project/2026-10-10-license-pricing-contracts.md)
@@ -55,3 +56,4 @@ Read relevant entries only. Store decisions with dates and evidence.
 - [2026-09-21 — Implementation history up to 2026-09-21 (current status in the pilot QA plan)](reference/2026-09-13-project-status.md)
 - [2026-09-12 — Development setup and handoff](reference/2026-09-12-development-setup.md)
 - [2026-09-12 — Earlier implementation status (superseded)](reference/2026-09-12-implementation-status.md)
+- [2026-10-19 — Tasknic link (project LensSpace, LEN codes)](reference/2026-10-19-tasknic.md)
