@@ -97,7 +97,7 @@ async function loadShell(supabase: SupabaseServerClient, userId: string, email: 
 
   if (isPlatformAdmin) {
     return {
-      allowedHrefs: ['/dashboard', '/organizations', '/catalog', '/manual'],
+      allowedHrefs: ['/dashboard', '/organizations', '/errors', '/catalog', '/manual'],
       counts: {},
       identity: { ...account, roleLabel: 'Administración de plataforma', organizationName: 'Plataforma LensSpace' },
       notices: [],

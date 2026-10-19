@@ -2,7 +2,7 @@
 
 import Link, { useLinkStatus } from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BookOpen, Building, Factory, FileText, LayoutDashboard, LoaderCircle, Plus, ReceiptText, Tags, Users, UsersRound, Wallet, type LucideIcon } from 'lucide-react'
+import { BookOpen, Bug, Building, Factory, FileText, LayoutDashboard, LoaderCircle, Plus, ReceiptText, Tags, Users, UsersRound, Wallet, type LucideIcon } from 'lucide-react'
 
 import { useNavigationCounts } from '@/shared/lib/navigation-counters'
 import { ButtonLink, cx } from '@/shared/ui'
@@ -38,6 +38,7 @@ const navigationSections: { label: string; items: { href: string; label: string;
       { href: '/catalog', label: 'Catálogo y precios', icon: Tags },
       { href: '/team', label: 'Equipo', icon: UsersRound },
       { href: '/organizations', label: 'Organizaciones', icon: Building },
+      { href: '/errors', label: 'Errores', icon: Bug },
       { href: '/manual', label: 'Manual del sistema', icon: BookOpen },
     ],
   },

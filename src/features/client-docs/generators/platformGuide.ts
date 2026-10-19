@@ -224,6 +224,28 @@ ${bullets([
   '**Manual:** en el Manual eres el único que edita el contenido de las guías del equipo y del dueño. Esta guía de plataforma no se edita desde ahí.',
 ])}` },
 
+    { id: 'module-errores', title: 'Errores del sistema', type: 'module', content: `# Errores del sistema
+
+Cuando algo falla en LensSpace, queda anotado en ${appUrl}/errors («Errores» en el menú). Solo tú lo ves. Las ópticas siguen viendo su mensaje de siempre.
+
+${bullets([
+  '**WhatsApp:** te llega un mensaje a tu teléfono de «Datos del proveedor» la primera vez que aparece cada error, con la pantalla, la óptica y la hora. Si se repite, no te vuelve a escribir: solo suma una vez más en la lista.',
+  '**Agrupados:** el mismo fallo en distintos pedidos o clientes cuenta como un solo error, con el número de veces al lado.',
+  '**Tope:** como mucho 6 mensajes por hora. Si salen más errores, igual quedan en la lista.',
+  '**Sin datos privados:** no se guardan contraseñas, correos, teléfonos ni datos de recetas.',
+])}
+
+## Qué hacer con un error
+
+${steps([
+  'Toca el error para ver el detalle: cuántas veces pasó, en qué ópticas y las últimas veces.',
+  'Pásaselo al equipo técnico para que lo arregle.',
+  'Cuando esté arreglado, toca «Marcar resuelto».',
+  'Si un error no importa (por ejemplo, algo que hizo una prueba), toca «Ignorar» y no te avisa más.',
+])}
+
+> Nota: si un error resuelto vuelve a pasar, se abre solo otra vez y te llega un WhatsApp nuevo.` },
+
     { id: 'faq', title: 'Preguntas que siempre salen', type: 'faq', content: `# Preguntas que siempre salen
 
 ## Subí el contrato pero la suscripción sigue en prueba

@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import type { Database } from './database.types'
 
 // QA-59: every signed-in area, so an expired session comes back to the same page.
-const protectedPrefixes = ['/dashboard', '/orders', '/sales', '/customers', '/prescriptions', '/catalog', '/cashbox', '/production', '/team', '/organizations', '/profile', '/manual']
+const protectedPrefixes = ['/dashboard', '/orders', '/sales', '/customers', '/prescriptions', '/catalog', '/cashbox', '/production', '/team', '/organizations', '/errors', '/profile', '/manual']
 const authPrefixes = ['/login', '/signup']
 
 export async function updateSession(request: NextRequest) {
