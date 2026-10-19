@@ -224,6 +224,27 @@ ${bullets([
   '**Manual:** en el Manual eres el único que edita el contenido de las guías del equipo y del dueño. Esta guía de plataforma no se edita desde ahí.',
 ])}` },
 
+    { id: 'module-actividad', title: 'Uso y actividad', type: 'module', content: `# Uso y actividad
+
+Sirve para saber si las ópticas usan LensSpace de verdad y qué partes usan más. Solo muestra cifras: nunca nombres de clientes, recetas ni pedidos.
+
+${bullets([
+  '**Uso del producto** (en el Panel principal): toda la plataforma junta. Al lado de cada función dice cuántas ópticas la usaron. Si una función casi nadie la usa, ahí hay algo que mejorar o explicar.',
+  '**Actividad de una óptica** (en Organizaciones, al abrir su detalle): días con actividad, pedidos, cobrado por moneda, qué partes del flujo usa y una barra por semana con los pedidos de las últimas 8 semanas.',
+  '**Equipo y último acceso:** el nombre de cada miembro, su rol y el último día que entró. No dice qué hizo.',
+  '**Períodos:** 7 días, 30 días, 90 días o Siempre.',
+])}
+
+## Encontrar las ópticas que dejaron de usarlo
+
+${steps([
+  'En Organizaciones, abre los filtros.',
+  'En «Orden», elige «Menos activas primero».',
+  'Arriba quedan las que llevan más tiempo sin actividad. La columna «Activa (30 días)» dice cuántos días trabajaron en el último mes.',
+])}
+
+> Nota: «Días con actividad» cuenta los días en que alguien registró algo (un cliente, una receta, un pedido, un cobro o un trabajo de producción). Los WhatsApp automáticos no cuentan.` },
+
     { id: 'module-errores', title: 'Errores del sistema', type: 'module', content: `# Errores del sistema
 
 Cuando algo falla en LensSpace, queda anotado en ${appUrl}/errors («Errores» en el menú). Solo tú lo ves. Las ópticas siguen viendo su mensaje de siempre.

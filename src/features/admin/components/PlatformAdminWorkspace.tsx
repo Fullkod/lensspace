@@ -11,6 +11,7 @@ import { friendlyError } from '@/shared/lib/friendly-error'
 import { BUSINESS_TIME_ZONE, formatBusinessDate, todayIn } from '@/shared/utils/dates'
 import { sendOwnerPasswordReset } from '../actions'
 import { addMonthsIso, SUBSCRIPTION_GRACE_DAYS } from '../license-pricing'
+import { ActivityPanel } from './ActivityPanel'
 import { BranchManagementPanel } from './BranchManagementPanel'
 import { DeleteOrganizationPanel } from './DeleteOrganizationPanel'
 import { LicenseContractPanel } from './LicenseContractPanel'
@@ -55,7 +56,7 @@ export type PlatformOrganization = {
   owners: { user_id: string; display_name: string }[]
   subscription?: { status: string; amount: number; currency: string; billing_period: string; starts_on: string; expires_on: string; last_renewed_on: string | null }
   modules: { module_key: string; is_enabled: boolean }[]
-  usage?: { customers: number; orders: number; members: number; openProductionJobs: number; notificationAttempts: number; lastActivityAt: string | null }
+  usage?: { customers: number; orders: number; members: number; openProductionJobs: number; notificationAttempts: number; orders30: number; activeDays30: number; lastActivityAt: string | null }
   supportSession?: { id: number; reason: string; started_at: string; expires_at: string }
   contracts: Tables<'license_contracts'>[]
   referrals: Tables<'license_contracts'>[]
@@ -72,6 +73,8 @@ export function PlatformAdminWorkspace({ organizations, providerProfile }: { org
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [subscriptionFilter, setSubscriptionFilter] = useState('all')
+  // LEN0002: «Menos activas primero» brings the opticians that stopped using LensSpace up.
+  const [sortOrder, setSortOrder] = useState('recent')
   const [historyKey, setHistoryKey] = useState(0)
   const today = todayIn()
   const [error, setError] = useState('')
@@ -83,8 +86,9 @@ export function PlatformAdminWorkspace({ organizations, providerProfile }: { org
     return matchesQuery && (statusFilter === 'all' || organization.status === statusFilter)
       && (subscriptionFilter === 'all' || subscriptionState(organization.subscription, today) === subscriptionFilter)
   })
-  const activeFilterCount = Number(Boolean(query.trim())) + Number(statusFilter !== 'all') + Number(subscriptionFilter !== 'all')
-  const clearFilters = () => { setQuery(''); setStatusFilter('all'); setSubscriptionFilter('all') }
+  if (sortOrder === 'inactive') filteredOrganizations.sort((left, right) => (left.usage?.lastActivityAt ?? '').localeCompare(right.usage?.lastActivityAt ?? ''))
+  const activeFilterCount = Number(Boolean(query.trim())) + Number(statusFilter !== 'all') + Number(subscriptionFilter !== 'all') + Number(sortOrder !== 'recent')
+  const clearFilters = () => { setQuery(''); setStatusFilter('all'); setSubscriptionFilter('all'); setSortOrder('recent') }
   const openOrganization = organizations.find(({ id }) => id === openId) ?? null
   const organizationNames = organizations.map(({ id, name }) => ({ id, name }))
 
@@ -178,6 +182,7 @@ export function PlatformAdminWorkspace({ organizations, providerProfile }: { org
             <Field label="Organización"><Input value={query} onChange={(event) => setQuery(event.target.value)} type="search" placeholder="Nombre, prefijo o propietario" /></Field>
             <Field label="Estado"><FormSelect ariaLabel="Filtrar por estado" value={statusFilter} onValueChange={setStatusFilter} options={[{ value: 'all', label: 'Todos los estados' }, { value: 'active', label: 'Activas' }, { value: 'suspended', label: 'Suspendidas' }, { value: 'archived', label: 'Archivadas' }]} /></Field>
             <Field label="Suscripción"><FormSelect ariaLabel="Filtrar por suscripción" value={subscriptionFilter} onValueChange={setSubscriptionFilter} options={[{ value: 'all', label: 'Todas' }, { value: 'pending', label: 'En preparación' }, { value: 'trial', label: 'En prueba' }, { value: 'expiring', label: 'Por vencer (5 días o menos)' }, { value: 'grace', label: 'En margen de pago' }, { value: 'expired', label: 'Vencidas' }, { value: 'active', label: 'Al día' }, { value: 'suspended', label: 'Suspendidas' }]} /></Field>
+            <Field label="Orden"><FormSelect ariaLabel="Ordenar organizaciones" value={sortOrder} onValueChange={setSortOrder} options={[{ value: 'recent', label: 'Más nuevas primero' }, { value: 'inactive', label: 'Menos activas primero' }]} /></Field>
           </div>
         </FilterPanel>
         <Button variant="secondary" icon={IdCard} onClick={() => setProviderOpen(true)}>Datos del proveedor</Button>
@@ -198,9 +203,9 @@ export function PlatformAdminWorkspace({ organizations, providerProfile }: { org
             <span className="text-[13px] font-semibold text-action">Ver detalles</span>
           </span>
         </button>
-        <dl className="grid grid-cols-2 gap-px border-t border-line bg-line sm:grid-cols-3 lg:grid-cols-6">
+        <dl className="grid grid-cols-2 gap-px border-t border-line bg-line sm:grid-cols-4 lg:grid-cols-7">
           {[
-            ['Clientes', organization.usage?.customers ?? 0], ['Pedidos', organization.usage?.orders ?? 0], ['Miembros', organization.usage?.members ?? 0], ['Producción abierta', organization.usage?.openProductionJobs ?? 0], ['Mensajes', organization.usage?.notificationAttempts ?? 0], ['Última actividad', organization.usage?.lastActivityAt ? formatBusinessDate(organization.usage.lastActivityAt) : '—'],
+            ['Clientes', organization.usage?.customers ?? 0], ['Pedidos', organization.usage?.orders ?? 0], ['Activa (30 días)', `${organization.usage?.activeDays30 ?? 0} días · ${organization.usage?.orders30 ?? 0} pedidos`], ['Miembros', organization.usage?.members ?? 0], ['Producción abierta', organization.usage?.openProductionJobs ?? 0], ['Mensajes', organization.usage?.notificationAttempts ?? 0], ['Última actividad', organization.usage?.lastActivityAt ? formatBusinessDate(organization.usage.lastActivityAt) : '—'],
           ].map(([label, value]) => <div key={label} className="bg-canvas px-4 py-3"><dt className="text-[12px] text-text-muted">{label}</dt><dd className="mt-0.5 font-display text-[15px] font-semibold tabular-nums text-ink">{value}</dd></div>)}
         </dl>
       </Card>
@@ -217,6 +222,10 @@ export function PlatformAdminWorkspace({ organizations, providerProfile }: { org
     >
       {openOrganization ? <div key={openOrganization.id} className="grid min-w-0 gap-6 xl:grid-cols-[2fr_1fr]">
         <div className="flex min-w-0 flex-col gap-8">
+        <div className="flex flex-col gap-3">
+          <CardHeader title="Actividad" />
+          <ActivityPanel organizationId={openOrganization.id} />
+        </div>
         <div className="flex flex-col gap-3">
           <CardHeader title="Suscripción" />
           <SubscriptionActions organizationId={openOrganization.id} subscription={openOrganization.subscription} signedContract={openOrganization.contracts.find(({ status }) => status === 'signed')} onChanged={contractChanged} />

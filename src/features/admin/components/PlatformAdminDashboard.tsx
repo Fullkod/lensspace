@@ -3,6 +3,7 @@ import { Building } from 'lucide-react'
 import { ButtonLink, Card, CardHeader, EmptyState, ListItem, StatCard } from '@/shared/ui'
 import { formatBusinessDate } from '@/shared/utils/dates'
 
+import { ActivityPanel } from './ActivityPanel'
 import type { PlatformOrganization } from './PlatformAdminWorkspace'
 
 export function PlatformAdminDashboard({ organizations }: { organizations: PlatformOrganization[] }) {
@@ -22,7 +23,8 @@ export function PlatformAdminDashboard({ organizations }: { organizations: Platf
     ['Producción abierta', openJobs, 'trabajos en curso'],
     ['En prueba', trials, `${preparing} en preparación`],
   ]
-  const recent = organizations.slice(0, 6)
+  // The list promises the most recent activity, not the newest organizations.
+  const recent = [...organizations].sort((left, right) => (right.usage?.lastActivityAt ?? '').localeCompare(left.usage?.lastActivityAt ?? '')).slice(0, 6)
 
   return (
     <div className="flex flex-col gap-5">
@@ -49,6 +51,13 @@ export function PlatformAdminDashboard({ organizations }: { organizations: Platf
           />
         ))}
         {!organizations.length ? <div className="p-5"><EmptyState icon={Building} title="Aún no hay organizaciones" description="Créala desde el área de organizaciones." /></div> : null}
+      </Card>
+      <Card>
+        <div className="mb-4 flex flex-col gap-1">
+          <CardHeader title="Uso del producto" />
+          <p className="text-[13px] text-text-muted">Qué partes de LensSpace usan las ópticas y cuántas las usan. Solo cifras: nunca datos de clientes.</p>
+        </div>
+        <ActivityPanel organizationId={null} />
       </Card>
     </div>
   )
