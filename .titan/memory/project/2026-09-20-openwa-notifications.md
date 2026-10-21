@@ -46,3 +46,17 @@ están cifrados en Supabase Vault.
 
 La recepción de respuestas queda fuera de este bloque hasta definir un caso de uso;
 necesitaría webhook HMAC, idempotencia y asociación mediante `messageId`/`@lid`.
+
+## Update 2026-10-21 — diagnosing "failed" WhatsApp attempts
+
+- QA-61 still holds: OpenWA (session `robert-us`, sender +1 575 318 0319) answers HTTP 500
+  even when the message is delivered, so `notification_attempts` shows `provider_unconfirmed`
+  for real deliveries. No attempt has ever been stored as `sent`. Do not read "failed" as "not
+  delivered": check the sender phone or the recipient.
+- Case LEN0003 (Óptica Javier, OJV-2026-000001): the real cause was a wrong customer phone
+  typed by the owner (…43 instead of …46), not OpenWA.
+- Safe manual check/resend without exposing secrets: from SQL, read the Vault values inside
+  the query and call OpenWA with `net.http_get`/`net.http_post`
+  (`/sessions/<id>`, `/sessions/<id>/messages/send-text` with `chatId` `53XXXXXXXX@c.us`), then
+  read `net._http_response`. Manual resends bypass the edge function and are not recorded in
+  the order timeline.
