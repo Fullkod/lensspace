@@ -16,6 +16,7 @@ import { BranchManagementPanel } from './BranchManagementPanel'
 import { DeleteOrganizationPanel } from './DeleteOrganizationPanel'
 import { LicenseContractPanel } from './LicenseContractPanel'
 import { OrganizationAuditHistory } from './OrganizationAuditHistory'
+import { OrganizationNamePanel } from './OrganizationNamePanel'
 import { OrganizationOnboardingForm } from './OrganizationOnboardingForm'
 import { type ProviderProfile, ProviderProfileForm } from './ProviderProfileForm'
 import { SubscriptionActions } from './SubscriptionActions'
@@ -268,6 +269,7 @@ export function PlatformAdminWorkspace({ organizations, providerProfile }: { org
         />
         </div>
         <div className="flex flex-col gap-4">
+          <OrganizationNamePanel organizationId={openOrganization.id} organizationName={openOrganization.name} onChanged={contractChanged} />
           <CardHeader title="Asistencia auditada" />
           {openOrganization.supportSession ? (
             <Alert tone="warning" icon={LifeBuoy} title={`Sesión activa hasta ${new Date(openOrganization.supportSession.expires_at).toLocaleTimeString('es-CU', { timeZone: BUSINESS_TIME_ZONE, hour: '2-digit', minute: '2-digit' })}`}>
