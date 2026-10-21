@@ -42,7 +42,7 @@ ${steps([
 ## Organización y primera sucursal
 
 ${bullets([
-  '**Nombre de la óptica:** como la conoce la gente. Sale en los mensajes de WhatsApp.',
+  '**Nombre de la óptica:** como la conoce la gente. Sale en los mensajes de WhatsApp. El dueño lo puede cambiar luego en Equipo.',
   '**Prefijo de pedidos:** 3 a 8 letras o números. Los pedidos salen como JAV-2026-000001. Se sugiere solo desde el nombre; el dueño lo puede cambiar antes de su primer pedido.',
   '**Nombre y código de la sucursal:** la primera sucursal (normalmente «Principal», código MAIN). Es la sucursal principal.',
   '**Zona horaria:** deja America/Havana salvo que la óptica esté en otro país.',
