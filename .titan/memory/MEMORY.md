@@ -58,3 +58,4 @@ Read relevant entries only. Store decisions with dates and evidence.
 - [2026-09-12 — Development setup and handoff](reference/2026-09-12-development-setup.md)
 - [2026-09-12 — Earlier implementation status (superseded)](reference/2026-09-12-implementation-status.md)
 - [2026-10-19 — Tasknic link (project LensSpace, LEN codes)](reference/2026-10-19-tasknic.md)
+- [2026-10-22 — Demo data and website screenshots](reference/2026-10-22-demo-data-and-screenshots.md)
