@@ -59,3 +59,4 @@ Read relevant entries only. Store decisions with dates and evidence.
 - [2026-09-12 — Earlier implementation status (superseded)](reference/2026-09-12-implementation-status.md)
 - [2026-10-19 — Tasknic link (project LensSpace, LEN codes)](reference/2026-10-19-tasknic.md)
 - [2026-10-22 — Demo data and website screenshots](reference/2026-10-22-demo-data-and-screenshots.md)
+- [2026-10-28 — Fullkod email on Resend; each project must notify on its own](reference/2026-10-28-fullkod-email-resend.md)
