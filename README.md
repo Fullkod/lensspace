@@ -26,3 +26,8 @@ the project memory are versioned with the repository for both Codex and Claude C
 which share one memory under `.titan/`. See [docs/AGENT_SETUP.md](docs/AGENT_SETUP.md)
 for teammate onboarding, skill restoration and the machine-local MCP authentication
 step for each agent.
+
+<!-- fullkod-signature -->
+---
+
+<a href="https://fullkod.com/?ref=lensspace"><img src="https://fullkod.com/brand/fullkod-symbol.svg" width="20" height="20" align="center" alt="Fullkod"></a> Built by **[Fullkod](https://fullkod.com/?ref=lensspace)**
