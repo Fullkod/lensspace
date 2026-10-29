@@ -222,7 +222,19 @@ export function LandingPage() {
             <AccessLink label="Iniciar sesión" className="transition hover:text-[#0D7A72]" />
           </nav>
 
-          <p className="text-xs text-[#8B9A97]">© {new Date().getFullYear()} LensSpace</p>
+          <div className="flex flex-col items-center gap-1.5 text-xs text-[#8B9A97] lg:items-end">
+            <p>© {new Date().getFullYear()} LensSpace</p>
+            <a
+              href="https://fullkod.com/?ref=lensspace"
+              target="_blank"
+              rel="noopener"
+              className="inline-flex items-center gap-1.5 transition hover:text-[#0D7A72]"
+            >
+              Desarrollado por
+              <Image src="/brand/fullkod-symbol.svg" width={14} height={14} alt="" />
+              <span className="font-semibold">Fullkod</span>
+            </a>
+          </div>
         </div>
       </footer>
     </main>
