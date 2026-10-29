@@ -7,6 +7,7 @@ import {
 import Image from 'next/image'
 import Link from 'next/link'
 
+import { FullkodCredit } from '@/shared/components/FullkodCredit'
 import { InstallAppButton } from '@/shared/components/InstallAppButton'
 
 import { AccessLink } from './AccessLink'
@@ -224,16 +225,7 @@ export function LandingPage() {
 
           <div className="flex flex-col items-center gap-1.5 text-xs text-[#8B9A97] lg:items-end">
             <p>© {new Date().getFullYear()} LensSpace</p>
-            <a
-              href="https://fullkod.com/?ref=lensspace"
-              target="_blank"
-              rel="noopener"
-              className="inline-flex items-center gap-1.5 transition hover:text-[#0D7A72]"
-            >
-              Desarrollado por
-              <Image src="/brand/fullkod-symbol.svg" width={14} height={14} alt="" />
-              <span className="font-semibold">Fullkod</span>
-            </a>
+            <FullkodCredit />
           </div>
         </div>
       </footer>

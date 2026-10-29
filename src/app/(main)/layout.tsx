@@ -7,7 +7,7 @@ import type { Tables } from '@/lib/supabase/database.types'
 import { getAccessSummary } from '@/lib/supabase/access'
 import { getCurrentUser } from '@/lib/supabase/current-user'
 import { createClient } from '@/lib/supabase/server'
-import { InstallAppButton, LensSpaceLogo, MainNavigation, MobileSidebar, OfflineBanner, RefreshOnFocus, SidebarAccount, SubscriptionBanner, type ShellIdentity, type SubscriptionNotice } from '@/shared/components'
+import { FullkodCredit, InstallAppButton, LensSpaceLogo, MainNavigation, MobileSidebar, OfflineBanner, RefreshOnFocus, SidebarAccount, SubscriptionBanner, type ShellIdentity, type SubscriptionNotice } from '@/shared/components'
 
 const commercialHrefs = ['/prescriptions', '/catalog', '/orders', '/sales', '/customers']
 const roleLabels: Record<string, string> = {
@@ -71,6 +71,9 @@ async function AuthenticatedLayout({ children }: { children: React.ReactNode }) 
         <SubscriptionBanner notices={notices} />
         <RefreshOnFocus />
         <main>{children}</main>
+        <div className="flex justify-end px-4 pb-6 pt-2 md:px-8">
+          <FullkodCredit />
+        </div>
       </div>
     </div>
   )
