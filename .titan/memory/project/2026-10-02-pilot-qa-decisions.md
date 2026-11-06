@@ -29,6 +29,10 @@ answers HTTP 500 after sending, so attempts are stored as failed (QA-61).
   last order rate → 420; a sale can still override it.
   **Status 2026-10-02: waiting for the elTOQUE token** (requested by the product
   owner; approval may take up to a week). Then set the `ELTOQUE_API_TOKEN` secret.
+  **Update 2026-11-06: token received and stored** as the Supabase Edge Function secret
+  `ELTOQUE_API_TOKEN` (not a Vercel env var: only `refresh-exchange-rate` reads it). Direct
+  call to `tasas.eltoque.com/v1/trmi` answered 200 (USD 930). Pending: press 'Actualizar con
+  elTOQUE' once in the app and check the `market_exchange_rates` row.
 - Supabase project region: `ca-central-1` (Montréal). Vercel functions should run in
   `yul1` (Montréal), or `iad1` if the Vercel plan does not offer it (QA-31).
 - OpenWA false negative (QA-61): closed 2026-11-05. New OpenWA session UUID in Vault;

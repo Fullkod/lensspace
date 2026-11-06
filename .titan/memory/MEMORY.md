@@ -22,7 +22,7 @@ Read relevant entries only. Store decisions with dates and evidence.
 - [2026-10-10 — Multi-branch: admin-managed branches and operational rule](project/2026-10-10-multi-branch-admin-only.md)
 - [2026-10-10 — License pricing, contracts and founder partner](project/2026-10-10-license-pricing-contracts.md)
 - [2026-10-04 — PWA install button instead of an APK](project/2026-10-04-pwa-install-button.md)
-- [2026-10-02 — Pilot QA decisions and readiness](project/2026-10-02-pilot-qa-decisions.md)
+- [2026-10-02 — Pilot QA decisions and readiness (elTOQUE token stored 2026-11-06)](project/2026-10-02-pilot-qa-decisions.md)
 - [2026-10-01 — UI 2.0 design system and view precedence](project/2026-10-01-ui-2-0-design-system.md)
 - [2026-10-01 — Dual-agent tooling: Claude Code and Codex](project/2026-10-01-dual-agent-tooling.md)
 - [2026-10-01 — Portable Codex tooling](project/2026-10-01-portable-codex-tooling.md)

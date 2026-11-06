@@ -69,3 +69,6 @@ CLAUDE.local.md
 supabase/.branches
 supabase/.temp
 supabase/functions/.env
+
+# Playwright MCP local artifacts
+.playwright-mcp/
