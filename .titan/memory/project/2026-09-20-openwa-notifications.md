@@ -1,7 +1,7 @@
 # Integración OpenWA para notificaciones de pedidos
 
 Fecha: 2026-09-20
-Estado: envío real verificado el 2026-10-02 (los mensajes llegan), pero OpenWA responde HTTP 500 tras enviar y el intento queda como failed: falso negativo, ver QA-61 en .titan/plans/prp-pilot-qa-hardening.md
+Estado: operativo. Desde el 2026-11-05 la nueva sesión OpenWA responde 201 con `messageId`; QA-61 (falso negativo por HTTP 500) cerrado. Ver la actualización 2026-11-05 al final.
 
 ## Decisión
 
@@ -47,7 +47,7 @@ están cifrados en Supabase Vault.
 La recepción de respuestas queda fuera de este bloque hasta definir un caso de uso;
 necesitaría webhook HMAC, idempotencia y asociación mediante `messageId`/`@lid`.
 
-## Update 2026-10-21 — diagnosing "failed" WhatsApp attempts
+## Update 2026-10-21 — diagnosing "failed" WhatsApp attempts (superseded 2026-11-05 for the 500)
 
 - QA-61 still holds: OpenWA (session `robert-us`, sender +1 575 318 0319) answers HTTP 500
   even when the message is delivered, so `notification_attempts` shows `provider_unconfirmed`
@@ -60,3 +60,14 @@ necesitaría webhook HMAC, idempotencia y asociación mediante `messageId`/`@lid
   (`/sessions/<id>`, `/sessions/<id>/messages/send-text` with `chatId` `53XXXXXXXX@c.us`), then
   read `net._http_response`. Manual resends bypass the edge function and are not recorded in
   the order timeline.
+
+## Update 2026-11-05 — new OpenWA session
+
+- The previous OpenWA session broke. Same base URL and API key; only the Vault secret
+  `vision_studio_openwa_session_id` changed (old `ef7074ea-…` → `05523cac-0c21-4c16-a092-4830337516b7`,
+  still aliased `robert-us`). New sender: +1 575 263 9686 ("Agente Virtual").
+- All three Edge Functions read it via `get_openwa_runtime_config()`, so no redeploy was needed.
+- Verified from SQL: `GET /sessions/<id>` → 200 `ready`; `send-text` to `5353077035@c.us` →
+  201 `{messageId,timestamp}` (no 5xx). Message received on the phone. The product owner waived the in-app end-to-end re-test.
+- QA-61 closed. Attempts stored `provider_unconfirmed` before 2026-11-05 were most likely delivered;
+  from now on a 5xx is a real anomaly worth checking in the OpenWA logs.

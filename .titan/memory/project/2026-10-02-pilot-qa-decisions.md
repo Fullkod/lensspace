@@ -31,8 +31,8 @@ answers HTTP 500 after sending, so attempts are stored as failed (QA-61).
   owner; approval may take up to a week). Then set the `ELTOQUE_API_TOKEN` secret.
 - Supabase project region: `ca-central-1` (Montréal). Vercel functions should run in
   `yul1` (Montréal), or `iad1` if the Vercel plan does not offer it (QA-31).
-- OpenWA false negative (QA-61): our side done; the VPS fix (Vault session UUID,
-  OpenWA logs) stays pending with the product owner.
+- OpenWA false negative (QA-61): closed 2026-11-05. New OpenWA session UUID in Vault;
+  send-text answers 201 with `messageId` (see `2026-09-20-openwa-notifications.md`).
 - WhatsApp messages carry the shop name, the sender's name and phone (QA-08 follow-up).
 - Superadmin (QA-38): never operational writes in a tenant; reading a tenant's
   operational data requires an open, audited support session for that organization

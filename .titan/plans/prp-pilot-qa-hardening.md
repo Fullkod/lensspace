@@ -56,7 +56,7 @@ Make LensSpace safe and frictionless for the Cuba pilot:
 ## Current status (2026-10-03, after Phase 6)
 
 - **Done:** Phases 1–6 complete (QA-52 deferred post-pilot by plan; QA-37 closed by decision; QA-60 reviewed). Extra: elTOQUE rate button, retry-safe customers, owner reset link, dialog stacking fix, and the proxy moved to `src/proxy.ts` (it never ran from the root; see QA-59).
-- **Waiting on the product owner:** elTOQUE token (`ELTOQUE_API_TOKEN` secret, approval up to a week); OpenWA fix on the VPS (QA-61); Vercel function region = Supabase region (QA-31: ca-central-1 → yul1, iad1 fallback); leaked-password protection setting (QA-60).
+- **Waiting on the product owner:** elTOQUE token (`ELTOQUE_API_TOKEN` secret, approval up to a week); Vercel function region = Supabase region (QA-31: ca-central-1 → yul1, iad1 fallback); leaked-password protection setting (QA-60).
 - **Next:** a production build + Vercel deploy check once the region is set. The superadmin should open `/manual` and press 'Guardar manual' once to publish the reviewed text.
 - **Deferred:** QA-36 supabase-js bundle, QA-52 recommended deposit, jobs history flag, provider jobs offline snapshot, `/catalog` column trimming.
 - **Final check (2026-10-04):** production build OK (landing static, proxy active). Smoke test on `next start`: 24 pages × 4 roles (anon, owner desktop/mobile, provider mobile, superadmin), 0 console/page errors, redirects correct; owner TTFB ~0.5–1 s, superadmin dashboard ~2.5 s (platform usage aggregate; watch on Vercel). End-to-end one-person sale as Javier: new customer + prescription → quote → accept → full cash payment → lens and mounting in the in-house workshop (7 clicks in /production) → delivered, JAV-2026-000002, timeline complete, 3 WhatsApp attempts recorded as not sent (no consent). Fix found: the order production panel still said 'Listo para recoger' after delivery → now 'Entregado al cliente'. Test order JAV-2026-000002 / customer 'QA PILOTO Venta final 0404' left in Óptica Javier with the product owner's consent.
@@ -150,7 +150,7 @@ Effort: S ≤ half a day · M 1–2 days · L > 2 days. Area keys: SOLO = solo o
 | QA-58 | Deactivated/invited member shows as 'Usuario' | low | bug | ADM-18 | done 2026-10-03 | S |
 | QA-59 | Session expiry drops the deep link; invite error is generic | low | friction | ADM-19 | done 2026-10-03 | S |
 | QA-60 | Advisors: leaked-password protection off; DEFINER RPC exposed | low | security | ADM-20 | reviewed 2026-10-02 (leaked-password setting pending) | S |
-| QA-61 | WhatsApp is delivered but OpenWA answers HTTP 500, so it is recorded as failed (false negative) | high | data-integrity | controlled send 2026-10-02 | confirmed | S–M |
+| QA-61 | WhatsApp is delivered but OpenWA answers HTTP 500, so it is recorded as failed (false negative) | high | data-integrity | controlled send 2026-10-02 | done 2026-11-05 | S–M |
 
 ---
 
@@ -351,6 +351,7 @@ Effort: S ≤ half a day · M 1–2 days · L > 2 days. Area keys: SOLO = solo o
   3. Keep the raw provider body (truncated) when it is not JSON.
 - **Status (2026-10-02): PENDING on the VPS (product owner).** Our side is done; the OpenWA fix stays open until the product owner checks the Vault session id and the OpenWA logs.
 - **Done (2026-10-02, our side):** the Edge Function records a 5xx answer as `failure_code 'provider_unconfirmed'` (non-JSON bodies kept, truncated) and `get_order_timeline` labels it 'WhatsApp enviado sin confirmación del proveedor' (migration `20261002195414`). The 6 historical `provider_http_500` attempts keep their old code. Still pending: the OpenWA fix on the VPS (session UUID in Vault).
+- **Done (2026-11-05, OpenWA side):** the old OpenWA session broke and the product owner brought up a new one (same base URL and API key). Vault `vision_studio_openwa_session_id` now holds the new session UUID `05523cac-0c21-4c16-a092-4830337516b7` (alias `robert-us`, sender +1 575 263 9686). Verified from SQL: `GET /sessions/<id>` → 200 `ready`; `send-text` to `5353077035@c.us` → **201** `{messageId,timestamp}`, received on the phone. No 5xx, so the Edge Function will now store `sent` with `provider_message_id`. The product owner waived the in-app end-to-end re-test. The 5xx → `provider_unconfirmed` handling stays as a safety net. **QA-61 closed.**
 - **Copy polish (low):** the payment message should state the amount paid and format money as '54 100,00 CUP' (es-CU grouping) instead of '54100.00'.
 - **Verify:** continue JAV-2026-000018 → verificar:
   - the next notification is stored `sent` with a `provider_message_id` and arrives once;

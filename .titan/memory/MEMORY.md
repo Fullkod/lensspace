@@ -32,7 +32,7 @@ Read relevant entries only. Store decisions with dates and evidence.
 - [2026-09-21 — Filtros operativos reutilizables](project/2026-09-21-operational-filters.md)
 - [2026-09-21 — Fichas de clientes unificadas y editables](project/2026-09-21-customer-forms-and-editing.md)
 - [2026-09-20 — Ajustes de precio por producto en ventas](project/2026-09-20-sale-line-price-adjustments.md)
-- [2026-09-20 — Integración OpenWA para notificaciones de pedidos](project/2026-09-20-openwa-notifications.md)
+- [2026-09-20 — Integración OpenWA para notificaciones de pedidos (new session 2026-11-05, QA-61 closed)](project/2026-09-20-openwa-notifications.md)
 - [2026-09-20 — QA de ventas, pedidos y experiencia del propietario](project/2026-09-20-sales-orders-qa-polish.md)
 - [2026-09-20 — Owner branch scope in commercial views](project/2026-09-20-owner-branch-scope.md)
 - [2026-09-14 — Role dashboards and team dialogs](project/2026-09-14-role-dashboards-team-dialogs.md)
