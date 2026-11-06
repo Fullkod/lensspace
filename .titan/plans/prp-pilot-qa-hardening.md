@@ -57,6 +57,7 @@ Make LensSpace safe and frictionless for the Cuba pilot:
 
 - **Done:** Phases 1–6 complete (QA-52 deferred post-pilot by plan; QA-37 closed by decision; QA-60 reviewed). Extra: elTOQUE rate button, retry-safe customers, owner reset link, dialog stacking fix, and the proxy moved to `src/proxy.ts` (it never ran from the root; see QA-59).
 - **Waiting on the product owner:** ~~elTOQUE token~~ (stored 2026-11-06); ~~Vercel region (QA-31)~~ (functions run in yul1, checked 2026-11-06); leaked-password protection (QA-60) needs the Supabase Pro plan (org on Free).
+- **Pilot kickoff with Javier: 2026-11-07** — plan `.titan/plans/meeting-javier-pilot-2026-11-07.md`, handout `docs/clients/optica-javier/`.
 - **Pre-pilot production run (2026-11-06):** full flow green in Óptica Javier Prueba, 9 WhatsApps sent; see `.titan/qa/2026-11-06-pre-pilot/`.
 - **Next:** a production build + Vercel deploy check once the region is set. The superadmin should open `/manual` and press 'Guardar manual' once to publish the reviewed text.
 - **Deferred:** QA-36 supabase-js bundle, QA-52 recommended deposit, jobs history flag, provider jobs offline snapshot, `/catalog` column trimming.

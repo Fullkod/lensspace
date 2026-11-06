@@ -16,6 +16,7 @@ Read relevant entries only. Store decisions with dates and evidence.
 
 ## Project decisions
 
+- [2026-11-06 — Javier pilot kickoff: meeting plan and client handout](project/2026-11-06-javier-pilot-kickoff.md)
 - [2026-11-06 — WhatsApp message format (emoji title, bold data, italic signature)](project/2026-11-06-whatsapp-message-format.md)
 - [2026-10-19 — Product usage and organization activity (LEN0002)](project/2026-10-19-organization-activity.md)
 - [2026-10-19 — Error log with WhatsApp alerts (LEN0001)](project/2026-10-19-error-log.md)

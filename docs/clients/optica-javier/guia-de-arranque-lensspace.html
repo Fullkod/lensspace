@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Guía de arranque · Óptica Javier · LensSpace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #07322f; --ink-2: #10463f; --action: #0d7a72; --action-soft: #e2f4f1;
+    --mint: #35c2a8; --coral: #ff6b4a; --coral-ink: #c23c1c; --coral-soft: #fff0eb;
+    --amber-ink: #a35a15; --amber-soft: #fff4e8;
+    --text: #1c3a37; --muted: #5f716c; --line: #dcecea; --canvas: #f7fbfa; --surface: #fff;
+  }
+  @page { size: A4; margin: 16mm 15mm 18mm; }
+  @page :first { margin: 0; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font: 11pt/1.5 'Source Sans 3', system-ui, sans-serif; color: var(--text); background: var(--surface); }
+  h1, h2, h3 { font-family: 'Space Grotesk', system-ui, sans-serif; color: var(--ink); line-height: 1.2; margin: 0; }
+  h2 { font-size: 19pt; margin: 0 0 4mm; }
+  h3 { font-size: 12.5pt; margin: 5mm 0 2mm; }
+  p { margin: 0 0 2.5mm; }
+  strong { color: var(--ink); }
+  .btn { display: inline-block; padding: 0 1.6mm; border-radius: 1.4mm; background: var(--action-soft); color: var(--action); font-weight: 700; white-space: nowrap; }
+  .tag { display: inline-block; font-size: 8.5pt; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; padding: .2mm 1.8mm; border-radius: 9mm; vertical-align: middle; }
+  .tag.opt { background: var(--amber-soft); color: var(--amber-ink); }
+  .tag.auto { background: var(--action-soft); color: var(--action); }
+  .tag.you { background: var(--coral-soft); color: var(--coral-ink); }
+
+  /* Cover */
+  .cover { height: 297mm; padding: 22mm 20mm; background: var(--ink); color: #fff; display: flex; flex-direction: column; page-break-after: always; position: relative; overflow: hidden; }
+  .cover img { width: 70mm; }
+  .cover .kicker { margin-top: auto; color: var(--mint); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 10pt; }
+  .cover h1 { color: #fff; font-size: 38pt; margin: 3mm 0 5mm; }
+  .cover .lead { font-size: 14pt; color: #cfe9e4; max-width: 140mm; }
+  .cover .meta { margin-top: 14mm; display: flex; gap: 10mm; font-size: 10pt; color: #a9d3cc; }
+  .cover .meta b { display: block; color: #fff; font-size: 11pt; }
+  .cover .ring { position: absolute; right: -40mm; top: 60mm; width: 150mm; height: 150mm; border-radius: 50%; border: 18mm solid rgba(53,194,168,.12); }
+
+  section { page-break-before: always; }
+  section.flow-cont { page-break-before: auto; }
+  .eyebrow { color: var(--action); font-weight: 700; font-size: 9pt; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 1mm; }
+  .intro { color: var(--muted); font-size: 11.5pt; margin-bottom: 5mm; }
+
+  /* Journey */
+  .journey { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2.5mm; margin: 4mm 0 6mm; }
+  .journey div { background: var(--canvas); border: .3mm solid var(--line); border-radius: 2.5mm; padding: 2.5mm; text-align: center; font-size: 9.5pt; }
+  .journey b { display: block; font-family: 'Space Grotesk'; color: var(--action); font-size: 13pt; }
+
+  .card { border: .3mm solid var(--line); border-radius: 3mm; padding: 4mm 5mm; margin-bottom: 3.5mm; background: var(--surface); break-inside: avoid; }
+  .card.soft { background: var(--canvas); }
+  .card h3 { margin-top: 0; }
+
+  /* Steps */
+  .step { display: grid; grid-template-columns: 10mm 1fr; gap: 3mm; padding: 3mm 0; border-bottom: .3mm solid var(--line); break-inside: avoid; }
+  .step:last-child { border-bottom: 0; }
+  .num { width: 9mm; height: 9mm; border-radius: 50%; background: var(--ink); color: #fff; font: 700 11pt 'Space Grotesk'; display: flex; align-items: center; justify-content: center; }
+  .step.optional .num { background: var(--surface); color: var(--amber-ink); border: .5mm dashed var(--amber-ink); }
+  .step h3 { margin: .6mm 0 1.2mm; font-size: 12pt; }
+  .step ul { margin: 1mm 0 0; padding-left: 4.5mm; }
+  .step li { margin-bottom: .8mm; }
+  .note { font-size: 10pt; color: var(--muted); }
+
+  /* Chat */
+  .chat { background: #e8f1ee; border-radius: 3mm; padding: 4mm; display: grid; grid-template-columns: 1fr 1fr; gap: 3.5mm; }
+  .bubble { background: #fff; border-radius: 2.5mm; padding: 3mm 3.5mm; font-size: 9.6pt; line-height: 1.4; box-shadow: 0 .3mm .8mm rgba(7,50,47,.12); white-space: pre-line; }
+  .bubble b { color: #111; } .bubble i { color: #444; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  th, td { text-align: left; padding: 2mm 2.5mm; border-bottom: .3mm solid var(--line); vertical-align: top; }
+  th { color: var(--ink); font-family: 'Space Grotesk'; font-size: 9.5pt; background: var(--canvas); }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5mm; }
+  .rule { display: grid; grid-template-columns: 6mm 1fr; gap: 2mm; margin-bottom: 2.5mm; break-inside: avoid; }
+  .rule .dot { width: 4mm; height: 4mm; margin-top: 1.2mm; border-radius: 50%; background: var(--mint); }
+  .footer-brand { margin-top: 8mm; display: flex; align-items: center; gap: 3mm; color: var(--muted); font-size: 9pt; }
+  .footer-brand img { width: 30mm; }
+</style>
+</head>
+<body>
+
+<!-- Cover -->
+<div class="cover">
+  <div class="ring"></div>
+  <img src="../../../public/brand/lensspace-horizontal-inverse.svg" alt="LensSpace">
+  <p class="kicker">Guía de arranque</p>
+  <h1>Óptica Javier<br>en LensSpace</h1>
+  <p class="lead">Todo lo que necesitas para empezar: qué preparar una sola vez, cómo es una venta de principio a fin, qué pasos puedes saltarte y qué le llega a tu cliente por WhatsApp.</p>
+  <div class="meta">
+    <div>Fecha<b>7 de noviembre de 2026</b></div>
+    <div>Dirección de la app<b>lensspace.fullkod.com</b></div>
+    <div>Hecho por<b>Fullkod</b></div>
+  </div>
+</div>
+
+<!-- 1. Resumen -->
+<section>
+  <p class="eyebrow">1 · De un vistazo</p>
+  <h2>De la receta a la entrega, en un solo lugar</h2>
+  <p class="intro">LensSpace guarda a tus clientes, sus recetas, lo que compran, lo que pagan, cómo va el trabajo en el taller y avisa al cliente por WhatsApp. Este es el camino completo de unos espejuelos:</p>
+  <div class="journey">
+    <div><b>1</b>Cliente</div>
+    <div><b>2</b>Receta</div>
+    <div><b>3</b>Precio</div>
+    <div><b>4</b>Pedido</div>
+    <div><b>5</b>Cobro</div>
+    <div><b>6</b>Cristales</div>
+    <div><b>7</b>Montaje</div>
+    <div><b>8</b>Revisión</div>
+    <div><b>9</b>Aviso</div>
+    <div><b>10</b>Entrega</div>
+  </div>
+  <p>En esta guía verás tres marcas:</p>
+  <p><span class="tag opt">Opcional</span> puedes saltarte ese paso. &nbsp; <span class="tag auto">Automático</span> el sistema lo hace solo. &nbsp; <span class="tag you">Tú decides</span> solo pasa cuando tú lo pulsas.</p>
+
+  <h3>Las pantallas que vas a usar</h3>
+  <table>
+    <tr><th style="width:42mm">Pantalla</th><th>Para qué sirve</th></tr>
+    <tr><td><span class="btn">Nueva venta</span></td><td>Buscar o crear el cliente, la receta, escoger lo que lleva y crear el pedido.</td></tr>
+    <tr><td><span class="btn">Pedidos y cobros</span></td><td>Ver todos los pedidos, cobrar, avisar al cliente y entregar.</td></tr>
+    <tr><td><span class="btn">Producción</span></td><td>Seguir los cristales y el montaje de cada pedido.</td></tr>
+    <tr><td><span class="btn">Caja y cierres</span></td><td>Lo que cobró cada vendedor y el cierre del día.</td></tr>
+    <tr><td><span class="btn">Panel principal</span></td><td>Cómo va el negocio: ventas, cobros, lo que falta por cobrar.</td></tr>
+    <tr><td><span class="btn">Clientes</span> · <span class="btn">Recetas</span></td><td>Consultar y corregir fichas y recetas.</td></tr>
+    <tr><td><span class="btn">Catálogo y precios</span></td><td>Tus productos y lo que cobras por cada uno.</td></tr>
+    <tr><td><span class="btn">Equipo</span></td><td>Invitar a tus vendedores, cristalero y montador.</td></tr>
+    <tr><td><span class="btn">Manual del sistema</span></td><td>La ayuda completa, paso a paso, dentro de la app.</td></tr>
+  </table>
+</section>
+
+<!-- 2. Preparar -->
+<section>
+  <p class="eyebrow">2 · Una sola vez</p>
+  <h2>Antes de la primera venta</h2>
+  <p class="intro">Esto se hace una vez. Lo más importante es el paso 3: sin tus precios, el sistema cotiza con precios de ejemplo.</p>
+
+  <div class="step"><div class="num">1</div><div>
+    <h3>Pon la app en tu teléfono</h3>
+    <p>Entra en <strong>lensspace.fullkod.com</strong> y pulsa <span class="btn">Instalar app</span>. En iPhone: botón Compartir → «Agregar a inicio». Queda como una app más y <strong>se actualiza sola</strong>: no hay que descargar nada nuevo.</p>
+  </div></div>
+
+  <div class="step"><div class="num">2</div><div>
+    <h3>Revisa tu perfil</h3>
+    <p>En <span class="btn">Mi perfil</span> comprueba tu nombre y tu teléfono. Tu nombre y tu teléfono salen al final de cada WhatsApp para que el cliente sepa a quién escribir si tiene dudas.</p>
+  </div></div>
+
+  <div class="step"><div class="num">3</div><div>
+    <h3>Pon tus precios</h3>
+    <p>En <span class="btn">Catálogo y precios</span> ya hay armaduras, tipos de espejuelo y cristales de ejemplo.</p>
+    <ul>
+      <li>Abre cada artículo y pon <strong>tu precio</strong> y su moneda (CUP o USD).</li>
+      <li>Si vendes algo que no está, créalo con <span class="btn">Nuevo artículo propio</span>.</li>
+      <li>Cada precio se queda en su moneda: lo que cobras en USD sigue en USD.</li>
+    </ul>
+  </div></div>
+
+  <div class="step"><div class="num">4</div><div>
+    <h3>La tasa del día</h3>
+    <p>Al empezar el día, en <span class="btn">Nueva venta</span> pulsa <span class="btn">Actualizar con elTOQUE</span>. Trae la tasa del día (por ejemplo, 1 USD = 930 CUP). Puedes cambiarla a mano en una venta si acordaste otra con el cliente. La tasa <strong>se guarda en cada pedido</strong> y no cambia aunque la tasa suba o baje después.</p>
+  </div></div>
+
+  <div class="step optional"><div class="num">5</div><div>
+    <h3>Invita a tu equipo <span class="tag opt">Opcional</span></h3>
+    <p>En <span class="btn">Equipo</span> → <span class="btn">Enviar invitación</span>. A cada persona le llega un correo para entrar.</p>
+    <table>
+      <tr><th style="width:38mm">Tipo de cuenta</th><th>Qué puede hacer</th></tr>
+      <tr><td><strong>Vendedor</strong></td><td>Vende, cobra y tiene su propia caja. Solo ve sus ventas y cobros, no los de otros vendedores.</td></tr>
+      <tr><td><strong>Cristalero/laboratorio</strong></td><td>Ve los cristales que le mandas y marca cómo van. <strong>No ve precios ni pagos.</strong></td></tr>
+      <tr><td><strong>Montador</strong></td><td>Ve los montajes que le mandas y marca cómo van. Tampoco ve precios ni pagos.</td></tr>
+    </table>
+    <p class="note" style="margin-top:2mm">Si tu cristalero o montador no quiere cuenta, tú o tus vendedores marcan el avance por ellos. Queda anotado quién lo hizo.</p>
+  </div></div>
+</section>
+
+<!-- 3. Venta ideal -->
+<section>
+  <p class="eyebrow">3 · Paso a paso</p>
+  <h2>Una venta de principio a fin</h2>
+  <p class="intro">Este es el camino completo. Los pasos con borde de puntos son opcionales.</p>
+
+  <div class="step"><div class="num">1</div><div>
+    <h3>El cliente</h3>
+    <p>En <span class="btn">Nueva venta</span> busca por nombre o teléfono. Si es nuevo, pulsa <span class="btn">Nuevo cliente</span>: nombre y teléfono.</p>
+    <ul>
+      <li>Marca <strong>«Consentimiento para mensajes por WhatsApp»</strong> si el cliente acepta. <strong>Sin esa marca no le llega ningún aviso.</strong></li>
+      <li>Revisa bien el teléfono: si está mal escrito, el mensaje le llega a otra persona.</li>
+      <li>Si ya existe alguien parecido, el sistema te avisa para no repetir fichas.</li>
+      <li>Carné, fecha de nacimiento, dirección y notas <span class="tag opt">Opcional</span></li>
+    </ul>
+  </div></div>
+
+  <div class="step optional"><div class="num">2</div><div>
+    <h3>La receta <span class="tag opt">Opcional</span></h3>
+    <p><span class="btn">Nueva receta</span>: esfera, cilindro, eje, adición, distancia pupilar y altura de cada ojo; prisma si hace falta, médico y observaciones. Puedes subir la <strong>foto o el PDF</strong> de la receta original. Si solo vende una armadura, no hace falta receta.</p>
+  </div></div>
+
+  <div class="step"><div class="num">3</div><div>
+    <h3>Lo que lleva y su precio</h3>
+    <p>Toca la armadura, el tipo de espejuelo, el cristal y los tratamientos. El total sale al momento, en CUP y en USD, con su equivalente en CUP según la tasa de esa venta.</p>
+    <p class="note">Notas para la venta <span class="tag opt">Opcional</span>. Si el cliente se lo quiere pensar: <span class="btn">Guardar cotización</span> <span class="tag opt">Opcional</span></p>
+  </div></div>
+
+  <div class="step"><div class="num">4</div><div>
+    <h3>El cliente acepta</h3>
+    <p>Pulsa <span class="btn">Cliente acepta · crear pedido</span>. Se crea el pedido con su número (<strong>OJV-2026-…</strong>) y <strong>el precio queda fijo</strong>.</p>
+    <p><span class="tag auto">Automático</span> Al cliente le llega el WhatsApp de «Pedido confirmado».</p>
+  </div></div>
+
+  <div class="step"><div class="num">5</div><div>
+    <h3>El cobro</h3>
+    <p>Escribe el importe, escoge <strong>CUP o USD</strong> y pulsa <span class="btn">Registrar pago</span>. <span class="btn">Cobrar saldo completo</span> pone el importe exacto de lo que falta.</p>
+    <ul>
+      <li>Puedes cobrar un adelanto ahora y el resto al entregar <span class="tag opt">Opcional</span></li>
+      <li>Puedes mezclar pagos en CUP y en USD en el mismo pedido.</li>
+      <li>En USD, el sistema redondea al centavo hacia arriba y lo explica en pantalla.</li>
+    </ul>
+    <p><span class="tag auto">Automático</span> Cada pago envía un WhatsApp con lo pagado y lo que falta.</p>
+  </div></div>
+</section>
+
+<section class="flow-cont">
+  <div class="step"><div class="num">6</div><div>
+    <h3>Los cristales y el montaje</h3>
+    <p>En el pedido, escoge quién hace los cristales y quién el montaje (tu taller o tu proveedor) y pulsa <span class="btn">Enviar</span>. Luego, en <span class="btn">Producción</span>, cada trabajo avanza así:</p>
+    <table>
+      <tr><th style="width:24mm">Trabajo</th><th>Botones, en orden</th></tr>
+      <tr><td><strong>Cristales</strong></td><td><span class="btn">Iniciar fabricación</span> → <span class="btn">Marcar trabajo listo</span> → <span class="btn">Marcar recibido</span></td></tr>
+      <tr><td><strong>Montaje</strong></td><td><span class="btn">Iniciar montaje</span> → <span class="btn">Marcar trabajo listo</span> → <span class="btn">Marcar recibido</span> → <span class="btn">Marcar revisado</span></td></tr>
+    </table>
+    <p class="note" style="margin-top:2mm">Si el proveedor tiene cuenta, los marca él desde su teléfono. Cuando todo está revisado, el pedido dice «Listo para recoger».</p>
+  </div></div>
+
+  <div class="step optional"><div class="num">7</div><div>
+    <h3>Si algo sale mal <span class="tag opt">Opcional</span></h3>
+    <p>¿Cristal rayado, receta equivocada, armadura rota? En el trabajo pulsa <span class="btn">Incidencia</span>, cuenta qué pasó y luego <span class="btn">Crear repetición</span>. El trabajo nuevo queda unido al anterior y puedes mandárselo a otra persona. No se borra nada.</p>
+  </div></div>
+
+  <div class="step"><div class="num">8</div><div>
+    <h3>Avisar al cliente <span class="tag you">Tú decides</span></h3>
+    <p>Cuando revises los espejuelos, en el pedido pulsa <span class="btn">Avisar: listo para recoger</span>. Este aviso <strong>no sale solo</strong>: lo mandas tú cuando estés seguro. Si hubo que repetir algo, lo puedes volver a mandar.</p>
+  </div></div>
+
+  <div class="step"><div class="num">9</div><div>
+    <h3>La entrega</h3>
+    <p>Cobra lo que falte y pulsa <span class="btn">Marcar como entregado</span>.</p>
+    <ul>
+      <li><strong>Solo se puede entregar con todo pagado.</strong> Así ningún pedido se va con deuda.</li>
+      <li>Si entregas sin haber pasado por producción, el sistema pregunta <strong>«¿Entregar igual?»</strong> para que no sea un error.</li>
+    </ul>
+    <p><span class="tag auto">Automático</span> Al cliente le llega el WhatsApp de «Pedido entregado».</p>
+  </div></div>
+
+  <div class="step"><div class="num">10</div><div>
+    <h3>Todo queda anotado</h3>
+    <p>En el pedido, la pestaña <strong>«Historial»</strong> muestra cada paso: quién lo hizo, cuándo y qué cambió. La pestaña <strong>«Pagos»</strong>, cada cobro con su moneda y su tasa.</p>
+  </div></div>
+</section>
+
+<!-- 4. WhatsApp -->
+<section>
+  <p class="eyebrow">4 · Lo que recibe tu cliente</p>
+  <h2>Los mensajes de WhatsApp</h2>
+  <p class="intro">Salen del número de avisos de LensSpace con el nombre de tu óptica. Ese número <strong>solo envía avisos</strong>; si el cliente tiene dudas, te escribe a ti, al teléfono de tu perfil.</p>
+  <div class="chat">
+<div class="bubble">✅ <b>Pedido confirmado</b>
+
+Hola, María Pérez.
+En <b>Óptica Javier</b> confirmamos tu pedido.
+
+Pedido: <b>OJV-2026-000003</b>
+
+Te avisaremos cuando avance.
+
+<i>Te atendió Javier.</i>
+<i>Si tienes dudas, escríbele al +53 5XXX XXXX.</i>
+<i>Este número solo envía avisos.</i></div>
+<div class="bubble">💵 <b>Pago recibido</b>
+
+Hola, María Pérez.
+<b>Óptica Javier</b> registró tu pago.
+
+Pedido: <b>OJV-2026-000003</b>
+Pago: <b>20 000 CUP</b>
+Saldo pendiente: <b>29 500 CUP</b>
+
+<i>Te atendió Javier.</i>
+<i>Si tienes dudas, escríbele al +53 5XXX XXXX.</i>
+<i>Este número solo envía avisos.</i></div>
+<div class="bubble">👓 <b>Tu pedido está listo</b>
+
+Hola, María Pérez.
+Ya puedes recogerlo en <b>Óptica Javier</b>.
+
+Pedido: <b>OJV-2026-000003</b>
+Saldo pendiente: <b>29 500 CUP</b>
+
+<i>Te atendió Javier.</i>
+<i>Si tienes dudas, escríbele al +53 5XXX XXXX.</i>
+<i>Este número solo envía avisos.</i></div>
+<div class="bubble">🎉 <b>Pedido entregado</b>
+
+Hola, María Pérez.
+Tu pedido <b>OJV-2026-000003</b> fue entregado.
+
+¡Gracias por elegir <b>Óptica Javier</b>!
+
+<i>Te atendió Javier.</i>
+<i>Si tienes dudas, escríbele al +53 5XXX XXXX.</i>
+<i>Este número solo envía avisos.</i></div>
+  </div>
+  <table style="margin-top:4mm">
+    <tr><th>Mensaje</th><th>Cuándo sale</th></tr>
+    <tr><td>Pedido confirmado</td><td><span class="tag auto">Automático</span> al pulsar «Cliente acepta».</td></tr>
+    <tr><td>Pago recibido</td><td><span class="tag auto">Automático</span> con cada pago.</td></tr>
+    <tr><td>Tu pedido está listo</td><td><span class="tag you">Tú decides</span> al pulsar «Avisar: listo para recoger».</td></tr>
+    <tr><td>Pedido entregado</td><td><span class="tag auto">Automático</span> al marcar como entregado.</td></tr>
+  </table>
+  <p class="note" style="margin-top:2mm">Si el cliente no dio su consentimiento o no tiene teléfono, no se envía nada y queda anotado en el pedido.</p>
+</section>
+
+<!-- 5. Caja y dueño -->
+<section>
+  <p class="eyebrow">5 · El dinero y el negocio</p>
+  <h2>La caja y lo que ves como dueño</h2>
+
+  <div class="card">
+    <h3>Caja y cierres</h3>
+    <ul>
+      <li>Cada vendedor tiene <strong>su propia caja</strong>: lo que cobra entra en ella, en CUP y en USD por separado.</li>
+      <li>Al terminar el día: <span class="btn">Cerrar caja del día</span>. El cierre queda guardado y no se puede cambiar.</li>
+      <li>¿Cobraste algo después de cerrar? Se puede, y luego pulsas <span class="btn">Generar complementario</span>. El cierre de ese día suma los dos.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Lo que ves solo tú</h3>
+    <ul>
+      <li><span class="btn">Panel principal</span>: pedidos activos, lo cobrado hoy, lo que falta por cobrar y los pedidos listos para entregar. Puedes filtrar por vendedor y por fechas.</li>
+      <li><span class="btn">Pedidos y cobros</span>: filtros «Con saldo», «Por entregar» y «Entregados».</li>
+      <li><span class="btn">Producción</span>: qué tiene cada cristalero y montador, y qué tiene problemas.</li>
+    </ul>
+  </div>
+
+  <h3>Reglas que conviene saber</h3>
+  <div class="rule"><span class="dot"></span><p><strong>No se entrega con deuda.</strong> El botón de entregar se activa cuando lo que falta por pagar llega a 0.</p></div>
+  <div class="rule"><span class="dot"></span><p><strong>El precio y la tasa se quedan fijos</strong> al crear el pedido. Si cambias precios en el catálogo, los pedidos viejos no cambian.</p></div>
+  <div class="rule"><span class="dot"></span><p><strong>Cuando el trabajo ya salió para el taller</strong>, cualquier cambio se hace con una incidencia, no editando el pedido.</p></div>
+  <div class="rule"><span class="dot"></span><p><strong>Todo queda anotado</strong> con el nombre de quien lo hizo, también cuando alguien marca algo por otra persona.</p></div>
+  <div class="rule"><span class="dot"></span><p><strong>Un teléfono puede ser de varias personas</strong> (por ejemplo, una familia). Por eso el sistema avisa, pero no prohíbe repetirlo.</p></div>
+  <div class="rule"><span class="dot"></span><p><strong>Hace falta internet</strong> para usar la app.</p></div>
+</section>
+
+<!-- 6. Plan y ayuda -->
+<section>
+  <p class="eyebrow">6 · Para seguir</p>
+  <h2>Tu prueba, lo que viene y dónde pedir ayuda</h2>
+
+  <div class="card soft">
+    <h3>Tu prueba gratis</h3>
+    <p>Tu óptica tiene todo activado y gratis <strong>hasta el 19 de noviembre de 2026</strong>. Antes de esa fecha firmamos el contrato con el plan que acordemos. Si se pasa la fecha, tienes 5 días de margen; después la app solo deja consultar hasta que se renueve.</p>
+  </div>
+
+  <div class="card">
+    <h3>Lo que todavía no hace</h3>
+    <p>Para que no haya sorpresas, hoy LensSpace <strong>no</strong> hace: devoluciones ni cancelaciones de pedidos, recibos o facturas, cobros por transferencia o tarjeta (solo efectivo), fechas prometidas de entrega ni pedidos urgentes. Si necesitas alguna, dínoslo y lo valoramos.</p>
+  </div>
+
+  <div class="card">
+    <h3>¿Dudas?</h3>
+    <ul>
+      <li>Dentro de la app: <span class="btn">Manual del sistema</span>, con cada pantalla explicada paso a paso.</li>
+      <li>Escríbenos a Fullkod: te ayudamos y, si nos das permiso, revisamos tu caso.</li>
+    </ul>
+  </div>
+
+  <div class="card soft">
+    <h3>Tu primer día, en 5 pasos</h3>
+    <ol style="margin:0;padding-left:5mm">
+      <li>Pon la app en tu teléfono.</li>
+      <li>Revisa tu nombre y tu teléfono en «Mi perfil».</li>
+      <li>Pon tus precios en «Catálogo y precios».</li>
+      <li>Pulsa «Actualizar con elTOQUE».</li>
+      <li>Haz tu primera venta con un cliente real.</li>
+    </ol>
+  </div>
+
+  <div class="footer-brand">
+    <img src="../../../public/brand/lensspace-horizontal.svg" alt="LensSpace">
+    <span>Desarrollado por Fullkod · fullkod.com</span>
+  </div>
+</section>
+
+</body>
+</html>
