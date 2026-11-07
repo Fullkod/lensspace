@@ -17,6 +17,7 @@ Read relevant entries only. Store decisions with dates and evidence.
 
 ## Project decisions
 
+- [2026-11-07 — Optometrist catalog, management and summary (LEN0008)](project/2026-11-07-optometrist-catalog.md)
 - [2026-11-07 — Auth emails: Spanish templates from noreply@fullkod.com (LEN0004)](project/2026-11-07-auth-emails.md)
 - [2026-11-06 — Payments follow the sale currency; USD at the sale rate](project/2026-11-06-sale-currency-payments.md)
 - [2026-11-06 — Javier pilot kickoff: meeting plan and client handout](project/2026-11-06-javier-pilot-kickoff.md)
@@ -55,6 +56,7 @@ Read relevant entries only. Store decisions with dates and evidence.
 
 ## References
 
+- [2026-11-07 — Supabase MCP auto-declines destructive SQL; use the CLI](reference/2026-11-07-supabase-mcp-destructive-sql.md)
 - [2026-11-07 — event.currentTarget is null after an await (LEN0005)](reference/2026-11-07-event-currenttarget-after-await.md)
 - [2026-10-03 — Proxy must live in src/proxy.ts; server access helpers](reference/2026-10-03-proxy-and-server-access.md)
 - [2026-10-02 — Refresh without polling](reference/2026-10-02-refresh-without-polling.md)
