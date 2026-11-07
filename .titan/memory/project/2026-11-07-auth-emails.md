@@ -34,8 +34,9 @@ Date: 2026-11-07
   (in one statement). Deleting the user alone fails: `organization_memberships.user_id` →
   `profiles` is RESTRICT ("Database error deleting user" in the dashboard). There is no
   cancel/resend button in Equipo yet.
-- Open issue (not fixed in LEN0004): hosted `uri_allow_list` only lists `lensspace.vercel.app`
-  and localhost callbacks, not `https://lensspace.fullkod.com/auth/callback`. Requests from the
-  custom domain fall back to `site_url` (`https://lensspace.vercel.app`, the root), and the root
-  does not exchange the `?code=`, so recovery/invite links from the custom domain may not reach
-  "set password". Seen in the 2026-11-07 test email (`redirect_to=https://lensspace.vercel.app`).
+- Redirects (fixed 2026-11-07, Roberto's OK): the hosted `uri_allow_list` lacked
+  `https://lensspace.fullkod.com/auth/callback`, so links requested from the custom domain fell
+  back to `site_url` (the root of `lensspace.vercel.app`), which does not exchange `?code=`.
+  Now `site_url = https://lensspace.fullkod.com` and the allow-list has localhost, vercel.app and
+  fullkod.com callbacks. Any new domain must be added there, or its invite/recovery links break.
+  In GoTrue logs the `referer` field shows the redirect actually used.
