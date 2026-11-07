@@ -55,6 +55,7 @@ Read relevant entries only. Store decisions with dates and evidence.
 
 ## References
 
+- [2026-11-07 — event.currentTarget is null after an await (LEN0005)](reference/2026-11-07-event-currenttarget-after-await.md)
 - [2026-10-03 — Proxy must live in src/proxy.ts; server access helpers](reference/2026-10-03-proxy-and-server-access.md)
 - [2026-10-02 — Refresh without polling](reference/2026-10-02-refresh-without-polling.md)
 - [2026-10-02 — RLS with FOR UPDATE and retry-safe RPCs](reference/2026-10-02-rls-for-update-and-retry-safe-rpcs.md)
