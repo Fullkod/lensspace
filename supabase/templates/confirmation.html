@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<title>Confirma tu correo en LensSpace</title>
+</head>
+<body style="margin:0;padding:0;background:#f7fbfa;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">Confirma tu correo para activar tu cuenta de LensSpace.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f7fbfa;">
+<tr><td align="center" style="padding:32px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;">
+<tr><td style="padding:0 4px 20px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+<td style="vertical-align:middle;"><img src="https://lensspace.fullkod.com/brand/lensspace-app-icon-192.png" width="36" height="36" alt="" style="display:block;border:0;border-radius:9px;"></td>
+<td style="vertical-align:middle;padding-left:10px;font:700 20px/1 'Space Grotesk',Arial,Helvetica,sans-serif;color:#07322f;letter-spacing:-0.02em;">LensSpace</td>
+</tr></table>
+</td></tr>
+<tr><td style="background:#ffffff;border:1px solid #dcecea;border-radius:14px;padding:32px 28px;font:16px/1.55 'Source Sans 3',Arial,Helvetica,sans-serif;color:#1c3a37;">
+<h1 style="margin:0 0 14px;font:700 24px/1.25 'Space Grotesk',Arial,Helvetica,sans-serif;color:#07322f;letter-spacing:-0.02em;">Confirma tu correo</h1>
+<p style="margin:0 0 14px;">Para activar tu cuenta de LensSpace confirma que <strong style="color:#07322f;">{{ .Email }}</strong> es tu correo.</p><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0;"><tr>
+<td style="border-radius:10px;background:#0d7a72;"><a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 26px;font:700 16px/1 Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:10px;">Confirmar mi correo</a></td>
+</tr></table>
+<p style="margin:0 0 6px;font-size:13px;color:#5f716c;">Si el botón no funciona, copia este enlace en el navegador:</p>
+<p style="margin:0 0 20px;font-size:13px;word-break:break-all;"><a href="{{ .ConfirmationURL }}" style="color:#0d7a72;">{{ .ConfirmationURL }}</a></p><p style="margin:0;padding:12px 14px;border-radius:10px;background:#f7fbfa;font-size:14px;color:#5f716c;">Si no creaste una cuenta en LensSpace, ignora este correo.</p>
+</td></tr>
+<tr><td style="padding:20px 8px 0;font:13px/1.5 Arial,Helvetica,sans-serif;color:#5f716c;text-align:center;">
+Este correo lo envió LensSpace de forma automática. No respondas a esta dirección.<br>
+LensSpace · Desarrollado por <a href="https://fullkod.com/?ref=lensspace-email" style="color:#0d7a72;text-decoration:none;font-weight:700;">Fullkod</a>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>
