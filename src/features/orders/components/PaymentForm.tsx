@@ -7,16 +7,17 @@ import { Button, Field, Input, SegmentedControl, cx } from '@/shared/ui'
 import { newRequestId } from '@/shared/utils/request-id'
 
 import { formatAmount } from '../format'
+import { cupToUsd, formatInCurrency, type Currency } from '../sale-currency'
 
-type Currency = 'CUP' | 'USD'
 export type PaymentInput = { amount: number; currency: Currency; rate: number; notes: string; requestId: string }
 
+type PaymentFormProps = { balanceCup: number; saleRate: number; saleCurrency: Currency; pending: boolean; onSubmit: (input: PaymentInput) => Promise<boolean> }
+
 // Live equivalence and over-balance feedback are informative; the server RPC still
-// rejects overpayments and validates every field.
-export function PaymentForm({ balanceCup, defaultRate, pending, onSubmit }: { balanceCup: number; defaultRate: number; pending: boolean; onSubmit: (input: PaymentInput) => Promise<boolean> }) {
-  const [currency, setCurrency] = useState<Currency>('CUP')
+// rejects overpayments, validates every field and values USD at the sale rate.
+export function PaymentForm({ balanceCup, saleRate, saleCurrency, pending, onSubmit }: PaymentFormProps) {
+  const [currency, setCurrency] = useState<Currency>(saleCurrency)
   const [amount, setAmount] = useState('')
-  const [rate, setRate] = useState(String(defaultRate))
   const [notes, setNotes] = useState('')
   // One id per payment attempt, reused on retry so a lost response never stores the
   // payment twice; a synchronous flag blocks bursts before `pending` re-renders.
@@ -24,7 +25,7 @@ export function PaymentForm({ balanceCup, defaultRate, pending, onSubmit }: { ba
   const submitting = useRef(false)
 
   const numericAmount = Number(amount) || 0
-  const numericRate = currency === 'USD' ? Number(rate) || 0 : 1
+  const numericRate = currency === 'USD' ? saleRate : 1
   const equivalent = numericAmount * numericRate
   // A USD payment rounded up to the cent may exceed the balance by less than one cent
   // (product decision, mirrored by the server); anything beyond is an overpayment.
@@ -32,16 +33,20 @@ export function PaymentForm({ balanceCup, defaultRate, pending, onSubmit }: { ba
   const over = equivalent - balanceCup >= tolerance
   const canSubmit = numericAmount > 0 && numericRate > 0 && !over && !pending
 
+  const inSale = (cup: number) => formatInCurrency(cup, saleCurrency, saleRate)
+  // Mixed/CUP sales paid in USD still show the CUP equivalent of the payment.
+  const prefix = currency === 'USD' && saleCurrency === 'CUP' ? `= ${formatAmount(equivalent)} CUP · ` : ''
+  const sentence = (text: string) => (prefix ? `${prefix}${text}` : text.charAt(0).toUpperCase() + text.slice(1))
   const feedback = over
-    ? `Supera el saldo en ${formatAmount(equivalent - balanceCup)} CUP`
-    : numericAmount && equivalent > balanceCup
-      ? `= ${formatAmount(equivalent)} CUP · salda el pedido (redondeo de ${formatAmount(equivalent - balanceCup)} CUP)`
+    ? `Supera el saldo en ${inSale(equivalent - balanceCup)}`
+    : numericAmount && equivalent >= balanceCup
+      ? sentence('salda el pedido')
       : numericAmount
-      ? currency === 'USD' ? `= ${formatAmount(equivalent)} CUP · quedarían ${formatAmount(balanceCup - equivalent)} CUP` : `Quedarían ${formatAmount(balanceCup - equivalent)} CUP`
-      : `Saldo actual ${formatAmount(balanceCup)} CUP`
+        ? sentence(`quedarían ${inSale(balanceCup - equivalent)}`)
+        : `Saldo actual ${inSale(balanceCup)}`
 
   function fillBalance() {
-    const value = currency === 'USD' ? Math.ceil(Math.round((balanceCup / (numericRate || defaultRate)) * 1e6) / 1e4) / 100 : balanceCup
+    const value = currency === 'USD' ? cupToUsd(balanceCup, saleRate) : balanceCup
     requestId.current = null
     setAmount(String(value))
   }
@@ -87,8 +92,8 @@ export function PaymentForm({ balanceCup, defaultRate, pending, onSubmit }: { ba
           </div>
         </Field>
         {currency === 'USD' ? (
-          <Field label="Tasa aplicada">
-            <Input type="number" inputMode="decimal" min="0.01" step="0.01" value={rate} onChange={(event) => { requestId.current = null; setRate(event.target.value) }} numeric controlSize="lg" required />
+          <Field as="div" label="Tasa de la venta">
+            <p className="flex min-h-[48px] items-center font-display text-[15px] font-semibold tabular-nums text-ink">1 USD = {formatAmount(saleRate)} CUP</p>
           </Field>
         ) : null}
         <Field label="Nota" optional className={currency === 'USD' ? undefined : 'sm:col-span-2'}>

@@ -9,6 +9,7 @@ import { Alert, Avatar, Badge, Button, Card, Dialog, ProgressBar, Tabs, Timeline
 
 import { formatAmount, formatDateTime, formatLongDate } from '../format'
 import { isFinished, orderStatus, paymentStatusLabels, timelineKind } from '../order-status'
+import { cupToUsd, formatTotals, saleCurrency } from '../sale-currency'
 import type { Order, PaymentSummary, TimelineEvent } from '../types'
 import { PaymentForm, type PaymentInput } from './PaymentForm'
 
@@ -36,6 +37,12 @@ export function OrderDetail({ order, summary, timeline, pending, error, onBack, 
   const owes = summary.balanceCup > 0 && !finished
   const percent = summary.totalCup ? (summary.paidCup / summary.totalCup) * 100 : 100
   const paymentCount = summary.payments.length
+  const currency = saleCurrency(summary.totals)
+  const rate = summary.saleRate ?? 420
+  const balance = currency === 'USD' ? cupToUsd(summary.balanceCup, rate) : summary.balanceCup
+  const total = currency === 'USD' ? summary.totals.USD : summary.totalCup
+  const paid = currency === 'USD' ? Math.max(total - balance, 0) : summary.paidCup
+  const mixed = Object.keys(summary.totals ?? {}).length > 1
   const paidMessage = summary.commercialStatus === 'delivered' ? 'Pedido entregado y pagado completamente.' : summary.commercialStatus === 'closed' ? 'Pedido cerrado y pagado.' : 'Pago completado. El pedido está listo para entregar.'
   const history = [...timeline].reverse().map((event) => ({ id: event.id, ...timelineKind(event.kind), when: formatDateTime(event.occurredAt), title: event.title, detail: event.detail, actor: event.actorName }))
 
@@ -58,8 +65,9 @@ export function OrderDetail({ order, summary, timeline, pending, error, onBack, 
               <div>
                 <p className={cx('text-[13px] font-semibold', owes ? 'text-coral-ink' : 'text-success-ink')}>{owes ? 'Saldo pendiente' : 'Saldo'}</p>
                 <p className={cx('mt-1 font-display text-[36px] font-bold leading-[1.05] tracking-[-0.03em] tabular-nums', owes ? 'text-coral-strong' : 'text-success-ink')}>
-                  {formatAmount(summary.balanceCup)} <span className="text-base font-semibold">CUP</span>
+                  {formatAmount(balance)} <span className="text-base font-semibold">{currency}</span>
                 </p>
+                {currency === 'USD' && owes ? <p className="mt-0.5 text-[13px] text-text-secondary">≈ {formatAmount(summary.balanceCup)} CUP a {formatAmount(rate)}</p> : null}
               </div>
               <span className={cx('grid size-[42px] shrink-0 place-items-center rounded-[12px]', owes ? 'bg-coral-wash text-coral-ink' : 'bg-success-soft text-success-ink')}>
                 {owes ? <Hourglass aria-hidden="true" size={20} /> : <CircleCheck aria-hidden="true" size={20} />}
@@ -71,19 +79,19 @@ export function OrderDetail({ order, summary, timeline, pending, error, onBack, 
           <div className="grid flex-[1_1_200px] grid-cols-2 gap-2.5">
             <div className="rounded-card border border-line-card px-4 py-3.5">
               <p className="text-[13px] text-text-muted">Total</p>
-              <p className="mt-1 font-display text-xl font-bold tabular-nums text-ink">{formatAmount(summary.totalCup)}</p>
-              <p className="text-xs text-text-muted">CUP equivalentes</p>
+              <p className="mt-1 font-display text-xl font-bold tabular-nums text-ink">{formatAmount(total)}</p>
+              <p className="text-xs text-text-muted">{currency === 'USD' ? 'USD' : mixed ? `CUP equiv. · ${formatTotals(summary.totals)}` : 'CUP'}</p>
             </div>
             <div className="rounded-card border border-line-card px-4 py-3.5">
               <p className="text-[13px] text-text-muted">Cobrado</p>
-              <p className="mt-1 font-display text-xl font-bold tabular-nums text-success-ink">{formatAmount(summary.paidCup)}</p>
+              <p className="mt-1 font-display text-xl font-bold tabular-nums text-success-ink">{formatAmount(paid)} <span className="text-sm font-semibold">{currency}</span></p>
               <p className="text-xs text-text-muted">{paymentCount === 1 ? '1 pago' : `${paymentCount} pagos`}</p>
             </div>
           </div>
         </div>
 
         {owes ? (
-          <PaymentForm key={summary.orderId} balanceCup={summary.balanceCup} defaultRate={summary.saleRate ?? 420} pending={pending} onSubmit={onRegisterPayment} />
+          <PaymentForm key={summary.orderId} balanceCup={summary.balanceCup} saleRate={rate} saleCurrency={currency} pending={pending} onSubmit={onRegisterPayment} />
         ) : (
           <Alert tone="success">{paidMessage}</Alert>
         )}
@@ -122,7 +130,7 @@ export function OrderDetail({ order, summary, timeline, pending, error, onBack, 
         <div className="flex flex-wrap items-center justify-between gap-3.5 border-t border-line-soft bg-canvas px-4 py-4 md:px-6">
           <p className={cx('flex items-center gap-2 text-sm', owes ? 'text-text-muted' : 'font-semibold text-success-ink')}>
             {owes ? <Lock aria-hidden="true" size={16} className="shrink-0 text-text-disabled" /> : <PackageCheck aria-hidden="true" size={16} className="shrink-0" />}
-            {owes ? `Disponible cuando el saldo llegue a 0 · faltan ${formatAmount(summary.balanceCup)} CUP` : 'Todo cobrado. Puedes entregar el pedido.'}
+            {owes ? `Disponible cuando el saldo llegue a 0 · faltan ${formatAmount(balance)} ${currency}` : 'Todo cobrado. Puedes entregar el pedido.'}
           </p>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
             <Button variant="secondary" icon={MessageCircle} onClick={onNotifyReady} disabled={pending} className="w-full sm:w-auto">Avisar: listo para recoger</Button>
