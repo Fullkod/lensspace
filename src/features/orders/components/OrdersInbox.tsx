@@ -38,10 +38,15 @@ export function OrdersInbox({ orders, selectedId, onSelect, initialQuery, initia
 
   const customerId = query === initialQuery ? initialCustomerId : undefined
   const term = query.trim().toLocaleLowerCase('es')
+  // LEN0007: 4+ digits also match any part of the customer's numbers (5307 → +53 5307 7035).
+  const digits = term.replace(/\D/g, '')
   const base = orders.filter((order) => {
     const day = order.createdAt.slice(0, 10)
+    const matchesTerm = !term
+      || order.customerName.toLocaleLowerCase('es').includes(term)
+      || (digits.length >= 4 && order.customerPhoneDigits.includes(digits))
     return (!customerId || order.customerId === customerId)
-      && (!term || order.customerName.toLocaleLowerCase('es').includes(term))
+      && matchesTerm
       && (!dateFrom || day >= dateFrom)
       && (!dateTo || day <= dateTo)
   })
@@ -56,7 +61,7 @@ export function OrdersInbox({ orders, selectedId, onSelect, initialQuery, initia
       <div className="flex flex-col gap-3 border-b border-line-soft px-4 pb-3.5 pt-[18px] md:px-[18px]">
         <CardHeader title="Bandeja de pedidos" meta={resultLabel} />
         <div className="flex gap-2">
-          <Input leadingIcon={Search} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Nombre del cliente" aria-label="Buscar por nombre del cliente" className="flex-1" />
+          <Input leadingIcon={Search} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Nombre o teléfono" aria-label="Buscar por nombre o teléfono del cliente" className="flex-1" />
           <IconButton icon={SlidersHorizontal} label="Filtrar por fecha" count={dateFilterCount} onClick={() => setFiltersOpen(true)} />
         </div>
         <FilterChips label="Filtrar por estado" value={chip} onChange={setChip} chips={chipDefinitions.map(({ value, label, matches }) => ({ value, label, count: base.filter(matches).length }))} />
@@ -71,7 +76,7 @@ export function OrdersInbox({ orders, selectedId, onSelect, initialQuery, initia
               key={order.id}
               avatarName={order.customerName}
               title={order.customerName}
-              meta={`${shortOrderNumber(order.orderNumber)} · ${formatShortDate(order.createdAt)}`}
+              meta={`${shortOrderNumber(order.orderNumber)} · ${formatShortDate(order.createdAt)}${order.customerPhone ? ` · ${order.customerPhone}` : ''}`}
               trailing={<span className={cx('whitespace-nowrap font-display text-[15.5px] font-bold tabular-nums', owes ? 'text-coral-ink' : 'text-ink')}>{formatAmount(owes ? order.balanceCup : order.totalCup)}</span>}
               badge={<Badge tone={status.tone}>{status.label}</Badge>}
               selected={order.id === selectedId}

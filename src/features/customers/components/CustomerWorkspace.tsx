@@ -94,7 +94,8 @@ export function CustomerWorkspace({ scopes }: { scopes: AccessScope[] }) {
       const digits = normalizePhone(term)
       let customerIds: number[] = []
 
-      if (digits.length >= 5) {
+      // LEN0007: 4 digits are enough (5307 → +53 5307 7035), same as the sale picker.
+      if (digits.length >= 4) {
         const { data: phoneMatches } = await supabase
           .from('customer_phones')
           .select('customer_id')

@@ -3,6 +3,10 @@ export type Order = {
   orderNumber: string
   customerId: number
   customerName: string
+  // Primary phone as stored, for display; null when the customer has none.
+  customerPhone: string | null
+  // Every normalized number of the customer, space-separated, for partial matching.
+  customerPhoneDigits: string
   commercialStatus: string
   paymentStatus: string
   totalCup: number

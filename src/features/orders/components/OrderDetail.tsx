@@ -53,7 +53,7 @@ export function OrderDetail({ order, summary, timeline, pending, error, onBack, 
         <Avatar name={order.customerName} size="lg" strong />
         <div className="min-w-0 flex-1 basis-[180px]">
           <h2 className="truncate font-display text-[22px] font-bold tracking-[-0.02em] text-ink">{order.customerName}</h2>
-          <p className="mt-0.5 text-sm text-text-muted">{summary.orderNumber} · creado el {formatLongDate(order.createdAt)}</p>
+          <p className="mt-0.5 text-sm text-text-muted">{summary.orderNumber} · creado el {formatLongDate(order.createdAt)}{order.customerPhone ? ` · ${order.customerPhone}` : ''}</p>
         </div>
         <Badge tone={status.tone} size="lg">{status.label}</Badge>
       </div>
