@@ -651,7 +651,7 @@ export function SalesWorkspace({
         </>}
       >
         <form id="sales-new-prescription" onSubmit={createPrescription} className="flex flex-col gap-4" noValidate>
-          <PrescriptionFormFields />
+          <PrescriptionFormFields organizationId={selectedCustomer?.organizationId} />
           {dialogMessage ? <Alert tone="danger" role="alert">{dialogMessage}</Alert> : null}
         </form>
       </Dialog>

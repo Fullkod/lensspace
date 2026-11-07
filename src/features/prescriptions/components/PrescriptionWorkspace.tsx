@@ -240,7 +240,7 @@ export function PrescriptionWorkspace({
             {!scope?.canWrite ? <Alert tone="warning">La organización está en modo de solo lectura.</Alert> : null}
             {mode === 'revision' ? <Field label="Motivo de la corrección"><Input name="changeReason" required maxLength={300} /></Field> : null}
 
-            <PrescriptionFormFields />
+            <PrescriptionFormFields organizationId={customer?.organization_id} />
             {message ? <Alert tone="info">{message}</Alert> : null}
             <div>
               <Button type="submit" icon={Save} disabled={saving || !scope?.canWrite} className="w-full sm:w-auto">{saving ? 'Guardando…' : mode === 'new' ? 'Guardar receta' : 'Guardar nueva revisión'}</Button>

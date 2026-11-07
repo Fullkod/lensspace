@@ -937,6 +937,41 @@ export type Database = {
         }
         Relationships: []
       }
+      optometrists: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          full_name: string
+          id: number
+          normalized_name: string | null
+          organization_id: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          full_name: string
+          id?: never
+          normalized_name?: string | null
+          organization_id: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          full_name?: string
+          id?: never
+          normalized_name?: string | null
+          organization_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "optometrists_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_confirmations: {
         Row: {
           branch_id: number
@@ -1580,6 +1615,7 @@ export type Database = {
           left_pupillary_distance: number | null
           left_sphere: number | null
           notes: string | null
+          optometrist_id: number | null
           organization_id: number
           prescriber_name: string | null
           prescription_date: string
@@ -1610,6 +1646,7 @@ export type Database = {
           left_pupillary_distance?: number | null
           left_sphere?: number | null
           notes?: string | null
+          optometrist_id?: number | null
           organization_id: number
           prescriber_name?: string | null
           prescription_date?: string
@@ -1640,6 +1677,7 @@ export type Database = {
           left_pupillary_distance?: number | null
           left_sphere?: number | null
           notes?: string | null
+          optometrist_id?: number | null
           organization_id?: number
           prescriber_name?: string | null
           prescription_date?: string
@@ -1662,6 +1700,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "prescription_revisions_optometrist_id_fkey"
+            columns: ["optometrist_id"]
+            isOneToOne: false
+            referencedRelation: "optometrists"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prescription_revisions_prescription_fkey"
@@ -2337,6 +2382,10 @@ export type Database = {
             }
             Returns: number
           }
+      create_optometrist: {
+        Args: { optometrist_name: string; target_organization_id: number }
+        Returns: number
+      }
       create_prescription_revision: {
         Args: {
           revision_change_reason: string
@@ -2409,6 +2458,15 @@ export type Database = {
       get_my_subscription_notices: { Args: never; Returns: Json }
       get_navigation_counters: { Args: never; Returns: Json }
       get_openwa_runtime_config: { Args: never; Returns: Json }
+      get_optometrist_summary: {
+        Args: {
+          date_from?: string
+          date_to?: string
+          target_branch_id?: number
+          target_organization_id: number
+        }
+        Returns: Json
+      }
       get_order_detail: { Args: { target_order_id: number }; Returns: Json }
       get_order_kpis: { Args: never; Returns: Json }
       get_order_payment_summary: {
@@ -2460,6 +2518,10 @@ export type Database = {
         Returns: Json
       }
       list_my_pending_invitations: { Args: never; Returns: Json }
+      list_optometrists: {
+        Args: { target_organization_id: number }
+        Returns: Json
+      }
       list_subscription_notices: {
         Args: { target_organization_id: number }
         Returns: Json
@@ -2475,6 +2537,10 @@ export type Database = {
       mark_order_delivered: {
         Args: { target_order_id: number }
         Returns: undefined
+      }
+      merge_optometrists: {
+        Args: { source_optometrist_id: number; target_optometrist_id: number }
+        Returns: number
       }
       notify_order_ready: {
         Args: { request_id: string; target_order_id: number }
@@ -2510,6 +2576,10 @@ export type Database = {
           target_order_id: number
         }
         Returns: Json
+      }
+      rename_optometrist: {
+        Args: { optometrist_name: string; target_optometrist_id: number }
+        Returns: undefined
       }
       report_client_error: { Args: { report: Json }; Returns: undefined }
       report_production_incident: {

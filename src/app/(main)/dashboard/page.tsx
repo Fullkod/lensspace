@@ -2,7 +2,7 @@ import { Building, Factory, Plus } from 'lucide-react'
 import { redirect } from 'next/navigation'
 
 import { PlatformAdminDashboard } from '@/features/admin/components'
-import { OwnerAnalyticsDashboard } from '@/features/analytics/components'
+import { OptometristSummary, OwnerAnalyticsDashboard } from '@/features/analytics/components'
 import { MemberAccessCard, OwnerAccessCard } from '@/features/dashboard/components/AccessCards'
 import { PendingInvitations, type PendingInvitation } from '@/features/dashboard/components/PendingInvitations'
 import { formatAmount } from '@/features/orders/format'
@@ -104,6 +104,7 @@ export default async function DashboardPage() {
               defaultFrom={defaultFrom}
               defaultTo={defaultTo}
             /> : null}
+            {organization.analyticsEnabled ? <OptometristSummary organizationId={organization.id} branches={organization.branches} /> : null}
             <OwnerAccessCard
               organizationName={organization.name}
               links={[

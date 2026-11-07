@@ -4,6 +4,8 @@ import { FormSelect } from '@/shared/components'
 import { Field, Input, Textarea } from '@/shared/ui'
 import { todayIn } from '@/shared/utils/dates'
 
+import { OptometristInput } from './OptometristInput'
+
 const eyes = [
   { key: 'right', label: 'OD', name: 'Ojo derecho' },
   { key: 'left', label: 'OI', name: 'Ojo izquierdo' },
@@ -21,7 +23,7 @@ const measures = [
 const prismBases = [{ value: '', label: 'Sin base' }, { value: 'up', label: 'Arriba' }, { value: 'down', label: 'Abajo' }, { value: 'in', label: 'Interna' }, { value: 'out', label: 'Externa' }]
 
 // One block per eye: 3 columns on mobile, 6 from md, so no horizontal scroll is needed.
-export function PrescriptionFormFields() {
+export function PrescriptionFormFields({ organizationId }: { organizationId?: number }) {
   return (
     <div className="flex flex-col gap-5">
       {eyes.map((eye) => (
@@ -50,7 +52,7 @@ export function PrescriptionFormFields() {
           </div>
         ))}
         <Field label="Fecha de la receta"><Input name="prescriptionDate" type="date" required defaultValue={todayIn()} /></Field>
-        <Field label="Médico u optometrista" className="md:col-span-2"><Input name="prescriberName" minLength={2} maxLength={160} /></Field>
+        <OptometristInput organizationId={organizationId} className="md:col-span-2" />
         <Field label="Observaciones" className="md:col-span-2 lg:col-span-3"><Textarea name="notes" rows={3} /></Field>
       </div>
 
