@@ -127,7 +127,9 @@ export function PrescriptionWorkspace({
 
     setSaving(true)
     setMessage(null)
-    const form = new FormData(event.currentTarget)
+    // React nulls event.currentTarget once the handler yields, so keep the element before any await.
+    const formElement = event.currentTarget
+    const form = new FormData(formElement)
     const validationError = validatePrescriptionForm(form)
     if (validationError) {
       setMessage(validationError)
@@ -162,7 +164,7 @@ export function PrescriptionWorkspace({
       attachment instanceof File && attachment.size > 0 &&
       !(await uploadPrescriptionOriginal(supabase, { organizationId: customer.organization_id, branchId: customer.branch_id, prescriptionId: revision.prescriptionId, revisionId: revision.revisionId }, attachment))
 
-    event.currentTarget.reset()
+    formElement.reset()
     setSelectedPrescriptionId(revision.prescriptionId)
     setMode('revision')
     await loadPrescriptions(customer.id)
