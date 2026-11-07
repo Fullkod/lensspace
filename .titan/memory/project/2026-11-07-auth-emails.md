@@ -9,8 +9,15 @@ Date: 2026-11-07
   `supabase/templates/{invite,recovery,confirmation,magic_link,email_change,reauthentication}.html`,
   subjects in `supabase/config.toml` (`[auth.email.template.*]`). The app currently triggers
   only `invite` (team invitation) and `recovery` (reset password and the owner's first access).
-- Templates use `{{ .ConfirmationURL }}`; `/auth/callback` handles code, token_hash and
-  fragment flows, so no app change was needed.
+- Links use `{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=<invite|recovery|email|email_change>`
+  and `/auth/callback` calls `verifyOtp`. Do NOT go back to `{{ .ConfirmationURL }}`: requests
+  made with the SSR client use PKCE, and the code exchange needs the verifier cookie of the
+  browser that asked for the email. It failed («La invitación no es válida o ya venció») when
+  the link was opened on another device, for admin-initiated «enviar acceso», and even in the
+  same browser when it held a stale session: the proxy's `getClaims()` refresh failed and
+  auth-js `_removeSession()` also deletes the PKCE verifiers (`removeAllPKCEVerifiers`).
+  Evidence 2026-11-07: `/verify` 303 + `auth.flow_state` with an issued code but no
+  `grant_type=pkce` call, then `refresh_token_not_found` from the proxy.
 - Logo is the hosted PNG `https://lensspace.fullkod.com/brand/lensspace-app-icon-192.png`
   (email clients do not render SVG). Copy says links expire in 1 hour (`otp_expiry = 3600`);
   update the templates if the hosted expiry changes.
