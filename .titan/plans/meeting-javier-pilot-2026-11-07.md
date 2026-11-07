@@ -1,7 +1,7 @@
 # Reunión de arranque del piloto con Javier (Óptica Javier)
 
 Date: 2026-11-06 (reunión: 2026-11-07)
-Para: equipo Fullkod (Roberto). Documento interno; a Javier se le entrega la guía en PDF
+Para: equipo Fullkod (Roberto y Claudia). Documento interno; a Javier se le entrega la guía en PDF
 `docs/clients/optica-javier/guia-de-arranque-lensspace.pdf`.
 
 Objetivo: que Javier salga de la reunión vendiendo solo con LensSpace, con su catálogo y

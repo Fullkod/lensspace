@@ -4,6 +4,7 @@ Read relevant entries only. Store decisions with dates and evidence.
 
 ## User and team
 
+- [2026-11-06 — Fullkod team: Roberto and Claudia](user/2026-11-06-fullkod-team.md)
 - [2026-09-13 — Continuous implementation memory](user/2026-09-13-continuous-implementation-memory.md)
 
 ## Feedback
