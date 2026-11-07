@@ -18,6 +18,7 @@ Date: 2026-11-07
   auth-js `_removeSession()` also deletes the PKCE verifiers (`removeAllPKCEVerifiers`).
   Evidence 2026-11-07: `/verify` 303 + `auth.flow_state` with an issued code but no
   `grant_type=pkce` call, then `refresh_token_not_found` from the proxy.
+  Roberto confirmed the token_hash links work in production the same day.
 - Logo is the hosted PNG `https://lensspace.fullkod.com/brand/lensspace-app-icon-192.png`
   (email clients do not render SVG). Copy says links expire in 1 hour (`otp_expiry = 3600`);
   update the templates if the hosted expiry changes.
