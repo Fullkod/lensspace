@@ -29,13 +29,15 @@ type ProductionJobCardProps = {
 
 export function ProductionJobCard({ job, showCustomer, showProvider, canAuthorizeRework, transitionLabel, secondaryTransitionLabel, transitionOnBehalf, secondaryOnBehalf, pending, onTransition, onSecondaryTransition, onReportIncident, onCreateRework }: ProductionJobCardProps) {
   const hasIncident = job.status === 'incident'
+  // LEN0006: "OJV-2026-000012 · Par 2 de 3"; providers never see who wears it.
+  const title = (job.snapshot.lineCount ?? 1) > 1 ? `${job.orderNumber} · Par ${job.snapshot.lineNumber} de ${job.snapshot.lineCount}` : job.orderNumber
   const meta = [job.jobType === 'lens' ? 'Cristales' : 'Montaje', showProvider ? job.providerName : null, formatBusinessDate(job.assignedAt)].filter(Boolean).join(' · ')
   // QA-25: a job replaced by an accepted rework is history; keep it short and inert.
   if (job.isCurrent === false) {
     return (
       <Card className="flex flex-col gap-1.5 opacity-80">
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <strong className="font-display text-[15px] text-ink">{job.orderNumber}</strong>
+          <strong className="font-display text-[15px] text-ink">{title}</strong>
           <Badge tone="neutral">Sustituido por repetición</Badge>
         </div>
         <p className="text-[13px] text-text-muted">{meta}</p>
@@ -46,7 +48,7 @@ export function ProductionJobCard({ job, showCustomer, showProvider, canAuthoriz
   return (
     <Card tone={hasIncident ? 'danger' : 'default'} className="flex flex-col gap-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <strong className="font-display text-[15px] text-ink">{job.orderNumber}</strong>
+        <strong className="font-display text-[15px] text-ink">{title}</strong>
         <div className="flex flex-wrap gap-1.5">
           {job.originalJobId ? <Badge tone="warning">Repetición</Badge> : null}
           <Badge tone={statusTone(job.status)}>{productionStatusLabel(job.status, job.jobType)}</Badge>
@@ -57,7 +59,7 @@ export function ProductionJobCard({ job, showCustomer, showProvider, canAuthoriz
         <p className="mt-0.5 text-[13px] text-text-muted">{meta}</p>
       </div>
       <p className="text-sm leading-6 text-text-secondary">{job.snapshot.items?.map((item) => item.name).join(' · ') || 'Configuración preservada en la asignación.'}</p>
-      <PrescriptionDetails prescription={job.snapshot.prescription} eyebrow={`${job.orderNumber} · ${job.jobType === 'lens' ? 'Cristales' : 'Montaje'}`} />
+      <PrescriptionDetails prescription={job.snapshot.prescription} eyebrow={`${title} · ${job.jobType === 'lens' ? 'Cristales' : 'Montaje'}`} />
       {job.incidents.map((incident) => (
         <div key={incident.id} className="flex flex-col gap-2 rounded-[12px] border border-coral-line bg-coral-tint px-4 py-3 text-sm text-coral-deep">
           <p className="flex gap-2"><TriangleAlert aria-hidden="true" size={16} className="mt-0.5 shrink-0 text-coral-ink" />{incident.description}</p>

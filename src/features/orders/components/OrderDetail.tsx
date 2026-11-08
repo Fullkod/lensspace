@@ -37,7 +37,10 @@ export function OrderDetail({ order, summary, timeline, pairs, pending, error, o
   const requestDelivery = () => (readiness?.ready ? onDeliver() : setConfirmDelivery(true))
   // LEN0006: «Pedido listo» stays manual (QA-08) but asks first while production is unfinished.
   const requestNotify = () => (readiness?.hasJobs && !readiness.ready ? setConfirmNotify(true) : onNotifyReady())
-  const unfinished = pairs.length > 1 ? 'Algún par todavía no está recibido y revisado por la óptica.' : 'La producción de este pedido todavía no está recibida y revisada por la óptica.'
+  const missingPairs = readiness ? readiness.pairCount - readiness.readyPairs : 0
+  const unfinished = readiness && readiness.pairCount > 1
+    ? `Faltan ${missingPairs} de ${readiness.pairCount} pares por recibir y revisar en la óptica.`
+    : 'La producción de este pedido todavía no está recibida y revisada por la óptica.'
   const status = orderStatus({ ...order, balanceCup: summary.balanceCup, commercialStatus: summary.commercialStatus, paymentStatus: summary.paymentStatus })
   const finished = isFinished(summary)
   const owes = summary.balanceCup > 0 && !finished

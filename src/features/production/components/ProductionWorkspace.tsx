@@ -35,8 +35,9 @@ export type PrescriptionSnapshot = {
   right_height?: number | null
   left_height?: number | null
 }
-export type ProductionJob = { id: number; orderId: number; orderNumber: string; customerName?: string | null; jobType: 'lens' | 'mounting'; providerId: string; providerName: string; status: string; snapshot: { items?: { name: string }[]; prescription?: PrescriptionSnapshot | null }; originalJobId: number | null; assignedAt: string; incidents: Incident[]; isCurrent?: boolean }
-export type AssignmentOrder = { id: number; organizationId: number; orderNumber: string; customerName?: string | null }
+export type ProductionJob = { id: number; orderId: number; orderLineId?: number; orderNumber: string; customerName?: string | null; jobType: 'lens' | 'mounting'; providerId: string; providerName: string; status: string; snapshot: { items?: { name: string }[]; prescription?: PrescriptionSnapshot | null; lineNumber?: number; lineCount?: number }; originalJobId: number | null; assignedAt: string; incidents: Incident[]; isCurrent?: boolean }
+// One entry per pair of an order (LEN0006); single-pair orders have lineCount 1.
+export type AssignmentOrder = { id: number; lineId: number; lineNumber: number; lineCount: number; patientName?: string | null; organizationId: number; orderNumber: string; customerName?: string | null }
 export type Provider = { id: string; organizationId: number; name: string; role: 'lens_provider' | 'mounting_provider' | 'in_house' }
 type JobAction = { target: string; label: string; onBehalf?: boolean }
 
@@ -101,7 +102,11 @@ export function ProductionWorkspace({ initialJobs, orders, providers, currentUse
     event.preventDefault()
     const form = new FormData(event.currentTarget)
     startTransition(async () => {
-      const { error } = await supabase.rpc('assign_production_job', { target_order_id: Number(form.get('orderId')), job_type: jobType, provider_id: effectiveProviderId } as never)
+      const entry = assignableOrders.find((order) => order.lineId === Number(form.get('orderLineId')))
+      if (!entry) return setAssignmentError('Selecciona el pedido.')
+      const { error } = entry.lineCount > 1
+        ? await supabase.rpc('assign_production_jobs', { target_order_id: entry.id, job_type: jobType, provider_id: effectiveProviderId, target_order_line_ids: [entry.lineId] } as never)
+        : await supabase.rpc('assign_production_job', { target_order_id: entry.id, job_type: jobType, provider_id: effectiveProviderId } as never)
       if (error) return setAssignmentError(friendlyError(error, 'No pudimos asignar el trabajo.'))
       const fresh = await refreshJobs(); setAssignmentOpen(false); setSelectedProviderId(''); setSelectedOrderId(0); setAssignmentError(''); setMessage(savedMessage(fresh, 'Trabajo asignado correctamente.'))
     })
@@ -163,8 +168,8 @@ export function ProductionWorkspace({ initialJobs, orders, providers, currentUse
   }
 
   // Orders that still lack an active job of the chosen type; none preselected.
-  const assignableOrders = orders.filter((order) => !jobs.some((job) => job.orderId === order.id && job.jobType === jobType && job.status !== 'incident'))
-  const selectedOrder = assignableOrders.find((order) => order.id === selectedOrderId)
+  const assignableOrders = orders.filter((order) => !jobs.some((job) => (job.orderLineId ? job.orderLineId === order.lineId : job.orderId === order.id) && job.isCurrent !== false && job.jobType === jobType && job.status !== 'incident'))
+  const selectedOrder = assignableOrders.find((order) => order.lineId === selectedOrderId)
   const matchingProviders = providers.filter((provider) => provider.organizationId === selectedOrder?.organizationId && (provider.role === 'in_house' || provider.role === (jobType === 'lens' ? 'lens_provider' : 'mounting_provider')))
   const effectiveProviderId = selectedProviderId || (matchingProviders.length === 1 ? matchingProviders[0].id : '')
   const filteredJobs = useMemo(() => {
@@ -243,7 +248,7 @@ export function ProductionWorkspace({ initialJobs, orders, providers, currentUse
       </>}
     >
       <form id="production-assign" onSubmit={assign} className="flex flex-col gap-4">
-        <Field label="Pedido"><FormSelect name="orderId" ariaLabel="Pedido" value={String(selectedOrderId)} onValueChange={(value) => { setSelectedOrderId(Number(value)); setSelectedProviderId('') }} options={[{ value: '0', label: assignableOrders.length ? 'Selecciona pedido' : 'No hay pedidos pendientes de este trabajo' }, ...assignableOrders.map((order) => ({ value: String(order.id), label: order.customerName ? `${order.orderNumber} · ${order.customerName}` : order.orderNumber }))]} /></Field>
+        <Field label="Pedido"><FormSelect name="orderLineId" ariaLabel="Pedido" value={String(selectedOrderId)} onValueChange={(value) => { setSelectedOrderId(Number(value)); setSelectedProviderId('') }} options={[{ value: '0', label: assignableOrders.length ? 'Selecciona pedido' : 'No hay pedidos pendientes de este trabajo' }, ...assignableOrders.map((order) => ({ value: String(order.lineId), label: [order.orderNumber, order.customerName, order.lineCount > 1 ? `Par ${order.lineNumber} · ${order.patientName ?? 'Paciente'}` : null].filter(Boolean).join(' · ') }))]} /></Field>
         <Field as="div" label="Tipo de trabajo"><SegmentedControl label="Tipo de trabajo" value={jobType} onChange={(value) => { setJobType(value); setSelectedProviderId('') }} options={[{ value: 'lens', label: 'Cristales' }, { value: 'mounting', label: 'Montaje' }]} /></Field>
         <Field label="Proveedor"><FormSelect name="providerId" ariaLabel="Proveedor" required value={effectiveProviderId} onValueChange={setSelectedProviderId} options={[{ value: '', label: matchingProviders.length ? 'Selecciona proveedor' : `No hay ${jobType === 'lens' ? 'cristaleros' : 'montadores'} activos` }, ...matchingProviders.map((provider) => ({ value: provider.id, label: provider.name }))]} /></Field>
         {assignmentError ? <Alert tone="danger" role="alert">{assignmentError}</Alert> : null}
