@@ -1,11 +1,11 @@
 'use client'
 
-import { Archive, ArchiveRestore, Pencil, Plus, Store, Tags } from 'lucide-react'
+import { Archive, ArchiveRestore, Pencil, Plus, ReceiptText, Store, Tags } from 'lucide-react'
 import { useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
 import { friendlyError } from '@/shared/lib/friendly-error'
-import { Alert, Badge, Button, Card, CardHeader, EmptyState, Toast } from '@/shared/ui'
+import { Alert, Badge, Button, ButtonLink, Card, CardHeader, EmptyState, Toast } from '@/shared/ui'
 
 import { discountLabel, type AccountPrice, type CommercialAccount, type WholesaleOrganization } from '../types'
 import { AccountFormDialog } from './AccountFormDialog'
@@ -82,6 +82,7 @@ export function WholesaleWorkspace({ userId, organizations, initialAccounts, ini
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <ButtonLink size="sm" variant="ghost" icon={ReceiptText} href={`/wholesale-orders?optica=${account.id}`}>Pedidos</ButtonLink>
                   <Button size="sm" variant="ghost" icon={Tags} onClick={() => setAction({ kind: 'prices', organization, account })}>Precios</Button>
                   {organization.canManage ? <>
                     {!account.archived_at ? <Button size="sm" variant="ghost" icon={Pencil} onClick={() => setAction({ kind: 'form', organization, account })}>Editar</Button> : null}

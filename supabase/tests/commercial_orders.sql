@@ -7,7 +7,8 @@ insert into auth.users (id, email, raw_user_meta_data, email_confirmed_at) value
   ('96000000-0000-0000-0000-000000000002', 'co-seller-a@example.test', '{"display_name":"CO Seller A"}', now()),
   ('96000000-0000-0000-0000-000000000003', 'co-seller-b@example.test', '{"display_name":"CO Seller B"}', now()),
   ('96000000-0000-0000-0000-000000000004', 'co-seller-c@example.test', '{"display_name":"CO Seller C"}', now()),
-  ('96000000-0000-0000-0000-000000000005', 'co-other@example.test', '{"display_name":"CO Other"}', now());
+  ('96000000-0000-0000-0000-000000000005', 'co-other@example.test', '{"display_name":"CO Other"}', now()),
+  ('96000000-0000-0000-0000-000000000006', 'co-lens@example.test', '{"display_name":"CO Lens"}', now());
 
 insert into public.organizations (id, name, order_prefix, timezone) overriding system value values
   (960000001, 'Commercial Orders Test', 'COQA', 'America/Havana'),
@@ -20,12 +21,14 @@ insert into public.organization_memberships (id, organization_id, user_id, branc
   (960000002, 960000001, '96000000-0000-0000-0000-000000000002', 960000001, 'seller', 'active'),
   (960000003, 960000001, '96000000-0000-0000-0000-000000000003', 960000001, 'seller', 'active'),
   (960000004, 960000001, '96000000-0000-0000-0000-000000000004', 960000001, 'seller', 'active'),
-  (960000005, 960000002, '96000000-0000-0000-0000-000000000005', null, 'owner', 'active');
+  (960000005, 960000002, '96000000-0000-0000-0000-000000000005', null, 'owner', 'active'),
+  (960000006, 960000001, '96000000-0000-0000-0000-000000000006', null, 'lens_provider', 'active');
 insert into public.subscriptions (organization_id, status, starts_on, expires_on) values
   (960000001, 'active', current_date - 1, current_date + 30),
   (960000002, 'active', current_date - 1, current_date + 30);
 insert into public.organization_modules (organization_id, module_key, changed_by) values
   (960000001, 'optical_sales', '96000000-0000-0000-0000-000000000001'),
+  (960000001, 'production', '96000000-0000-0000-0000-000000000001'),
   (960000002, 'optical_sales', '96000000-0000-0000-0000-000000000005');
 insert into public.catalog_items (id, organization_id, category, code, name, sale_price, currency, is_active) overriding system value values
   (960000001, 960000001, 'vision_type', 'co_single', 'Monofocal CO', 100, 'USD', true),
@@ -92,6 +95,24 @@ begin
   exception when insufficient_privilege then null;
   end;
 
+  -- No production while the order is open.
+  begin
+    perform public.assign_production_jobs(sale_order, 'lens', '96000000-0000-0000-0000-000000000006', array[(first_line->>'lineId')::bigint]);
+    raise exception 'Production must wait until the order is closed';
+  exception when object_not_in_prerequisite_state then null;
+  end;
+
+  -- Readers: the seller lists the order and reads it with account prices.
+  if jsonb_array_length(public.list_commercial_orders()) <> 1
+    or (public.get_commercial_order(sale_order)->>'canManage')::boolean
+    or jsonb_array_length(public.get_commercial_order(sale_order)->'lines') <> 2 then
+    raise exception 'Seller readers are wrong';
+  end if;
+  if not exists (select 1 from jsonb_array_elements(public.get_commercial_price_list(sale_order)) entry
+    where (entry->>'id')::bigint = 960000001 and (entry->>'price')::numeric = 90 and entry->>'priceSource' = 'account_discount') then
+    raise exception 'Price list must show the account price';
+  end if;
+
   -- The seller cannot close.
   begin
     perform public.close_commercial_order(sale_order);
@@ -106,9 +127,15 @@ select set_config('request.jwt.claim.sub', '96000000-0000-0000-0000-000000000003
 do $$
 declare sale_order bigint := (select id from co_ids where key = 'order');
 begin
-  if exists (select 1 from public.orders where id = sale_order) or exists (select 1 from public.order_lines where order_id = sale_order) then
+  if exists (select 1 from public.orders where id = sale_order) or exists (select 1 from public.order_lines where order_id = sale_order)
+    or jsonb_array_length(public.list_commercial_orders()) <> 0 then
     raise exception 'Another seller must not see the order';
   end if;
+  begin
+    perform public.get_commercial_order(sale_order);
+    raise exception 'Another seller must not read the order';
+  exception when no_data_found then null;
+  end;
   begin
     perform public.add_commercial_order_line(sale_order, jsonb_build_object('patientCustomerId', (select id from co_ids where key = 'patient_one'), 'itemIds', jsonb_build_array(960000001)), null);
     raise exception 'Another seller must not add lines';
@@ -191,6 +218,28 @@ $$;
 -- Owner closes; seller A marks ready and delivers line by line on credit.
 select set_config('request.jwt.claim.sub', '96000000-0000-0000-0000-000000000001', true);
 select public.close_commercial_order((select id from co_ids where key = 'order'));
+
+-- The permitted seller C assigns lens work to every active line; the removed one is refused.
+select set_config('request.jwt.claim.sub', '96000000-0000-0000-0000-000000000004', true);
+do $$
+declare
+  sale_order bigint := (select id from co_ids where key = 'order');
+  active bigint[] := (select array_agg(id order by line_number) from public.order_lines where order_id = sale_order and removed_at is null);
+  removed bigint := (select id from public.order_lines where order_id = sale_order and removed_at is not null);
+  created bigint[];
+begin
+  created := public.assign_production_jobs(sale_order, 'lens', '96000000-0000-0000-0000-000000000006', active);
+  if cardinality(created) <> 2 then raise exception 'Expected 2 lens jobs'; end if;
+  if jsonb_array_length(public.get_order_production_panel(sale_order)->'pairs') <> 2 then
+    raise exception 'The production panel must hide removed lines';
+  end if;
+  begin
+    perform public.assign_production_jobs(sale_order, 'lens', '96000000-0000-0000-0000-000000000006', array[removed]);
+    raise exception 'A removed line must not get production';
+  exception when no_data_found then null;
+  end;
+end;
+$$;
 
 select set_config('request.jwt.claim.sub', '96000000-0000-0000-0000-000000000002', true);
 do $$

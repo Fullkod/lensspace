@@ -136,6 +136,7 @@ async function loadShell(supabase: SupabaseServerClient, userId: string, email: 
   if (memberships.some((membership) => membership.role === 'owner')) allowed.push('/team')
   if (hasAccess(['owner', 'seller'], 'optical_sales')) allowed.push(...commercialHrefs)
   if (hasAccess(['owner'], 'optical_sales')) allowed.push('/wholesale')
+  if (hasAccess(['owner', 'seller'], 'optical_sales')) allowed.push('/wholesale-orders')
   if (hasAccess(['owner', 'seller'], 'cashbox')) allowed.push('/cashbox')
   if (hasAccess(['owner', 'seller', 'lens_provider', 'mounting_provider'], 'production')) {
     allowed.push('/production')

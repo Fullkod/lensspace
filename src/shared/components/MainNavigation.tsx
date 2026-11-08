@@ -2,7 +2,7 @@
 
 import Link, { useLinkStatus } from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BookOpen, Bug, Building, Factory, FileText, LayoutDashboard, LoaderCircle, Plus, ReceiptText, Store, Tags, Users, UsersRound, Wallet, type LucideIcon } from 'lucide-react'
+import { BookOpen, Bug, Building, Factory, FileText, LayoutDashboard, LoaderCircle, Plus, ReceiptText, Store, Tags, Truck, Users, UsersRound, Wallet, type LucideIcon } from 'lucide-react'
 
 import { useNavigationCounts } from '@/shared/lib/navigation-counters'
 import { ButtonLink, cx } from '@/shared/ui'
@@ -30,6 +30,7 @@ const navigationSections: { label: string; items: { href: string; label: string;
       { href: '/prescriptions', label: 'Recetas', icon: FileText },
       { href: '/production', label: 'Producción', icon: Factory },
       { href: '/cashbox', label: 'Caja y cierres', icon: Wallet },
+      { href: '/wholesale-orders', label: 'Pedidos a ópticas', icon: Truck },
     ],
   },
   {

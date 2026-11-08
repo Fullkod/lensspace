@@ -2815,6 +2815,11 @@ export type Database = {
         Args: { target_dispatch_id: number }
         Returns: Json
       }
+      get_commercial_order: { Args: { target_order_id: number }; Returns: Json }
+      get_commercial_price_list: {
+        Args: { target_order_id: number }
+        Returns: Json
+      }
       get_error_group: { Args: { target_group_id: number }; Returns: Json }
       get_my_subscription_notices: { Args: never; Returns: Json }
       get_navigation_counters: { Args: never; Returns: Json }
@@ -2876,6 +2881,14 @@ export type Database = {
       list_accessible_production_jobs: { Args: never; Returns: Json }
       list_commercial_accounts_for_orders: {
         Args: { target_organization_id: number }
+        Returns: Json
+      }
+      list_commercial_order_permissions: {
+        Args: { target_organization_id: number }
+        Returns: Json
+      }
+      list_commercial_orders: {
+        Args: { target_account_id?: number }
         Returns: Json
       }
       list_error_groups: {
