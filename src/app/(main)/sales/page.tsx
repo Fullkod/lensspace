@@ -44,9 +44,9 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   // prescriptions for the selected customer (QA-12).
   const [{ data: customerData }, { data: requestedCustomer }, { data: requestedRevisions }] = branchIds.length
     ? await Promise.all([
-        supabase.from('customers').select('id, organization_id, branch_id, full_name').in('branch_id', branchIds).is('archived_at', null).order('updated_at', { ascending: false }).limit(10),
+        supabase.from('customers').select('id, organization_id, branch_id, full_name').in('branch_id', branchIds).is('archived_at', null).is('commercial_account_id', null).order('updated_at', { ascending: false }).limit(10),
         // "Nueva venta" from a customer card (/sales?clienteId=…) starts with that customer.
-        requestedCustomerId ? supabase.from('customers').select('id, organization_id, branch_id, full_name').eq('id', requestedCustomerId).in('branch_id', branchIds).maybeSingle() : Promise.resolve({ data: null }),
+        requestedCustomerId ? supabase.from('customers').select('id, organization_id, branch_id, full_name').eq('id', requestedCustomerId).in('branch_id', branchIds).is('commercial_account_id', null).maybeSingle() : Promise.resolve({ data: null }),
         requestedCustomerId ? supabase.from('prescription_revisions').select('id, organization_id, branch_id, prescription_id, prescription_date, prescriptions!inner(customer_id)').eq('prescriptions.customer_id', requestedCustomerId).order('created_at', { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
       ])
     : [{ data: [] }, { data: null }, { data: [] }]

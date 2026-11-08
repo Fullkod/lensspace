@@ -73,6 +73,43 @@ realmente el cambio.
 - La ficha de un familiar muestra los pedidos donde lleva un par. El resumen por
   optometrista cuenta los pedidos a través de la receta de cada par.
 
+### Venta a ópticas minoristas (LEN0009 + LEN0010, 2026-11-08)
+
+La organización también puede trabajar como proveedora de otras ópticas («ópticas
+minoristas»). Esas ópticas no tienen usuario en LensSpace: el personal de la
+organización registra sus pedidos.
+
+- **Ficha de la óptica:** nombre, persona de contacto, teléfono, correo, dirección,
+  condiciones de pago (texto y días de crédito opcionales) y notas. Pertenece a la
+  organización (se comparte entre sucursales). Solo el dueño la crea, la edita o la
+  archiva; archivarla no borra su historial.
+- **Precios propios:** cada óptica puede tener un descuento general (%) sobre el
+  precio de catálogo y precios fijos para artículos concretos; el precio fijo gana.
+  Los recargos por graduación también llevan el descuento. Estos precios no cambian
+  el catálogo ni los precios de otras ópticas o de la venta al detalle. Solo el
+  dueño los ve y los cambia.
+- **Pacientes:** cada trabajo es para un paciente de la óptica minorista, con su
+  receta. Se guardan como clientes ligados a esa óptica (teléfono de la óptica,
+  WhatsApp desactivado) y no aparecen en la lista de clientes de la sucursal.
+- **Pedido comercial:** se abre para una óptica, en una sucursal, y acumula trabajos
+  con receta durante varios días (hasta 200). Cada trabajo se valora con los precios
+  de la óptica y queda fijo al agregarlo, con quién lo agregó y cuándo. Un trabajo
+  puede quitarse, con motivo, solo mientras el pedido esté abierto y sin producción.
+- **Estados del pedido comercial:** abierto → cerrado (se manda a fabricar) → listo
+  para recoger → entregado → terminado (entregado y pagado). Solo el dueño cierra y
+  reabre (con motivo); un pedido cerrado no admite cambios sin reabrirlo. Reabrir no
+  toca los trabajos que ya están en producción.
+- **Permiso especial:** como excepción, el dueño puede autorizar a un vendedor para
+  ver todos los pedidos comerciales de su sucursal, cambiar su estado (incluido
+  cerrar y reabrir) y cobrar. Sin ese permiso, cada vendedor solo ve los suyos. Las
+  fichas y los precios siguen siendo solo del dueño.
+- **Entrega:** todo el pedido o trabajo por trabajo, quedando registrado quién
+  entrega cada uno. Se puede entregar con saldo pendiente (a crédito).
+- **Cobro:** se registra una vez, en la caja de quien cobra, y se reparte entre uno o
+  varios pedidos de la óptica (primero los más antiguos, ajustable). La deuda de cada
+  óptica es la suma de los saldos de sus pedidos, en USD a la tasa de cada pedido.
+- **WhatsApp:** los pedidos comerciales no envían mensajes en esta versión.
+
 ## Receta
 
 Debe admitir esfera, cilindro y eje por ojo; adición; distancia pupilar conjunta o
@@ -151,7 +188,8 @@ notas y origen. Deben contemplarse cristales defectuosos, errores de receta,
 roturas, repetición del trabajo y otras incidencias.
 
 No se permite marcar un pedido como entregado mientras conserve saldo pendiente.
-No existe excepción a esta regla en el MVP.
+La única excepción son los pedidos comerciales a ópticas minoristas, que pueden
+entregarse a crédito (ver «Venta a ópticas minoristas»).
 
 Después de enviar el trabajo al cristalero, una corrección requiere abrir una
 incidencia. Se conserva el trabajo original y se crea una corrección o repetición

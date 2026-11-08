@@ -48,7 +48,7 @@ export default async function PrescriptionsPage() {
   const { data: customerData } = await supabase
     .from('customers')
     .select('id, organization_id, branch_id, full_name, customer_phones(phone_number)')
-    .is('archived_at', null)
+    .is('archived_at', null).is('commercial_account_id', null)
     .order('updated_at', { ascending: false })
     .limit(100)
 

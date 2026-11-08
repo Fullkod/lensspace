@@ -40,7 +40,7 @@ export function CustomerSearchPicker({ organizationId, branchId, recent, selecte
       }
       const safeTerm = query.replace(/[,%()]/g, ' ')
       let request = supabase.from('customers').select('id, organization_id, branch_id, full_name')
-        .eq('organization_id', organizationId).eq('branch_id', branchId).is('archived_at', null)
+        .eq('organization_id', organizationId).eq('branch_id', branchId).is('archived_at', null).is('commercial_account_id', null)
         .order('updated_at', { ascending: false }).limit(12)
       request = phoneCustomerIds.length ? request.or(`full_name.ilike.%${safeTerm}%,id.in.(${phoneCustomerIds.join(',')})`) : request.ilike('full_name', `%${safeTerm}%`)
       const { data, error } = await request

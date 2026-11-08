@@ -107,7 +107,7 @@ export function CustomerWorkspace({ scopes }: { scopes: AccessScope[] }) {
       let request = supabase
         .from('customers')
         .select(customerSelect)
-        .is('archived_at', null)
+        .is('archived_at', null).is('commercial_account_id', null)
         .order('updated_at', { ascending: false })
         .limit(30)
 
@@ -179,7 +179,7 @@ export function CustomerWorkspace({ scopes }: { scopes: AccessScope[] }) {
       supabase
         .from('customers')
         .select('id')
-        .is('archived_at', null)
+        .is('archived_at', null).is('commercial_account_id', null)
         .ilike('full_name', fullName.trim()),
     ])
     const possibleDuplicateIds = [
@@ -195,7 +195,7 @@ export function CustomerWorkspace({ scopes }: { scopes: AccessScope[] }) {
         .from('customers')
         .select(customerSelect)
         .in('id', otherDuplicateIds)
-        .is('archived_at', null)
+        .is('archived_at', null).is('commercial_account_id', null)
       setResults(withOrderSummaries((matches ?? []) as CustomerResult[]))
       setSearched(true)
       setQuery(fullName.trim())

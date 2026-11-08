@@ -397,6 +397,113 @@ export type Database = {
           },
         ]
       }
+      commercial_account_prices: {
+        Row: {
+          account_id: number
+          catalog_item_id: number
+          changed_at: string
+          changed_by: string
+          currency: string
+          organization_id: number
+          sale_price: number
+        }
+        Insert: {
+          account_id: number
+          catalog_item_id: number
+          changed_at?: string
+          changed_by: string
+          currency: string
+          organization_id: number
+          sale_price: number
+        }
+        Update: {
+          account_id?: number
+          catalog_item_id?: number
+          changed_at?: string
+          changed_by?: string
+          currency?: string
+          organization_id?: number
+          sale_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_account_prices_account_id_organization_id_fkey"
+            columns: ["account_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_accounts"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "commercial_account_prices_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commercial_accounts: {
+        Row: {
+          address: string | null
+          archived_at: string | null
+          contact_name: string | null
+          created_at: string
+          created_by: string
+          credit_days: number | null
+          discount_percent: number
+          email: string | null
+          id: number
+          name: string
+          notes: string | null
+          organization_id: number
+          payment_terms: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          archived_at?: string | null
+          contact_name?: string | null
+          created_at?: string
+          created_by: string
+          credit_days?: number | null
+          discount_percent?: number
+          email?: string | null
+          id?: never
+          name: string
+          notes?: string | null
+          organization_id: number
+          payment_terms?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          archived_at?: string | null
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string
+          credit_days?: number | null
+          discount_percent?: number
+          email?: string | null
+          id?: never
+          name?: string
+          notes?: string | null
+          organization_id?: number
+          payment_terms?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_accounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_phones: {
         Row: {
           branch_id: number
@@ -454,6 +561,7 @@ export type Database = {
           birth_date: string | null
           branch_id: number
           client_request_id: string | null
+          commercial_account_id: number | null
           created_at: string
           created_by: string
           full_name: string
@@ -470,6 +578,7 @@ export type Database = {
           birth_date?: string | null
           branch_id: number
           client_request_id?: string | null
+          commercial_account_id?: number | null
           created_at?: string
           created_by: string
           full_name: string
@@ -486,6 +595,7 @@ export type Database = {
           birth_date?: string | null
           branch_id?: number
           client_request_id?: string | null
+          commercial_account_id?: number | null
           created_at?: string
           created_by?: string
           full_name?: string
@@ -502,6 +612,13 @@ export type Database = {
             columns: ["branch_id", "organization_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "customers_commercial_account_fkey"
+            columns: ["commercial_account_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_accounts"
             referencedColumns: ["id", "organization_id"]
           },
           {
@@ -1132,39 +1249,63 @@ export type Database = {
       }
       order_lines: {
         Row: {
+          added_at: string | null
+          added_by: string | null
           branch_id: number
+          client_request_id: string | null
           created_at: string
           cup_equivalent: number
+          delivered_at: string | null
+          delivered_by: string | null
           id: number
           line_number: number
           order_id: number
           organization_id: number
           patient_customer_id: number
           prescription_revision_id: number | null
+          removal_reason: string | null
+          removed_at: string | null
+          removed_by: string | null
           totals: Json
         }
         Insert: {
+          added_at?: string | null
+          added_by?: string | null
           branch_id: number
+          client_request_id?: string | null
           created_at?: string
           cup_equivalent: number
+          delivered_at?: string | null
+          delivered_by?: string | null
           id?: never
           line_number: number
           order_id: number
           organization_id: number
           patient_customer_id: number
           prescription_revision_id?: number | null
+          removal_reason?: string | null
+          removed_at?: string | null
+          removed_by?: string | null
           totals: Json
         }
         Update: {
+          added_at?: string | null
+          added_by?: string | null
           branch_id?: number
+          client_request_id?: string | null
           created_at?: string
           cup_equivalent?: number
+          delivered_at?: string | null
+          delivered_by?: string | null
           id?: never
           line_number?: number
           order_id?: number
           organization_id?: number
           patient_customer_id?: number
           prescription_revision_id?: number | null
+          removal_reason?: string | null
+          removed_at?: string | null
+          removed_by?: string | null
           totals?: Json
         }
         Relationships: [
@@ -1195,57 +1336,78 @@ export type Database = {
         Row: {
           accepted_at: string
           branch_id: number
+          client_request_id: string | null
+          closed_at: string | null
+          closed_by: string | null
+          commercial_account_id: number | null
           commercial_status: string
           created_at: string
           cup_equivalent: number
-          customer_id: number
+          customer_id: number | null
           delivered_at: string | null
           delivered_by: string | null
           id: number
+          order_kind: string
           order_number: string
           organization_id: number
           payment_status: string
           prescription_revision_id: number | null
           primary_seller_id: string
-          quotation_id: number
+          quotation_id: number | null
+          ready_at: string | null
+          ready_by: string | null
           totals: Json
           usd_to_cup_rate: number
         }
         Insert: {
           accepted_at?: string
           branch_id: number
+          client_request_id?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
+          commercial_account_id?: number | null
           commercial_status?: string
           created_at?: string
           cup_equivalent: number
-          customer_id: number
+          customer_id?: number | null
           delivered_at?: string | null
           delivered_by?: string | null
           id?: never
+          order_kind?: string
           order_number: string
           organization_id: number
           payment_status?: string
           prescription_revision_id?: number | null
           primary_seller_id: string
-          quotation_id: number
+          quotation_id?: number | null
+          ready_at?: string | null
+          ready_by?: string | null
           totals: Json
           usd_to_cup_rate: number
         }
         Update: {
           accepted_at?: string
           branch_id?: number
+          client_request_id?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
+          commercial_account_id?: number | null
           commercial_status?: string
           created_at?: string
           cup_equivalent?: number
-          customer_id?: number
+          customer_id?: number | null
           delivered_at?: string | null
           delivered_by?: string | null
           id?: never
+          order_kind?: string
           order_number?: string
           organization_id?: number
           payment_status?: string
           prescription_revision_id?: number | null
           primary_seller_id?: string
-          quotation_id?: number
+          quotation_id?: number | null
+          ready_at?: string | null
+          ready_by?: string | null
           totals?: Json
           usd_to_cup_rate?: number
         }
@@ -1255,6 +1417,13 @@ export type Database = {
             columns: ["branch_id", "organization_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "orders_commercial_account_fkey"
+            columns: ["commercial_account_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_accounts"
             referencedColumns: ["id", "organization_id"]
           },
           {
@@ -1297,6 +1466,7 @@ export type Database = {
       organization_memberships: {
         Row: {
           branch_id: number | null
+          can_manage_commercial_orders: boolean
           created_at: string
           id: number
           organization_id: number
@@ -1307,6 +1477,7 @@ export type Database = {
         }
         Insert: {
           branch_id?: number | null
+          can_manage_commercial_orders?: boolean
           created_at?: string
           id?: never
           organization_id: number
@@ -1317,6 +1488,7 @@ export type Database = {
         }
         Update: {
           branch_id?: number | null
+          can_manage_commercial_orders?: boolean
           created_at?: string
           id?: never
           organization_id?: number
@@ -2389,6 +2561,14 @@ export type Database = {
     }
     Functions: {
       accept_quotation: { Args: { target_quotation_id: number }; Returns: Json }
+      add_commercial_order_line: {
+        Args: {
+          request_id?: string
+          target_line: Json
+          target_order_id: number
+        }
+        Returns: Json
+      }
       add_organization_member: {
         Args: {
           actor_user_id: string
@@ -2461,6 +2641,7 @@ export type Database = {
         Args: {
           line_adjustments?: Json
           selected_item_ids: number[]
+          target_account_id?: number
           target_organization_id: number
           target_prescription_revision_id: number
           usd_to_cup_rate: number
@@ -2478,6 +2659,10 @@ export type Database = {
           target_cashbox_id: number
         }
         Returns: Json
+      }
+      close_commercial_order: {
+        Args: { target_order_id: number }
+        Returns: undefined
       }
       complete_automatic_notification_dispatch: {
         Args: {
@@ -2513,6 +2698,14 @@ export type Database = {
           branch_name: string
           change_reason: string
           target_organization_id: number
+        }
+        Returns: number
+      }
+      create_commercial_patient: {
+        Args: {
+          patient_name: string
+          target_account_id: number
+          target_branch_id: number
         }
         Returns: number
       }
@@ -2603,6 +2796,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      deliver_commercial_order_lines: {
+        Args: { target_line_ids?: number[]; target_order_id: number }
+        Returns: Json
+      }
       end_platform_support_session: {
         Args: { target_session_id: number }
         Returns: boolean
@@ -2677,6 +2874,10 @@ export type Database = {
         | { Args: never; Returns: Json }
         | { Args: { finished_since: string }; Returns: Json }
       list_accessible_production_jobs: { Args: never; Returns: Json }
+      list_commercial_accounts_for_orders: {
+        Args: { target_organization_id: number }
+        Returns: Json
+      }
       list_error_groups: {
         Args: { target_limit?: number; target_status?: string }
         Returns: Json
@@ -2698,6 +2899,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_commercial_order_ready: {
+        Args: { target_order_id: number }
+        Returns: undefined
+      }
       mark_order_delivered: {
         Args: { target_order_id: number }
         Returns: undefined
@@ -2708,6 +2913,16 @@ export type Database = {
       }
       notify_order_ready: {
         Args: { request_id: string; target_order_id: number }
+        Returns: Json
+      }
+      open_commercial_order: {
+        Args: {
+          request_id?: string
+          target_account_id: number
+          target_branch_id: number
+          target_organization_id: number
+          target_usd_to_cup_rate: number
+        }
         Returns: Json
       }
       platform_owner_email: {
@@ -2741,8 +2956,16 @@ export type Database = {
         }
         Returns: Json
       }
+      remove_commercial_order_line: {
+        Args: { target_line_id: number; target_reason: string }
+        Returns: undefined
+      }
       rename_optometrist: {
         Args: { optometrist_name: string; target_optometrist_id: number }
+        Returns: undefined
+      }
+      reopen_commercial_order: {
+        Args: { reopen_reason: string; target_order_id: number }
         Returns: undefined
       }
       report_client_error: { Args: { report: Json }; Returns: undefined }
@@ -2807,6 +3030,10 @@ export type Database = {
           target_branch_id: number
         }
         Returns: boolean
+      }
+      set_commercial_orders_permission: {
+        Args: { enabled: boolean; target_membership_id: number }
+        Returns: undefined
       }
       set_error_group_status: {
         Args: { target_group_id: number; target_status: string }
