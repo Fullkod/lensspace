@@ -297,6 +297,11 @@ advance (QA-52), messages to patients, refunds/cancellation of one pair, droppin
 - **Result**: all checks passed both times; fixture org/users and the new functions were absent afterwards. End to end from the current UI: `JAV-2026-000013` (1 pair, totals equal) and its WhatsApp `sent`.
 - **Aplicar en**: phases 4–5 (payments, delivery and production tests follow the same pattern).
 
+### 2026-11-08: Phase 4 scope moved to phase 5
+- **Context**: per-pair timeline labels and "Faltan X de N pares" need per-pair production jobs, which only exist after phase 5.
+- **Done in phase 4**: pairCount/patientNames in the inbox (search by patient), collapsible pairs in the order detail, `{{pairs_summary}}` ("Pares: *N*" only with 2+ pairs, single-pair messages unchanged, verified on JAV-2026-000013/14), «¿Avisar igual?» while production is unfinished. Also fixed: `{{balance}}` tells the balance in USD for USD-only sales (`20261108030000`).
+- **Phase 5 adds**: per-pair readiness count in the Avisar/Entregar dialogs and pair labels on production timeline events.
+
 ---
 
 ## Gotchas

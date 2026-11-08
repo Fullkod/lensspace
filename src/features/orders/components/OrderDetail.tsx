@@ -10,13 +10,15 @@ import { Alert, Avatar, Badge, Button, Card, Dialog, ProgressBar, Tabs, Timeline
 import { formatAmount, formatDateTime, formatLongDate } from '../format'
 import { isFinished, orderStatus, paymentStatusLabels, timelineKind } from '../order-status'
 import { cupToUsd, formatTotals, saleCurrency } from '../sale-currency'
-import type { Order, PaymentSummary, TimelineEvent } from '../types'
+import type { Order, OrderPair, PaymentSummary, TimelineEvent } from '../types'
+import { OrderPairs } from './OrderPairs'
 import { PaymentForm, type PaymentInput } from './PaymentForm'
 
 type OrderDetailProps = {
   order: Order
   summary: PaymentSummary
   timeline: TimelineEvent[]
+  pairs: OrderPair[]
   pending: boolean
   error: string
   onBack: () => void
@@ -25,13 +27,17 @@ type OrderDetailProps = {
   onNotifyReady: () => void
 }
 
-export function OrderDetail({ order, summary, timeline, pending, error, onBack, onRegisterPayment, onDeliver, onNotifyReady }: OrderDetailProps) {
+export function OrderDetail({ order, summary, timeline, pairs, pending, error, onBack, onRegisterPayment, onDeliver, onNotifyReady }: OrderDetailProps) {
   const [tab, setTab] = useState<'payments' | 'history'>('payments')
   const [readiness, setReadiness] = useState<ProductionReadiness | null>(null)
   const [confirmDelivery, setConfirmDelivery] = useState(false)
+  const [confirmNotify, setConfirmNotify] = useState(false)
   const handleReadiness = useCallback((value: ProductionReadiness) => setReadiness(value), [])
   // Product decision (QA-14): delivering before production is reviewed warns, never blocks.
   const requestDelivery = () => (readiness?.ready ? onDeliver() : setConfirmDelivery(true))
+  // LEN0006: «Pedido listo» stays manual (QA-08) but asks first while production is unfinished.
+  const requestNotify = () => (readiness?.hasJobs && !readiness.ready ? setConfirmNotify(true) : onNotifyReady())
+  const unfinished = pairs.length > 1 ? 'Algún par todavía no está recibido y revisado por la óptica.' : 'La producción de este pedido todavía no está recibida y revisada por la óptica.'
   const status = orderStatus({ ...order, balanceCup: summary.balanceCup, commercialStatus: summary.commercialStatus, paymentStatus: summary.paymentStatus })
   const finished = isFinished(summary)
   const owes = summary.balanceCup > 0 && !finished
@@ -97,6 +103,8 @@ export function OrderDetail({ order, summary, timeline, pending, error, onBack, 
         )}
         {error ? <Alert tone="danger" role="alert">{error}</Alert> : null}
 
+        {pairs.length > 1 ? <OrderPairs pairs={pairs} /> : null}
+
         <OrderProductionPanel key={`production-${summary.orderId}`} orderId={summary.orderId} canAssign={summary.commercialStatus === 'accepted'} delivered={summary.commercialStatus === 'delivered' || summary.commercialStatus === 'closed'} onReadinessChange={handleReadiness} />
 
         <div>
@@ -133,7 +141,7 @@ export function OrderDetail({ order, summary, timeline, pending, error, onBack, 
             {owes ? `Disponible cuando el saldo llegue a 0 · faltan ${formatAmount(balance)} ${currency}` : 'Todo cobrado. Puedes entregar el pedido.'}
           </p>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            <Button variant="secondary" icon={MessageCircle} onClick={onNotifyReady} disabled={pending} className="w-full sm:w-auto">Avisar: listo para recoger</Button>
+            <Button variant="secondary" icon={MessageCircle} onClick={requestNotify} disabled={pending} className="w-full sm:w-auto">Avisar: listo para recoger</Button>
             <Button variant="ink" icon={PackageCheck} onClick={requestDelivery} disabled={owes || pending} className="w-full sm:w-auto">Marcar como entregado</Button>
           </div>
         </div>
@@ -143,10 +151,20 @@ export function OrderDetail({ order, summary, timeline, pending, error, onBack, 
         open={confirmDelivery}
         onClose={() => setConfirmDelivery(false)}
         title="¿Entregar igual?"
-        description={readiness?.hasJobs ? 'La producción de este pedido todavía no está recibida y revisada por la óptica.' : 'Este pedido no se ha enviado a producción.'}
+        description={readiness?.hasJobs ? unfinished : 'Este pedido no se ha enviado a producción.'}
         footer={<>
           <Button variant="ghost" onClick={() => setConfirmDelivery(false)}>Volver</Button>
           <Button variant="ink" icon={PackageCheck} onClick={() => { setConfirmDelivery(false); onDeliver() }}>Entregar igual</Button>
+        </>}
+      />
+      <Dialog
+        open={confirmNotify}
+        onClose={() => setConfirmNotify(false)}
+        title="¿Avisar igual?"
+        description={`${unfinished} El cliente recibirá «Tu pedido está listo».`}
+        footer={<>
+          <Button variant="ghost" onClick={() => setConfirmNotify(false)}>Volver</Button>
+          <Button icon={MessageCircle} onClick={() => { setConfirmNotify(false); onNotifyReady() }}>Avisar igual</Button>
         </>}
       />
     </Card>

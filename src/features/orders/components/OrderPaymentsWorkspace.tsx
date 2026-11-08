@@ -14,7 +14,7 @@ import { FINISHED_ORDERS_DAYS, formatAmount } from '../format'
 import { daysAgoIn } from '@/shared/utils/dates'
 import { orderKpis } from '../order-kpis'
 import { friendlyPaymentError, isNetworkError } from '../payment-errors'
-import type { Order, PaymentSummary, TimelineEvent } from '../types'
+import type { Order, OrderPair, PaymentSummary, TimelineEvent } from '../types'
 import { OrderDetail } from './OrderDetail'
 import { OrdersInbox } from './OrdersInbox'
 import type { PaymentInput } from './PaymentForm'
@@ -30,6 +30,7 @@ export function OrderPaymentsWorkspace({ initialOrders, initialCustomerFilter = 
   const [selectedId, setSelectedId] = useState(0)
   const [summary, setSummary] = useState<PaymentSummary | null>(null)
   const [timeline, setTimeline] = useState<TimelineEvent[]>([])
+  const [pairs, setPairs] = useState<OrderPair[]>([])
   const [error, setError] = useState('')
   const [toast, setToast] = useState('')
   const [pending, startTransition] = useTransition()
@@ -38,9 +39,10 @@ export function OrderPaymentsWorkspace({ initialOrders, initialCustomerFilter = 
     // One call for summary + history (QA-35): half the requests and preflights.
     const { data, error: detailError } = await supabase.rpc('get_order_detail', { target_order_id: orderId } as never)
     if (detailError) throw detailError
-    const detail = data as unknown as { summary: PaymentSummary; timeline: TimelineEvent[] }
+    const detail = data as unknown as { summary: PaymentSummary; timeline: TimelineEvent[]; pairs?: OrderPair[] }
     setSummary(detail.summary)
     setTimeline(detail.timeline ?? [])
+    setPairs(detail.pairs ?? [])
   }, [supabase])
 
   const refreshOrders = useCallback(async () => {
@@ -169,6 +171,7 @@ export function OrderPaymentsWorkspace({ initialOrders, initialCustomerFilter = 
                 order={selectedOrder}
                 summary={summary}
                 timeline={timeline}
+                pairs={pairs}
                 pending={pending}
                 error={error}
                 onBack={() => { setSummary(null); setTimeline([]); setSelectedId(0); setError('') }}
