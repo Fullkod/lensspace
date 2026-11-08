@@ -302,6 +302,11 @@ advance (QA-52), messages to patients, refunds/cancellation of one pair, droppin
 - **Done in phase 4**: pairCount/patientNames in the inbox (search by patient), collapsible pairs in the order detail, `{{pairs_summary}}` ("Pares: *N*" only with 2+ pairs, single-pair messages unchanged, verified on JAV-2026-000013/14), «¿Avisar igual?» while production is unfinished. Also fixed: `{{balance}}` tells the balance in USD for USD-only sales (`20261108030000`).
 - **Phase 5 adds**: per-pair readiness count in the Avisar/Entregar dialogs and pair labels on production timeline events.
 
+### 2026-11-08: Phase 5 shipped with phases 3–4
+- **Done**: unique current job per (order_line_id, job_type); `private.assign_production_job(…, target_order_line_id)` (3-arg version = line 1, refuses multi-pair); `public.assign_production_jobs(order, type, provider, line_ids[])` atomic; snapshot carries lineNumber/lineCount and the pair's items/prescription, no patient; panel groups by pair with "Todos los pares" / "Solo par N"; `/production` dialog lists one entry per pair; cards show "Par N de M"; timeline details "Par N · …" only with 2+ pairs; Avisar warns "Faltan X de N pares". `supabase/tests/production_per_pair.sql` passed before and after the push; e2e on JAV-2026-000014 ended with "Tu pedido está listo · Pares: 2" `sent`. Pushed `f2f0c86`, Vercel deploy success.
+- **Error**: in a test, calling a mutating RPC inside a `WHERE id = f()` ran it once per scanned row (second call hit the unique index).
+- **Fix**: assign the RPC result to a variable first. **Aplicar en**: every SQL test calling volatile functions.
+
 ---
 
 ## Gotchas
