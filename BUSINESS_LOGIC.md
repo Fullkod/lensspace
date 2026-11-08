@@ -52,6 +52,27 @@ realmente el cambio.
 14. El vendedor decide cuándo notificar al cliente por WhatsApp.
 15. Al recogerlos, se cobra cualquier saldo y se cierra el pedido.
 
+### Pedido familiar: varios pares, un solo pago (LEN0006, 2026-11-08)
+
+- Un pedido puede tener de 1 a 10 **pares**. Quien encarga y paga es el **titular**
+  (el cliente del pedido); cada par tiene su **paciente**, su receta, sus conceptos y
+  su subtotal. Cada paciente es un cliente de la sucursal; «Nuevo familiar» solo pide
+  el nombre y copia el teléfono del titular con WhatsApp desactivado.
+- Un solo número de pedido, una sola tasa, un solo saldo y un solo registro de pagos:
+  el anticipo (por ejemplo, la mitad) es un pago normal sobre todo el pedido.
+- Precio por par: recargos por graduación según la receta de ese par; el mismo
+  concepto puede repetirse en pares distintos. El total es la suma de los pares.
+- Producción por par: cada par tiene a lo sumo un trabajo vigente de cristales y uno
+  de montaje, con proveedores que pueden ser distintos por par («Todos los pares» o
+  «Solo par N»). El taller ve «Par 2 de 3», la receta y los conceptos del par, nunca
+  quién lo usa, precios ni pagos.
+- «Avisar: listo para recoger» sigue siendo manual y avisa (sin bloquear) mientras
+  falte algún par por recibir y revisar. La entrega es de todo el pedido junto.
+- WhatsApp: un solo mensaje por evento, al titular, con «Pares: N» y sin nombres de
+  pacientes. Los pedidos de un par se ven y notifican igual que antes.
+- La ficha de un familiar muestra los pedidos donde lleva un par. El resumen por
+  optometrista cuenta los pedidos a través de la receta de cada par.
+
 ## Receta
 
 Debe admitir esfera, cilindro y eje por ojo; adición; distancia pupilar conjunta o
@@ -146,9 +167,9 @@ identifica al usuario que ejecutó la acción, incluso si actualizó en nombre d
 
 ## Asignación de proveedores
 
-En el MVP cada pedido tendrá como máximo un cristalero y un montador activos. La
-óptica puede usar proveedores diferentes entre pedidos, pero un mismo pedido no se
-divide entre varios proveedores. Las repeticiones por incidencia permanecen
+Cada **par** del pedido tiene como máximo un cristalero y un montador activos. En un
+pedido de un par esto equivale a la regla original; en un pedido familiar cada par
+puede ir a un proveedor distinto (decisión del 2026-11-08). Las repeticiones por incidencia permanecen
 vinculadas al trabajo original y pueden reasignarse.
 
 ## Numeración de pedidos
@@ -336,6 +357,9 @@ desactiva con pedidos sin entregar, cobros sin cerrar en caja o vendedores asign
 - La integración futura usará el servicio OpenWA del propietario en una VPS.
 - La mensajería se aislará detrás de una interfaz para no acoplar los pedidos a OpenWA.
 - Credenciales y detalles privados nunca se guardarán en la documentación.
+- El saldo pendiente de los mensajes («Pago recibido», «Tu pedido está listo») se
+  dice siempre en USD, a la tasa congelada de la venta y redondeado al centavo hacia
+  arriba (decisión del 2026-11-08). En la app el saldo se muestra en la moneda de la venta.
 
 ## Armaduras e inventario
 
