@@ -15,6 +15,7 @@ type QuoteSummaryProps = {
   pairEstimates: Record<string, number>[]
   estimate: Record<string, number>
   estimateCup: number
+  rate: number
   selectedCount: number
   quotationId: number | null
   pending: boolean
@@ -43,7 +44,7 @@ function PricedLines({ pricing }: { pricing: PriceResult }) {
 // Lives inside the sale <form>: "Guardar cotización" submits it, while "Cliente acepta"
 // saves (when needed) and creates the order in one tap. With several pairs each one is
 // listed with its subtotal; the order total is their sum.
-export function QuoteSummary({ preview, pairLabels, pairEstimates, estimate, estimateCup, selectedCount, quotationId, pending, canOperate, canAccept, message, onAccept }: QuoteSummaryProps) {
+export function QuoteSummary({ preview, pairLabels, pairEstimates, estimate, estimateCup, rate, selectedCount, quotationId, pending, canOperate, canAccept, message, onAccept }: QuoteSummaryProps) {
   const multi = pairLabels.length > 1
   const estimateTotals = Object.entries(estimate)
   return (
@@ -71,7 +72,7 @@ export function QuoteSummary({ preview, pairLabels, pairEstimates, estimate, est
                   <span>{amount(total)} <span className="text-sm font-medium text-text-muted">{currency}</span></span>
                 </p>
               ))}
-              {preview.cupEquivalent !== null ? <p className="mt-1.5 text-right text-[13px] text-text-muted">Equivalente: {amount(preview.cupEquivalent)} CUP</p> : null}
+              {preview.cupEquivalent !== null && preview.totals.CUP && rate > 0 ? <p className="mt-1.5 text-right text-[13px] text-text-muted">Equivalente: {amount(Math.round((preview.cupEquivalent / rate) * 100) / 100)} USD</p> : null}
             </div>
             {/* Catalog advisories inform; they never block the sale. */}
             {preview.warnings.map((warning, index) => (
@@ -89,7 +90,7 @@ export function QuoteSummary({ preview, pairLabels, pairEstimates, estimate, est
                 <span>{amount(total)} <span className="text-sm font-medium text-text-muted">{currency}</span></span>
               </p>
             ))}
-            {estimate.USD ? <p className="text-right text-[13px] text-text-muted">Equivalente: {amount(estimateCup)} CUP</p> : null}
+            {estimate.CUP && rate > 0 ? <p className="text-right text-[13px] text-text-muted">Equivalente: {amount(Math.round((estimateCup / rate) * 100) / 100)} USD</p> : null}
             <p className="text-[13px] text-text-muted">Se confirma al crear el pedido; puede incluir recargos por graduación.</p>
           </div>
         ) : (

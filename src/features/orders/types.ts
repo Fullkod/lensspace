@@ -14,6 +14,8 @@ export type Order = {
   commercialStatus: string
   paymentStatus: string
   totalCup: number
+  // Frozen USD -> CUP rate of the sale, to show amounts in USD.
+  saleRate: number | null
   createdAt: string
   paidCup: number
   balanceCup: number

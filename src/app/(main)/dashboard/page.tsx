@@ -86,9 +86,9 @@ export default async function DashboardPage() {
         </>}
         stats={kpis ? <>
           <StatCard surface="ink" label="Pedidos activos" value={kpis.activeCount} />
-          <StatCard surface="ink" label="Cobrado hoy" value={formatAmount(kpis.collectedToday)} unit="CUP" />
+          <StatCard surface="ink" label="Cobrado hoy" value={formatAmount(kpis.collectedTodayUsd)} unit="USD" />
           <StatCard surface="ink" tone="positive" label="Listos para entregar" value={kpis.readyToDeliver} />
-          <StatCard surface="ink" tone="attention" label="Saldo por cobrar" value={formatAmount(kpis.balanceDue)} unit="CUP" />
+          <StatCard surface="ink" tone="attention" label="Saldo por cobrar" value={formatAmount(kpis.balanceDueUsd)} unit="USD" />
         </> : undefined}
       />
       <PendingInvitations invitations={invitations} />
@@ -141,7 +141,7 @@ function todayLabel() {
 
 const plural = (count: number, singular: string, many: string) => `${count} ${count === 1 ? singular : many}`
 
-type OrderKpis = { activeCount: number; balanceDue: number; readyToDeliver: number; withBalance: number; collectedToday: number }
+type OrderKpis = { activeCount: number; balanceDue: number; readyToDeliver: number; withBalance: number; collectedToday: number; balanceDueUsd: number; collectedTodayUsd: number }
 
 async function loadMemberAccess(supabase: SupabaseServerClient) {
   const user = await getCurrentUser()

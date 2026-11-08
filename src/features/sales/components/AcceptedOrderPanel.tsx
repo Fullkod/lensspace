@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, useTransition } from 'react'
 import { PaymentForm, type PaymentInput } from '@/features/orders/components/PaymentForm'
 import { formatAmount } from '@/features/orders/format'
 import { friendlyPaymentError, isNetworkError } from '@/features/orders/payment-errors'
-import { cupToUsd, formatInCurrency, saleCurrency } from '@/features/orders/sale-currency'
+import { cupToUsd, formatInCurrency, isUsdOnly, saleCurrency, toUsd } from '@/features/orders/sale-currency'
 import type { PaymentSummary } from '@/features/orders/types'
 import { OrderProductionPanel } from '@/features/production/components'
 import { createClient } from '@/lib/supabase/client'
@@ -58,7 +58,7 @@ export function AcceptedOrderPanel({ order, customerName, preview, pairLabels, o
   }
 
   const owes = Boolean(summary && summary.balanceCup > 0)
-  const currency = saleCurrency(summary?.totals)
+  const currency = saleCurrency()
   const rate = summary?.saleRate ?? 420
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
@@ -107,7 +107,7 @@ export function AcceptedOrderPanel({ order, customerName, preview, pairLabels, o
           {summary ? (
             <div className="mt-3">
               <ProgressBar value={summary.totalCup ? (summary.paidCup / summary.totalCup) * 100 : 100} tone={owes ? 'attention' : 'success'} label="Porcentaje cobrado" />
-              <p className="mt-2 text-[13px] text-text-muted">Cobrado: {currency === 'USD' ? `${formatAmount(Math.max(summary.totals.USD - cupToUsd(summary.balanceCup, rate), 0))} USD` : `${formatAmount(summary.paidCup)} CUP equivalentes`}</p>
+              <p className="mt-2 text-[13px] text-text-muted">Cobrado: {formatAmount(isUsdOnly(summary.totals) ? Math.max(summary.totals.USD - cupToUsd(summary.balanceCup, rate), 0) : toUsd(summary.paidCup, rate))} USD</p>
             </div>
           ) : null}
         </div>

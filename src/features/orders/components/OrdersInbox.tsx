@@ -7,6 +7,7 @@ import { Badge, Button, Card, CardHeader, Dialog, EmptyState, Field, FilterChips
 
 import { FINISHED_ORDERS_DAYS, formatAmount, formatShortDate, shortOrderNumber } from '../format'
 import { isFinished, orderStatus } from '../order-status'
+import { cupToUsd, toUsd } from '../sale-currency'
 import type { Order } from '../types'
 
 type Chip = 'all' | 'balance' | 'deliver' | 'done'
@@ -79,7 +80,7 @@ export function OrdersInbox({ orders, selectedId, onSelect, initialQuery, initia
               avatarName={order.customerName}
               title={order.customerName}
               meta={`${shortOrderNumber(order.orderNumber)} · ${formatShortDate(order.createdAt)}${order.pairCount > 1 ? ` · ${order.pairCount} pares` : ''}${order.customerPhone ? ` · ${order.customerPhone}` : ''}`}
-              trailing={<span className={cx('whitespace-nowrap font-display text-[15.5px] font-bold tabular-nums', owes ? 'text-coral-ink' : 'text-ink')}>{formatAmount(owes ? order.balanceCup : order.totalCup)}</span>}
+              trailing={<span className={cx('whitespace-nowrap font-display text-[15.5px] font-bold tabular-nums', owes ? 'text-coral-ink' : 'text-ink')}>{formatAmount(owes ? cupToUsd(order.balanceCup, Number(order.saleRate)) : toUsd(order.totalCup, Number(order.saleRate)))} <span className="text-[12px] font-semibold">USD</span></span>}
               badge={<Badge tone={status.tone}>{status.label}</Badge>}
               selected={order.id === selectedId}
               onSelect={() => onSelect(order.id)}

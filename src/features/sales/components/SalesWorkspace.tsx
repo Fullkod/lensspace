@@ -334,7 +334,7 @@ export function SalesWorkspace({ organizations, userId, lastRates, businessRates
           </Card>
         </div>
 
-        <QuoteSummary preview={preview} pairLabels={pairLabels} pairEstimates={pairEstimates} estimate={estimate} estimateCup={estimateCup} selectedCount={selectedCount}
+        <QuoteSummary preview={preview} pairLabels={pairLabels} pairEstimates={pairEstimates} estimate={estimate} estimateCup={estimateCup} rate={rateValue} selectedCount={selectedCount}
           quotationId={quotationId} pending={pending} canOperate={Boolean(organization?.canOperate)} canAccept={ready} message={message} onAccept={accept} />
       </form>
 

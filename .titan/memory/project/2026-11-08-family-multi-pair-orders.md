@@ -21,6 +21,9 @@ Plan and learnings: `.titan/plans/prp-family-multi-pair-orders.md`.
 - WhatsApp: one message per event to the holder; `{{pairs_summary}}` adds "Pares: N" only
   with 2+ pairs; never patient names.
 - `{{balance}}` in messages is always in USD at the sale's frozen rate, rounded up to the
-  cent (owner decision 2026-11-08). The app keeps showing the balance in the sale currency.
+  cent (owner decision 2026-11-08). The app shows every order amount in USD too
+  (`saleCurrency()` always 'USD', `toUsd`/`cupToUsd` per order rate, `get_order_kpis`
+  *Usd keys, owner dashboard salesUsd/collectionsUsd/outstandingUsd). Base unchanged:
+  catalog prices, payments and cashboxes keep their currency; balances stay CUP equivalents.
 - Tests: `supabase/tests/multi_pair_orders.sql`, `supabase/tests/production_per_pair.sql`
   (run inside a transaction on production via the Management API, ending in rollback).

@@ -9,7 +9,7 @@ import { Alert, Avatar, Badge, Button, Card, Dialog, ProgressBar, Tabs, Timeline
 
 import { formatAmount, formatDateTime, formatLongDate } from '../format'
 import { isFinished, orderStatus, paymentStatusLabels, timelineKind } from '../order-status'
-import { cupToUsd, formatTotals, saleCurrency } from '../sale-currency'
+import { cupToUsd, formatTotals, isUsdOnly, saleCurrency, toUsd } from '../sale-currency'
 import type { Order, OrderPair, PaymentSummary, TimelineEvent } from '../types'
 import { OrderPairs } from './OrderPairs'
 import { PaymentForm, type PaymentInput } from './PaymentForm'
@@ -46,12 +46,12 @@ export function OrderDetail({ order, summary, timeline, pairs, pending, error, o
   const owes = summary.balanceCup > 0 && !finished
   const percent = summary.totalCup ? (summary.paidCup / summary.totalCup) * 100 : 100
   const paymentCount = summary.payments.length
-  const currency = saleCurrency(summary.totals)
+  const currency = saleCurrency()
   const rate = summary.saleRate ?? 420
   const balance = currency === 'USD' ? cupToUsd(summary.balanceCup, rate) : summary.balanceCup
-  const total = currency === 'USD' ? summary.totals.USD : summary.totalCup
+  // A USD-only sale has an exact USD total; CUP and mixed sales convert at the sale rate.
+  const total = isUsdOnly(summary.totals) ? summary.totals.USD : toUsd(summary.totalCup, rate)
   const paid = currency === 'USD' ? Math.max(total - balance, 0) : summary.paidCup
-  const mixed = Object.keys(summary.totals ?? {}).length > 1
   const paidMessage = summary.commercialStatus === 'delivered' ? 'Pedido entregado y pagado completamente.' : summary.commercialStatus === 'closed' ? 'Pedido cerrado y pagado.' : 'Pago completado. El pedido está listo para entregar.'
   const history = [...timeline].reverse().map((event) => ({ id: event.id, ...timelineKind(event.kind), when: formatDateTime(event.occurredAt), title: event.title, detail: event.detail, actor: event.actorName }))
 
@@ -89,7 +89,7 @@ export function OrderDetail({ order, summary, timeline, pairs, pending, error, o
             <div className="rounded-card border border-line-card px-4 py-3.5">
               <p className="text-[13px] text-text-muted">Total</p>
               <p className="mt-1 font-display text-xl font-bold tabular-nums text-ink">{formatAmount(total)}</p>
-              <p className="text-xs text-text-muted">{currency === 'USD' ? 'USD' : mixed ? `CUP equiv. · ${formatTotals(summary.totals)}` : 'CUP'}</p>
+              <p className="text-xs text-text-muted">{isUsdOnly(summary.totals) ? 'USD' : `USD · precio ${formatTotals(summary.totals)}`}</p>
             </div>
             <div className="rounded-card border border-line-card px-4 py-3.5">
               <p className="text-[13px] text-text-muted">Cobrado</p>
@@ -124,7 +124,7 @@ export function OrderDetail({ order, summary, timeline, pairs, pending, error, o
                     </div>
                     <p className="text-[13px] text-text-muted">{formatDateTime(payment.receivedAt)}{payment.notes ? ` · ${payment.notes}` : ''}</p>
                   </div>
-                  <p className="whitespace-nowrap font-display text-base font-bold tabular-nums text-ink">{formatAmount(payment.equivalentCup)} CUP</p>
+                  <p className="whitespace-nowrap font-display text-base font-bold tabular-nums text-ink">{formatAmount(payment.currency === 'USD' ? payment.amount : toUsd(payment.equivalentCup, rate))} USD</p>
                 </div>
               ))}
               {!paymentCount ? <p className="px-1 py-[22px] text-[14.5px] text-text-muted">Aún no hay pagos registrados para este pedido.</p> : null}

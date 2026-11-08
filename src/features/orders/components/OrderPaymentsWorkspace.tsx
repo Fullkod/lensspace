@@ -141,9 +141,9 @@ export function OrderPaymentsWorkspace({ initialOrders, initialCustomerFilter = 
         description="Registra efectivo, controla el saldo y entrega solo cuando el pedido esté pagado."
         stats={<>
           <StatCard surface="ink" label="Pedidos activos" value={kpis.activeCount} />
-          <StatCard surface="ink" tone="attention" label="Saldo por cobrar" value={formatAmount(kpis.balanceDue)} unit="CUP" />
+          <StatCard surface="ink" tone="attention" label="Saldo por cobrar" value={formatAmount(kpis.balanceDue)} unit="USD" />
           <StatCard surface="ink" tone="positive" label="Pagados, por entregar" value={kpis.readyToDeliver} />
-          <StatCard surface="ink" label="Cobrado hoy" value={formatAmount(kpis.collectedToday)} unit="CUP" />
+          <StatCard surface="ink" label="Cobrado hoy" value={formatAmount(kpis.collectedToday)} unit="USD" />
         </>}
       />
 

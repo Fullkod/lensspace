@@ -359,7 +359,12 @@ desactiva con pedidos sin entregar, cobros sin cerrar en caja o vendedores asign
 - Credenciales y detalles privados nunca se guardarán en la documentación.
 - El saldo pendiente de los mensajes («Pago recibido», «Tu pedido está listo») se
   dice siempre en USD, a la tasa congelada de la venta y redondeado al centavo hacia
-  arriba (decisión del 2026-11-08). En la app el saldo se muestra en la moneda de la venta.
+  arriba (decisión del 2026-11-08).
+- En la app todo importe de pedido (saldo, total, cobrado, KPIs y analítica del dueño)
+  se muestra en USD, convirtiendo cada pedido a su propia tasa, y el formulario de
+  pago propone USD. La base no cambia: precios de catálogo, cada pago y la caja
+  conservan su moneda, y el saldo se sigue llevando en CUP equivalentes a la tasa
+  congelada de la venta (decisión del 2026-11-08).
 
 ## Armaduras e inventario
 

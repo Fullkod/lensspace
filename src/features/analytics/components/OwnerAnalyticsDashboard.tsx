@@ -12,8 +12,9 @@ type Seller = { id: string; name: string; branchId: number | null }
 type Metrics = {
   orders: { total: number; accepted: number; delivered: number; withIncidents: number }
   salesCup: number; collectionsCup: number; outstandingCup: number
+  salesUsd: number; collectionsUsd: number; outstandingUsd: number
   averageDeliveryHours: number | null; cashDifferenceCup: number
-  bySeller: { seller_name: string; order_count: number; sales_cup: number }[]
+  bySeller: { seller_name: string; order_count: number; sales_cup: number; sales_usd: number }[]
   providerLoads: { provider_name: string; job_type: string; active_jobs: number }[]
   topItems: { name: string; category: string; quantity: number }[]
 }
@@ -73,13 +74,13 @@ export function OwnerAnalyticsDashboard({ organizationId, branches, sellers, def
     </form>
     {metrics ? <>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Ventas" value={money(metrics.salesCup)} unit="CUP" />
-        <StatCard label="Cobros" value={money(metrics.collectionsCup)} unit="CUP" tone="positive" />
-        <StatCard label="Saldo pendiente" value={money(metrics.outstandingCup)} unit="CUP" tone={metrics.outstandingCup > 0 ? 'attention' : 'default'} />
+        <StatCard label="Ventas" value={money(metrics.salesUsd)} unit="USD" />
+        <StatCard label="Cobros" value={money(metrics.collectionsUsd)} unit="USD" tone="positive" />
+        <StatCard label="Saldo pendiente" value={money(metrics.outstandingUsd)} unit="USD" tone={metrics.outstandingUsd > 0 ? 'attention' : 'default'} />
         <StatCard label="Pedidos" value={metrics.orders.total} hint={`${metrics.orders.withIncidents} con incidencia`} tone={metrics.orders.withIncidents ? 'danger' : 'default'} />
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
-        <MetricList title="Por vendedor" rows={metrics.bySeller.map(x => [x.seller_name, `${money(x.sales_cup)} CUP · ${x.order_count}`])} />
+        <MetricList title="Por vendedor" rows={metrics.bySeller.map(x => [x.seller_name, `${money(x.sales_usd)} USD · ${x.order_count}`])} />
         <MetricList title="Carga de proveedores" rows={metrics.providerLoads.map(x => [x.provider_name, `${x.active_jobs} · ${jobTypeLabels[x.job_type] ?? x.job_type}`])} />
         <MetricList title="Productos destacados" rows={metrics.topItems.map(x => [x.name, String(x.quantity)])} />
       </div>

@@ -2,13 +2,21 @@ import { formatAmount } from './format'
 
 export type Currency = 'CUP' | 'USD'
 
-// Balances are stored as CUP equivalents at the sale's frozen rate. A sale priced
-// only in USD is shown and charged in USD by default; CUP and mixed sales stay in CUP
-// (product decision 2026-11-06).
-export function saleCurrency(totals: Record<string, number> | null | undefined): Currency {
-  const currencies = Object.keys(totals ?? {})
-  return currencies.length === 1 && currencies[0] === 'USD' ? 'USD' : 'CUP'
+// Balances are stored as CUP equivalents at the sale's frozen rate. Every sale is shown
+// and charged in USD by default (owner decision 2026-11-08); CUP payments stay possible
+// and catalog prices, payments and cashboxes keep their own currency.
+export function saleCurrency(): Currency {
+  return 'USD'
 }
+
+// True when the sale was priced only in USD: its USD total is exact, not converted.
+export const isUsdOnly = (totals: Record<string, number> | null | undefined) => {
+  const currencies = Object.keys(totals ?? {})
+  return currencies.length === 1 && currencies[0] === 'USD'
+}
+
+// CUP -> USD for display (nearest cent), e.g. totals and paid amounts.
+export const toUsd = (cup: number, rate: number) => (rate ? Math.round((cup / rate) * 100) / 100 : 0)
 
 // CUP → USD at the sale rate, rounded up to the cent so paying it settles the
 // balance (the server tolerates that sub-cent overshoot, QA-18).
