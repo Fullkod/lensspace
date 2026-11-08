@@ -17,6 +17,7 @@ Read relevant entries only. Store decisions with dates and evidence.
 
 ## Project decisions
 
+- [2026-11-08 — Retail opticians: accounts, prices, accumulative commercial orders and collections (LEN0009 + LEN0010)](project/2026-11-08-retail-optician-commercial-orders.md)
 - [2026-11-07 — Optometrist catalog, management and summary (LEN0008)](project/2026-11-07-optometrist-catalog.md)
 - [2026-11-08 — Family orders: several pairs, one payment; WhatsApp balance always in USD (LEN0006)](project/2026-11-08-family-multi-pair-orders.md)
 - [2026-11-08 — Money shown in USD everywhere; catalog, payments and cashboxes keep their currency](project/2026-11-08-money-shown-in-usd.md)

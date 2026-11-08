@@ -1,6 +1,6 @@
 # PRP LEN0009 + LEN0010 — Retail opticians: accounts, prices and accumulative commercial orders
 
-> **Status**: APROBADO 2026-11-08 (Roberto, with adjustments A3/A4 below) — EN PROGRESO
+> **Status**: IMPLEMENTADO 2026-11-08 (local commits; DB migrations in production; web deploy pending push). Approved by Roberto with adjustments A3/A4.
 > **Date**: 2026-11-08
 > **Project**: LensSpace
 > **Tasknic**: LEN0009 (accounts and prices), LEN0010 (accumulative orders, delivery, debt). Builds on LEN0006.
@@ -33,17 +33,17 @@ production, providers and cashbox.
 ## What
 
 ### Success criteria
-- [ ] The owner registers a retail optician (name, contact, phone, address, payment terms, notes) **without creating a user**, then edits or archives it. *(LEN0009)*
-- [ ] The owner sets a general % discount and fixed prices per catalog item for that account. A line priced for account A gets A's prices; account B and retail sales are unaffected. *(LEN0009)*
-- [ ] A seller or the owner opens a commercial order for an account and adds prescription lines on different days. Each line records who added it and when, and its price is frozen at that moment. *(LEN0010)*
-- [ ] Only the owner closes the order (it then goes to production) and only the owner reopens it, with a reason. While closed, lines can't be added or removed. Every close, reopen and line removal leaves an audit trail. *(LEN0010)*
-- [ ] The order can be marked ready for pickup and then delivered whole or line by line (records who delivered each line), **with or without** a pending balance. *(LEN0010)*
-- [ ] The owner can grant a seller the exceptional permission to see every commercial order of the branch, change its status and record collections; without it a seller only sees their own. *(LEN0010)*
-- [ ] A collection from an account is recorded once, in the receiver's cashbox, and split across one or several of its orders (oldest first by default). Cashbox closures are unchanged. *(LEN0010)*
-- [ ] The owner sees the list of accounts with a pending balance, and per account the history of orders, deliveries and payments. *(LEN0009 + LEN0010)*
-- [ ] Retail sales, family orders, payments, production and every existing message behave exactly as today. Commercial orders send no WhatsApp in v1.
-- [ ] RLS: sellers only see their own commercial orders. Account prices and debts are owner-only. Providers see the job and the prescription, never the account, prices or payments. Rollback SQL tests cover pricing, lifecycle, multi-order payment and isolation.
-- [ ] Works at 390 px. `npm run lint`, `npm run typecheck`, `npm run build` and `supabase db lint` pass.
+- [x] The owner registers a retail optician (name, contact, phone, address, payment terms, notes) **without creating a user**, then edits or archives it. *(LEN0009)*
+- [x] The owner sets a general % discount and fixed prices per catalog item for that account. A line priced for account A gets A's prices; account B and retail sales are unaffected. *(LEN0009)*
+- [x] A seller or the owner opens a commercial order for an account and adds prescription lines on different days. Each line records who added it and when, and its price is frozen at that moment. *(LEN0010)*
+- [x] Only the owner closes the order (it then goes to production) and only the owner reopens it, with a reason. While closed, lines can't be added or removed. Every close, reopen and line removal leaves an audit trail. *(LEN0010)*
+- [x] The order can be marked ready for pickup and then delivered whole or line by line (records who delivered each line), **with or without** a pending balance. *(LEN0010)*
+- [x] The owner can grant a seller the exceptional permission to see every commercial order of the branch, change its status and record collections; without it a seller only sees their own. *(LEN0010)*
+- [x] A collection from an account is recorded once, in the receiver's cashbox, and split across one or several of its orders (oldest first by default). Cashbox closures are unchanged. *(LEN0010)*
+- [x] The owner sees the list of accounts with a pending balance, and per account the history of orders, deliveries and payments. *(LEN0009 + LEN0010)*
+- [x] Retail sales, family orders, payments, production and every existing message behave exactly as today. Commercial orders send no WhatsApp in v1.
+- [x] RLS: sellers only see their own commercial orders. Account prices and debts are owner-only. Providers see the job and the prescription, never the account, prices or payments. Rollback SQL tests cover pricing, lifecycle, multi-order payment and isolation.
+- [x] Works at 390 px. `npm run lint`, `npm run typecheck` and `supabase db lint` pass (only the unrelated `begin_platform_support_session` notice). `npm run build`: on Vercel after the push.
 
 ### Expected behaviour (happy path)
 
@@ -313,6 +313,12 @@ returns or credit notes, WhatsApp to the account, moving a line between orders.
 - **Error**: opening the dialog from `startOpen` in the initial state caused a hydration mismatch. **Fix**: open it after mount, once (ref), together with the deferred load.
 - **Tests**: `commercial_orders.sql` extended (split across two orders, sum mismatch, overpayment, retry, auto-close when paid, seller isolation) + `cashbox_closures`, `multi_pair_orders` passed before/after the push. Browser QA in `.titan/qa/2026-11-08-len0009/README.md`.
 
+### 2026-11-08: Phase 6 — readers, docs and final validation
+- **Done**: `20261108220000_commercial_orders_readers.sql` («Pedidos y cobros» counter retail only; owner dashboard live body + `wholesaleSalesUsd` / `wholesaleOutstandingUsd`, shown as hints on «Ventas» and «Saldo pendiente»). `20261108230000_assign_jobs_typed_array.sql` (db lint). Manual: «Venderle a otra óptica», «Darle precios especiales a una óptica» and a FAQ. Memory: `project/2026-11-08-retail-optician-commercial-orders.md`.
+- **Smoke on org 2**: wholesale sales 67,90 USD, outstanding 37,90 USD; retail counter unchanged (7).
+- **Error**: dumping a live function through a cp1252 console lost the accents. **Fix**: fetch definitions to a UTF-8 file (`qf.py` pattern: JSON decoded as UTF-8, written with `encoding='utf-8'`) before copying them into a migration. **Aplicar en**: every «copy the live body» migration.
+- **Not done (out of scope or follow-up)**: «Par N» wording for commercial jobs in production; `notify_order_ready` / `prepare_manual_notification` are not reachable for commercial orders from the UI but don't refuse them server-side; `supabase/tests/production_provider_workflows.sql` was already failing (pre-LEN0006).
+
 ---
 
 ## Gotchas
@@ -337,4 +343,4 @@ returns or credit notes, WhatsApp to the account, moving a line between orders.
 
 ---
 
-*Approved 2026-11-08. Implementation in progress.*
+*Implemented 2026-11-08.*

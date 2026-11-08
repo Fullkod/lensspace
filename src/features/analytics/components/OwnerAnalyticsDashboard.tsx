@@ -13,6 +13,7 @@ type Metrics = {
   orders: { total: number; accepted: number; delivered: number; withIncidents: number }
   salesCup: number; collectionsCup: number; outstandingCup: number
   salesUsd: number; collectionsUsd: number; outstandingUsd: number
+  wholesaleSalesUsd?: number; wholesaleOutstandingUsd?: number
   averageDeliveryHours: number | null; cashDifferenceCup: number
   bySeller: { seller_name: string; order_count: number; sales_cup: number; sales_usd: number }[]
   providerLoads: { provider_name: string; job_type: string; active_jobs: number }[]
@@ -74,9 +75,9 @@ export function OwnerAnalyticsDashboard({ organizationId, branches, sellers, def
     </form>
     {metrics ? <>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Ventas" value={money(metrics.salesUsd)} unit="USD" />
+        <StatCard label="Ventas" value={money(metrics.salesUsd)} unit="USD" hint={metrics.wholesaleSalesUsd ? `${money(metrics.wholesaleSalesUsd)} USD a ópticas` : undefined} />
         <StatCard label="Cobros" value={money(metrics.collectionsUsd)} unit="USD" tone="positive" />
-        <StatCard label="Saldo pendiente" value={money(metrics.outstandingUsd)} unit="USD" tone={metrics.outstandingUsd > 0 ? 'attention' : 'default'} />
+        <StatCard label="Saldo pendiente" value={money(metrics.outstandingUsd)} unit="USD" tone={metrics.outstandingUsd > 0 ? 'attention' : 'default'} hint={metrics.wholesaleOutstandingUsd ? `${money(metrics.wholesaleOutstandingUsd)} USD de ópticas` : undefined} />
         <StatCard label="Pedidos" value={metrics.orders.total} hint={`${metrics.orders.withIncidents} con incidencia`} tone={metrics.orders.withIncidents ? 'danger' : 'default'} />
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
