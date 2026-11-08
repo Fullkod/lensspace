@@ -1059,6 +1059,7 @@ export type Database = {
           line_kind: string
           name: string
           order_id: number
+          order_line_id: number
           organization_id: number
           position: number
           price_adjusted_by: string | null
@@ -1078,6 +1079,7 @@ export type Database = {
           line_kind: string
           name: string
           order_id: number
+          order_line_id: number
           organization_id: number
           position: number
           price_adjusted_by?: string | null
@@ -1097,6 +1099,7 @@ export type Database = {
           line_kind?: string
           name?: string
           order_id?: number
+          order_line_id?: number
           organization_id?: number
           position?: number
           price_adjusted_by?: string | null
@@ -1112,11 +1115,79 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "order_items_line_fkey"
+            columns: ["order_line_id", "organization_id", "branch_id"]
+            isOneToOne: false
+            referencedRelation: "order_lines"
+            referencedColumns: ["id", "organization_id", "branch_id"]
+          },
+          {
             foreignKeyName: "order_items_order_id_organization_id_branch_id_fkey"
             columns: ["order_id", "organization_id", "branch_id"]
             isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id", "organization_id", "branch_id"]
+          },
+        ]
+      }
+      order_lines: {
+        Row: {
+          branch_id: number
+          created_at: string
+          cup_equivalent: number
+          id: number
+          line_number: number
+          order_id: number
+          organization_id: number
+          patient_customer_id: number
+          prescription_revision_id: number | null
+          totals: Json
+        }
+        Insert: {
+          branch_id: number
+          created_at?: string
+          cup_equivalent: number
+          id?: never
+          line_number: number
+          order_id: number
+          organization_id: number
+          patient_customer_id: number
+          prescription_revision_id?: number | null
+          totals: Json
+        }
+        Update: {
+          branch_id?: number
+          created_at?: string
+          cup_equivalent?: number
+          id?: never
+          line_number?: number
+          order_id?: number
+          organization_id?: number
+          patient_customer_id?: number
+          prescription_revision_id?: number | null
+          totals?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_lines_order_fkey"
+            columns: ["order_id", "organization_id", "branch_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id", "organization_id", "branch_id"]
+          },
+          {
+            foreignKeyName: "order_lines_patient_fkey"
+            columns: ["patient_customer_id", "organization_id", "branch_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "organization_id", "branch_id"]
+          },
+          {
+            foreignKeyName: "order_lines_prescription_revision_id_fkey"
+            columns: ["prescription_revision_id"]
+            isOneToOne: false
+            referencedRelation: "prescription_revisions"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1874,6 +1945,7 @@ export type Database = {
           is_current: boolean
           job_type: string
           order_id: number
+          order_line_id: number
           organization_id: number
           original_job_id: number | null
           provider_id: string
@@ -1892,6 +1964,7 @@ export type Database = {
           is_current?: boolean
           job_type: string
           order_id: number
+          order_line_id: number
           organization_id: number
           original_job_id?: number | null
           provider_id: string
@@ -1910,6 +1983,7 @@ export type Database = {
           is_current?: boolean
           job_type?: string
           order_id?: number
+          order_line_id?: number
           organization_id?: number
           original_job_id?: number | null
           provider_id?: string
@@ -1919,6 +1993,13 @@ export type Database = {
           work_snapshot?: Json
         }
         Relationships: [
+          {
+            foreignKeyName: "production_jobs_line_fkey"
+            columns: ["order_line_id", "organization_id", "branch_id"]
+            isOneToOne: false
+            referencedRelation: "order_lines"
+            referencedColumns: ["id", "organization_id", "branch_id"]
+          },
           {
             foreignKeyName: "production_jobs_order_id_organization_id_branch_id_fkey"
             columns: ["order_id", "organization_id", "branch_id"]
@@ -1987,6 +2068,7 @@ export type Database = {
           price_adjusted_by: string | null
           price_adjustment_reason: string | null
           quotation_id: number
+          quotation_line_id: number
           source_code: string | null
         }
         Insert: {
@@ -2006,6 +2088,7 @@ export type Database = {
           price_adjusted_by?: string | null
           price_adjustment_reason?: string | null
           quotation_id: number
+          quotation_line_id: number
           source_code?: string | null
         }
         Update: {
@@ -2025,6 +2108,7 @@ export type Database = {
           price_adjusted_by?: string | null
           price_adjustment_reason?: string | null
           quotation_id?: number
+          quotation_line_id?: number
           source_code?: string | null
         }
         Relationships: [
@@ -2036,7 +2120,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "quotation_items_line_fkey"
+            columns: ["quotation_line_id", "organization_id", "branch_id"]
+            isOneToOne: false
+            referencedRelation: "quotation_lines"
+            referencedColumns: ["id", "organization_id", "branch_id"]
+          },
+          {
             foreignKeyName: "quotation_items_quotation_id_organization_id_branch_id_fkey"
+            columns: ["quotation_id", "organization_id", "branch_id"]
+            isOneToOne: false
+            referencedRelation: "quotations"
+            referencedColumns: ["id", "organization_id", "branch_id"]
+          },
+        ]
+      }
+      quotation_lines: {
+        Row: {
+          branch_id: number
+          created_at: string
+          cup_equivalent: number
+          id: number
+          line_number: number
+          organization_id: number
+          patient_customer_id: number
+          prescription_revision_id: number | null
+          quotation_id: number
+          totals: Json
+          warnings: Json
+        }
+        Insert: {
+          branch_id: number
+          created_at?: string
+          cup_equivalent?: number
+          id?: never
+          line_number: number
+          organization_id: number
+          patient_customer_id: number
+          prescription_revision_id?: number | null
+          quotation_id: number
+          totals?: Json
+          warnings?: Json
+        }
+        Update: {
+          branch_id?: number
+          created_at?: string
+          cup_equivalent?: number
+          id?: never
+          line_number?: number
+          organization_id?: number
+          patient_customer_id?: number
+          prescription_revision_id?: number | null
+          quotation_id?: number
+          totals?: Json
+          warnings?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_lines_patient_fkey"
+            columns: ["patient_customer_id", "organization_id", "branch_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "organization_id", "branch_id"]
+          },
+          {
+            foreignKeyName: "quotation_lines_prescription_revision_id_fkey"
+            columns: ["prescription_revision_id"]
+            isOneToOne: false
+            referencedRelation: "prescription_revisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotation_lines_quotation_fkey"
             columns: ["quotation_id", "organization_id", "branch_id"]
             isOneToOne: false
             referencedRelation: "quotations"
