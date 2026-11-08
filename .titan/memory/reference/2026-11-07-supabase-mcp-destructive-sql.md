@@ -16,3 +16,9 @@ History drift fixed the same day: `repair_catalog_utf8_text` was `20260913224717
 locally and `20260913224749` remotely (same SQL); the local file was renamed so
 `db push` only sees new migrations. When applying through the MCP, save the local
 file with the version the MCP assigned (`list_migrations`).
+
+Rollback dry runs of SQL with `DELETE` (migration + `supabase/tests/*.sql` in one
+transaction ending in `raise exception`) go through the Management API instead of the
+MCP: `POST https://api.supabase.com/v1/projects/<ref>/database/query` with
+`SUPABASE_ACCESS_TOKEN` from `.env.local` (never print it). Check afterwards that the
+fixture rows and new functions do not exist (rolled back). Added 2026-11-08 (LEN0006).

@@ -287,6 +287,11 @@ advance (QA-52), messages to patients, refunds/cancellation of one pair, droppin
 - **Fix**: write the file in `supabase/migrations/`, `npx supabase db push --remote --dry-run`, then `--yes` (see `.titan/memory/reference/2026-11-07-supabase-mcp-destructive-sql.md`).
 - **Aplicar en**: every phase of this PRP.
 
+### 2026-11-08: Phase 2 validated against production without a disposable database
+- **Context**: no local Docker stack; `supabase/tests/multi_pair_orders.sql` was run twice on production inside one transaction ending in `raise exception` (before the push, together with the migration; after the push, alone), via the Management API. Acceptance inside the test only queues a pg_net request, discarded by the rollback.
+- **Result**: all checks passed both times; fixture org/users and the new functions were absent afterwards. End to end from the current UI: `JAV-2026-000013` (1 pair, totals equal) and its WhatsApp `sent`.
+- **Aplicar en**: phases 4–5 (payments, delivery and production tests follow the same pattern).
+
 ---
 
 ## Gotchas

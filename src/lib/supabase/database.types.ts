@@ -2749,6 +2749,19 @@ export type Database = {
         Args: { accept: boolean; target_membership_id: number }
         Returns: undefined
       }
+      save_multi_line_quotation: {
+        Args: {
+          quotation_request_id?: string
+          target_branch_id: number
+          target_customer_id: number
+          target_lines: Json
+          target_notes?: string
+          target_organization_id: number
+          target_quotation_id: number
+          target_usd_to_cup_rate: number
+        }
+        Returns: Json
+      }
       save_quotation: {
         Args: {
           selected_item_ids: number[]
