@@ -46,7 +46,8 @@ export function OrdersInbox({ orders, selectedId, onSelect, initialQuery, initia
       || order.customerName.toLocaleLowerCase('es').includes(term)
       || order.patientNames.toLocaleLowerCase('es').includes(term)
       || (digits.length >= 4 && order.customerPhoneDigits.includes(digits))
-    return (!customerId || order.customerId === customerId)
+    // A relative's card (?clienteId=…) also finds the family orders where they wear a pair.
+    return (!customerId || order.customerId === customerId || (order.patientCustomerIds ?? []).includes(customerId))
       && matchesTerm
       && (!dateFrom || day >= dateFrom)
       && (!dateTo || day <= dateTo)

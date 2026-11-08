@@ -10,6 +10,7 @@ export type Order = {
   // LEN0006: number of pairs (1 for a classic order) and the other patients' names, for search.
   pairCount: number
   patientNames: string
+  patientCustomerIds: number[]
   commercialStatus: string
   paymentStatus: string
   totalCup: number

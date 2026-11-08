@@ -2412,6 +2412,15 @@ export type Database = {
         Args: { job_type: string; provider_id: string; target_order_id: number }
         Returns: number
       }
+      assign_production_jobs: {
+        Args: {
+          job_type: string
+          provider_id: string
+          target_order_id: number
+          target_order_line_ids: number[]
+        }
+        Returns: number[]
+      }
       begin_platform_support_session: {
         Args: {
           duration_minutes?: number
