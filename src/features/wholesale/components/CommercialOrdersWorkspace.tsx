@@ -12,6 +12,7 @@ import { friendlyError } from '@/shared/lib/friendly-error'
 import { newRequestId } from '@/shared/utils/request-id'
 import { Alert, Badge, Button, Card, Dialog, EmptyState, Field, FilterChips, Input } from '@/shared/ui'
 
+import { AccountCollections } from './AccountCollections'
 import { balanceUsd, formatUsd, jobsLabel, paymentLabels, paymentTones, statusLabels, statusTones, totalUsd, type CommercialOrderSummary, type CommercialScope } from '../order-types'
 
 type Filter = 'active' | 'debt' | 'all'
@@ -21,11 +22,12 @@ const isActive = (order: CommercialOrderSummary) => order.status === 'open' || o
 
 // LEN0010: commercial orders to retail opticians. Sellers see their own; the owner and
 // sellers with the exceptional permission see every order of their branches.
-export function CommercialOrdersWorkspace({ orders, scopes, accounts, initialAccountId }: {
+export function CommercialOrdersWorkspace({ orders, scopes, accounts, initialAccountId, startCollect }: {
   orders: CommercialOrderSummary[]
   scopes: CommercialScope[]
   accounts: Record<number, AccountOption[]>
   initialAccountId: number | null
+  startCollect: boolean
 }) {
   const [filter, setFilter] = useState<Filter>('active')
   const [accountId, setAccountId] = useState(initialAccountId ? String(initialAccountId) : '')
@@ -77,6 +79,7 @@ export function CommercialOrdersWorkspace({ orders, scopes, accounts, initialAcc
           </Link>)}
         </div>}
     </Card>
+    {accountId && byAccount.length ? <AccountCollections key={accountId} accountId={Number(accountId)} accountName={byAccount[0].accountName} orders={byAccount} startOpen={startCollect} /> : null}
     {creating ? <NewCommercialOrderDialog scopes={scopes.filter((scope) => scope.canOperate)} accounts={accounts} initialAccountId={accountId} onClose={() => setCreating(false)} /> : null}
   </div>
 }

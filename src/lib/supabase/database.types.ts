@@ -1616,6 +1616,7 @@ export type Database = {
           business_date: string
           cashbox_id: number
           client_request_id: string | null
+          collection_id: string | null
           currency: string
           equivalent_cup: number | null
           id: number
@@ -1634,6 +1635,7 @@ export type Database = {
           business_date: string
           cashbox_id: number
           client_request_id?: string | null
+          collection_id?: string | null
           currency: string
           equivalent_cup?: number | null
           id?: never
@@ -1652,6 +1654,7 @@ export type Database = {
           business_date?: string
           cashbox_id?: number
           client_request_id?: string | null
+          collection_id?: string | null
           currency?: string
           equivalent_cup?: number | null
           id?: never
@@ -2879,6 +2882,10 @@ export type Database = {
         | { Args: never; Returns: Json }
         | { Args: { finished_since: string }; Returns: Json }
       list_accessible_production_jobs: { Args: never; Returns: Json }
+      list_account_collections: {
+        Args: { target_account_id: number }
+        Returns: Json
+      }
       list_commercial_accounts_for_orders: {
         Args: { target_organization_id: number }
         Returns: Json
@@ -2948,6 +2955,17 @@ export type Database = {
       }
       prepare_openwa_notification: {
         Args: { target_order_id: number; target_template_key: string }
+        Returns: Json
+      }
+      record_account_collection: {
+        Args: {
+          allocations: Json
+          collection_amount: number
+          collection_currency: string
+          collection_notes?: string
+          request_id?: string
+          target_account_id: number
+        }
         Returns: Json
       }
       record_server_error: {

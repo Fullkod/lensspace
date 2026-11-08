@@ -29,6 +29,7 @@ insert into public.subscriptions (organization_id, status, starts_on, expires_on
 insert into public.organization_modules (organization_id, module_key, changed_by) values
   (960000001, 'optical_sales', '96000000-0000-0000-0000-000000000001'),
   (960000001, 'production', '96000000-0000-0000-0000-000000000001'),
+  (960000001, 'cashbox', '96000000-0000-0000-0000-000000000001'),
   (960000002, 'optical_sales', '96000000-0000-0000-0000-000000000005');
 insert into public.catalog_items (id, organization_id, category, code, name, sale_price, currency, is_active) overriding system value values
   (960000001, 960000001, 'vision_type', 'co_single', 'Monofocal CO', 100, 'USD', true),
@@ -274,6 +275,66 @@ begin
   perform public.reopen_commercial_order((select id from co_ids where key = 'order'), 'Quiero cambiarlo');
   raise exception 'A delivered order cannot be reopened';
 exception when object_not_in_prerequisite_state then null;
+end;
+$$;
+
+-- Collections: seller A opens a second order and collects 100 USD split across both.
+select set_config('request.jwt.claim.sub', '96000000-0000-0000-0000-000000000002', true);
+do $$
+declare
+  first_order bigint := (select id from co_ids where key = 'order');
+  second_order bigint := (public.open_commercial_order(960000001, 960000001, 960000001, 400, null)->>'orderId')::bigint;
+  result jsonb;
+  again jsonb;
+begin
+  perform public.add_commercial_order_line(second_order, jsonb_build_object('patientCustomerId', (select id from co_ids where key = 'patient_two'), 'itemIds', jsonb_build_array(960000001)), null);
+  insert into co_ids values ('second', second_order);
+
+  begin
+    perform public.record_account_collection(960000001, 100, 'USD', jsonb_build_array(jsonb_build_object('orderId', first_order, 'amount', 50), jsonb_build_object('orderId', second_order, 'amount', 40)), null, null);
+    raise exception 'A split that does not add up must be refused';
+  exception when invalid_parameter_value then null;
+  end;
+  begin
+    perform public.record_account_collection(960000001, 200, 'USD', jsonb_build_array(jsonb_build_object('orderId', second_order, 'amount', 200)), null, null);
+    raise exception 'Overpaying an order must be refused';
+  exception when numeric_value_out_of_range then null;
+  end;
+
+  result := public.record_account_collection(960000001, 100, 'USD',
+    jsonb_build_array(jsonb_build_object('orderId', first_order, 'amount', 60), jsonb_build_object('orderId', second_order, 'amount', 40)),
+    'Pago del viernes', '96000000-0000-0000-0000-0000000000c1');
+  again := public.record_account_collection(960000001, 100, 'USD',
+    jsonb_build_array(jsonb_build_object('orderId', first_order, 'amount', 60), jsonb_build_object('orderId', second_order, 'amount', 40)),
+    'Pago del viernes', '96000000-0000-0000-0000-0000000000c1');
+  if not (again->>'duplicate')::boolean or (select count(*) from public.payments where collection_id = '96000000-0000-0000-0000-0000000000c1') <> 2
+    or (select count(distinct cashbox_id) from public.payments where collection_id = '96000000-0000-0000-0000-0000000000c1') <> 1 then
+    raise exception 'Collection must be one retry-safe split in one cashbox: %', result;
+  end if;
+  if (select payment_status from public.orders where id = first_order) <> 'partial'
+    or (select payment_status from public.orders where id = second_order) <> 'partial' then
+    raise exception 'Both orders must be partially paid';
+  end if;
+  if jsonb_array_length(public.list_account_collections(960000001)) <> 1 then
+    raise exception 'The collection must be listed once';
+  end if;
+
+  -- Paying the rest of the delivered order closes it: 74700 - 24000 = 50700 CUP = 126.75 USD.
+  perform public.record_account_collection(960000001, 126.75, 'USD', jsonb_build_array(jsonb_build_object('orderId', first_order, 'amount', 126.75)), null, null);
+  if (select commercial_status from public.orders where id = first_order) <> 'closed'
+    or (select payment_status from public.orders where id = first_order) <> 'paid' then
+    raise exception 'A delivered commercial order closes once paid';
+  end if;
+end;
+$$;
+
+-- Seller B cannot collect orders it cannot see.
+select set_config('request.jwt.claim.sub', '96000000-0000-0000-0000-000000000003', true);
+do $$
+begin
+  perform public.record_account_collection(960000001, 10, 'USD', jsonb_build_array(jsonb_build_object('orderId', (select id from co_ids where key = 'second'), 'amount', 10)), null, null);
+  raise exception 'Another seller must not collect';
+exception when no_data_found then null;
 end;
 $$;
 

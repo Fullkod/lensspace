@@ -13,7 +13,8 @@ export default async function WholesaleOrdersPage({ searchParams }: { searchPara
   const user = await getCurrentUser()
   if (!user) redirect('/login')
   await requireCommercialRole()
-  const requestedAccount = Number((await searchParams).optica) || null
+  const query = await searchParams
+  const requestedAccount = Number(query.optica) || null
 
   const scopes = await loadCommercialScopes(supabase, user.id)
   const organizationIds = [...new Set(scopes.map(({ organizationId }) => organizationId))]
@@ -25,6 +26,6 @@ export default async function WholesaleOrdersPage({ searchParams }: { searchPara
 
   return <PageContainer>
     <PageHeader eyebrow="Venta a ópticas" title="Pedidos a ópticas" description="Pedidos de ópticas minoristas que se van completando en varios días, se mandan a fabricar y se entregan con o sin pago." />
-    <CommercialOrdersWorkspace orders={(orderData ?? []) as unknown as CommercialOrderSummary[]} scopes={scopes} accounts={accounts} initialAccountId={requestedAccount} />
+    <CommercialOrdersWorkspace orders={(orderData ?? []) as unknown as CommercialOrderSummary[]} scopes={scopes} accounts={accounts} initialAccountId={requestedAccount} startCollect={query.cobrar === '1'} />
   </PageContainer>
 }

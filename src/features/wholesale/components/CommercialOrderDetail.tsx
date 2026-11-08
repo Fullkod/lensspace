@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, Lock, PackageCheck, Plus, RotateCcw, Truck } from 'lucide-react'
+import { ArrowLeft, Lock, PackageCheck, Plus, RotateCcw, Truck, Wallet } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, type FormEvent } from 'react'
@@ -10,7 +10,7 @@ import { OrderProductionPanel } from '@/features/production/components'
 import type { SaleItem, SaleScope } from '@/features/sales/components'
 import { createClient } from '@/lib/supabase/client'
 import { friendlyError } from '@/shared/lib/friendly-error'
-import { Alert, Badge, Button, Card, Dialog, Field, Input, Toast, cx } from '@/shared/ui'
+import { Alert, Badge, Button, ButtonLink, Card, Dialog, Field, Input, Toast, cx } from '@/shared/ui'
 
 import { balanceUsd, formatUsd, paidUsd, paymentLabels, paymentTones, statusLabels, statusTones, totalUsd, type CommercialLine, type CommercialOrder } from '../order-types'
 import { AddJobEditor } from './AddJobEditor'
@@ -98,6 +98,7 @@ export function CommercialOrderDetail({ order, items, scope, canApproveLargeDisc
         {order.status === 'open' && order.canManage ? <Button variant="secondary" icon={Lock} disabled={!active.length} onClick={() => open({ kind: 'close' })}>Cerrar y mandar a fabricar</Button> : null}
         {order.status === 'confirmed' ? <Button variant="secondary" icon={PackageCheck} onClick={() => void markReady()}>Marcar listo para recoger</Button> : null}
         {closedStage && pendingDelivery.length ? <Button icon={Truck} onClick={() => open({ kind: 'deliver' })}>Entregar</Button> : null}
+        {balance > 0 && active.length ? <ButtonLink variant="ghost" icon={Wallet} href={`/wholesale-orders?optica=${order.accountId}&cobrar=1`}>Cobrar</ButtonLink> : null}
         {closedStage && order.canManage && !active.some((line) => line.deliveredAt) ? <Button variant="ghost" icon={RotateCcw} onClick={() => open({ kind: 'reopen' })}>Reabrir</Button> : null}
       </div> : null}
       {order.status === 'open' && !order.canManage ? <p className="text-[13px] text-text-muted">Cuando el pedido esté completo, avisa al dueño para que lo cierre y lo mande a fabricar.</p> : null}

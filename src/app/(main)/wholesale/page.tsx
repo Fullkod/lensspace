@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { WholesaleWorkspace } from '@/features/wholesale/components'
+import { balanceUsd, type CommercialOrderSummary } from '@/features/wholesale/order-types'
 import type { AccountPrice, CatalogOption, CommercialAccount } from '@/features/wholesale/types'
 import type { Tables } from '@/lib/supabase/database.types'
 import { getCurrentUser } from '@/lib/supabase/current-user'
@@ -37,6 +38,9 @@ export default async function WholesalePage() {
     supabase.from('catalog_items').select('id, organization_id, category, name, sale_price, currency').eq('is_active', true).order('category').order('name'),
     supabase.from('catalog_item_overrides').select('organization_id, catalog_item_id, sale_price, currency, is_enabled').in('organization_id', organizationIds),
   ])
+  const { data: orderData } = await supabase.rpc('list_commercial_orders')
+  const debts: Record<number, number> = {}
+  for (const order of (orderData ?? []) as unknown as CommercialOrderSummary[]) debts[order.accountId] = (debts[order.accountId] ?? 0) + balanceUsd(order)
   const items = (itemData ?? []) as Item[]
   const overrides = (overrideData ?? []) as Override[]
   const organizations = await Promise.all(((organizationData ?? []) as Pick<Tables<'organizations'>, 'id' | 'name'>[]).map(async (organization) => {
@@ -50,6 +54,7 @@ export default async function WholesalePage() {
       userId={user.id}
       organizations={organizations}
       initialAccounts={(accountData ?? []) as CommercialAccount[]}
+      debts={debts}
       initialPrices={((priceData ?? []) as AccountPrice[]).map((price) => ({ ...price, sale_price: Number(price.sale_price) }))}
     />
   </PageContainer>

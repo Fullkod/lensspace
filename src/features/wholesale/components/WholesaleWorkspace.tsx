@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { friendlyError } from '@/shared/lib/friendly-error'
 import { Alert, Badge, Button, ButtonLink, Card, CardHeader, EmptyState, Toast } from '@/shared/ui'
 
+import { formatUsd } from '../order-types'
 import { discountLabel, type AccountPrice, type CommercialAccount, type WholesaleOrganization } from '../types'
 import { AccountFormDialog } from './AccountFormDialog'
 import { AccountPricesDialog } from './AccountPricesDialog'
@@ -17,8 +18,9 @@ const fixedLabel = (count: number) => (count === 1 ? '1 precio fijo' : `${count}
 
 // LEN0009: the owner keeps the retail opticians the organization sells to, with their
 // payment terms and prices. Their orders and debts arrive with LEN0010.
-export function WholesaleWorkspace({ userId, organizations, initialAccounts, initialPrices }: {
+export function WholesaleWorkspace({ userId, organizations, initialAccounts, initialPrices, debts }: {
   userId: string
+  debts: Record<number, number>
   organizations: WholesaleOrganization[]
   initialAccounts: CommercialAccount[]
   initialPrices: AccountPrice[]
@@ -77,6 +79,7 @@ export function WholesaleWorkspace({ userId, organizations, initialAccounts, ini
                   </span> : null}
                   <div className="flex flex-wrap gap-1.5 pt-0.5">
                     {account.archived_at ? <Badge>Archivada</Badge> : null}
+                    {(debts[account.id] ?? 0) > 0 ? <Badge tone="danger">Debe {formatUsd(debts[account.id])}</Badge> : null}
                     {Number(account.discount_percent) ? <Badge tone="progress">{discountLabel(Number(account.discount_percent))}</Badge> : null}
                     {fixedCount ? <Badge tone="progress">{fixedLabel(fixedCount)}</Badge> : null}
                   </div>

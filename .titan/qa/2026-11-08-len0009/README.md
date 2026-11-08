@@ -34,3 +34,12 @@ item 15) for the next phases. Seller/other-org isolation is covered by
 Dev server note: the long-running `next dev` (≈40 h) had a broken worker pool («Jest worker
 encountered 2 child process exceptions») that made the new dynamic route return 500; a
 restart fixed it.
+
+## LEN0010 phase 5 — collections (2026-11-08, 390 px)
+
+| Check | Result |
+|-------|--------|
+| Order detail «Cobrar» → `/wholesale-orders?optica=5&cobrar=1` opens «Cobrar a la óptica» | OK, no hydration error after fixing the auto-open (`collection-dialog-390.png`) |
+| 30 USD, FIFO proposal fills JAV-2026-000015 with 30 | Payment 30 USD at 930 in Javier's cashbox (id 114), `collection_id` set, order «Pago parcial», 0 WhatsApp |
+| «Cobros de Óptica Sol» lists the collection with note and order split | OK (`collection-done-390.png`) |
+| Split, overpayment, retry, auto-close when paid, seller isolation | `supabase/tests/commercial_orders.sql` |

@@ -307,6 +307,12 @@ returns or credit notes, WhatsApp to the account, moving a line between orders.
 - **Error**: a ≈40 h `next dev` had a broken jest-worker pool; only the new dynamic route failed (500 / too many redirects). **Fix**: restart the dev server. **Aplicar en**: any «Jest worker encountered … child process exceptions» in dev.
 - **Known**: the production panel and provider cards still say «Par N» for commercial jobs (works, wording only).
 
+### 2026-11-08: Phase 5 — collections and debt
+- **Done**: `20261108210000_account_collections.sql`: `payments.collection_id`; `prepare_cash_payment` (body copied from `20261107021257`, md5-checked against live) also lets the permitted seller collect commercial orders; `record_account_collection(account, amount, currency, allocations, notes, request_id)` inserts one payment per order through the normal trigger (rate, overpayment, cashbox, post-close), retry-safe by `collection_id = request_id`, audited; `list_account_collections`.
+- **UI**: `AccountCollections` on `/wholesale-orders?optica=…` (debt, «Cobrar» with FIFO split editable per order, history); order detail «Cobrar» link; account cards on `/wholesale` show «Debe X USD».
+- **Error**: opening the dialog from `startOpen` in the initial state caused a hydration mismatch. **Fix**: open it after mount, once (ref), together with the deferred load.
+- **Tests**: `commercial_orders.sql` extended (split across two orders, sum mismatch, overpayment, retry, auto-close when paid, seller isolation) + `cashbox_closures`, `multi_pair_orders` passed before/after the push. Browser QA in `.titan/qa/2026-11-08-len0009/README.md`.
+
 ---
 
 ## Gotchas
