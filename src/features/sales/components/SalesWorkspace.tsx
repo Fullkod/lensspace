@@ -1,93 +1,29 @@
 "use client";
 
-import { CircleCheck, Plus, Save, Store, UserPlus } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
+import { CircleCheck, Plus, Store } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent } from "react";
 
-import { friendlyError, isNetworkError } from "@/shared/lib/friendly-error";
-import { CustomerFormFields, customerFormValues, type CustomerPhoneDraft } from "@/features/customers/components";
-import { findDuplicateCustomers, type DuplicateCustomer } from "@/features/customers/phone";
-import { PrescriptionFormFields } from "@/features/prescriptions/components";
-import {
-  friendlyPrescriptionError,
-  prescriptionAttachmentError,
-  prescriptionRevisionValues,
-  validatePrescriptionForm,
-} from "@/features/prescriptions/prescription-validation";
-import { uploadPrescriptionOriginal } from "@/features/prescriptions/upload-original";
 import { createClient } from "@/lib/supabase/client";
-import { newRequestId } from "@/shared/utils/request-id";
-import { refreshNavigationCounters } from "@/shared/lib/navigation-counters";
 import { ExchangeRateRefresh, FormSelect, type BusinessRate } from "@/shared/components";
-import { Alert, Button, Card, Dialog, EmptyState, Field, Input, Steps, Textarea } from "@/shared/ui";
+import { friendlyError, isNetworkError } from "@/shared/lib/friendly-error";
+import { refreshNavigationCounters } from "@/shared/lib/navigation-counters";
+import { newRequestId } from "@/shared/utils/request-id";
+import { Alert, Button, Card, EmptyState, Field, Input, Steps, Textarea } from "@/shared/ui";
 
 import { AcceptedOrderPanel } from "./AcceptedOrderPanel";
 import { CustomerSearchPicker, type SaleCustomer } from "./CustomerSearchPicker";
-import { ItemPicker } from "./ItemPicker";
+import { PairEditor } from "./PairEditor";
 import { QuoteSummary } from "./QuoteSummary";
-import type { AcceptedOrder, PriceResult, SaleItem } from "./sale-types";
+import { NewCustomerDialog, NewPrescriptionDialog, NewRelativeDialog } from "./SaleDialogs";
+import { newPair, readDraft, writeDraft, type SaleDraft } from "./sale-draft";
+import { pairAdjustmentsOrError, pairEstimate, sumTotals, toCup, toggleItem, type LineAdjustments } from "./sale-pricing";
+import { MAX_PAIRS, type AcceptedOrder, type MultiPriceResult, type PairDraft, type Revision, type SaleItem } from "./sale-types";
 
-type Organization = {
-  id: number;
-  name: string;
-  branchId: number;
-  branchName: string;
-  canOperate: boolean;
-  canApproveLargeDiscount: boolean;
-};
-type Revision = {
-  id: number;
-  organizationId: number;
-  branchId: number;
-  customerId: number;
-  label: string;
-};
-type PrescriptionResult = {
-  prescriptionId: number;
-  revisionId: number;
-  revisionNumber: number;
-};
+type Organization = { id: number; name: string; branchId: number; branchName: string; canOperate: boolean; canApproveLargeDiscount: boolean };
+type Dialog = { kind: "customer" } | { kind: "relative"; pairIndex: number } | { kind: "prescription"; pairIndex: number } | null;
+type SaleLine = { patientCustomerId: number; prescriptionRevisionId: number | null; itemIds: number[]; lineAdjustments: LineAdjustments };
 
-type SaleDraft = {
-  savedAt: number;
-  customer: SaleCustomer;
-  revisionId: number;
-  selected: number[];
-  agreedPrices: Record<number, string>;
-  adjustmentReasons: Record<number, string>;
-  rate: string;
-  notes: string;
-};
-const DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
-
-// Per-viewer convenience only (never balances or payments): a reload, a dropped
-// connection or a closed tab must not lose the sale being prepared (QA-17).
-function readDraft(key: string): SaleDraft | null {
-  try {
-    const draft = JSON.parse(localStorage.getItem(key) ?? "null") as SaleDraft | null;
-    return draft && Date.now() - draft.savedAt < DRAFT_TTL_MS && draft.customer ? draft : null;
-  } catch {
-    return null;
-  }
-}
-function writeDraft(key: string, draft: SaleDraft | null) {
-  try {
-    if (draft) localStorage.setItem(key, JSON.stringify(draft));
-    else localStorage.removeItem(key);
-  } catch {
-    /* storage unavailable (private mode): the sale still works without a draft */
-  }
-}
-
-export function SalesWorkspace({
-  organizations,
-  userId,
-  lastRates,
-  businessRates,
-  recentCustomers,
-  initialCustomer,
-  initialRevisions,
-  items,
-}: {
+export function SalesWorkspace({ organizations, userId, lastRates, businessRates, recentCustomers, initialCustomer, initialRevisions, items }: {
   organizations: Organization[];
   userId: string;
   lastRates: Record<number, number>;
@@ -98,18 +34,12 @@ export function SalesWorkspace({
   items: SaleItem[];
 }) {
   const supabase = useMemo(() => createClient(), []);
-  const initialScope =
-    organizations.find((entry) => initialCustomer && entry.id === initialCustomer.organizationId && entry.branchId === initialCustomer.branchId) ??
-    organizations[0];
-  const [scopeKey, setScopeKey] = useState(
-    initialScope ? `${initialScope.id}:${initialScope.branchId}` : "",
-  );
-  const [selectedCustomer, setSelectedCustomer] = useState<SaleCustomer | null>(initialCustomer);
+  const initialScope = organizations.find((entry) => initialCustomer && entry.id === initialCustomer.organizationId && entry.branchId === initialCustomer.branchId) ?? organizations[0];
+  const [scopeKey, setScopeKey] = useState(initialScope ? `${initialScope.id}:${initialScope.branchId}` : "");
+  const [holder, setHolder] = useState<SaleCustomer | null>(initialCustomer);
+  const [pairs, setPairs] = useState<PairDraft[]>(() => [newPair()]);
+  const [relatives, setRelatives] = useState<SaleCustomer[]>([]);
   const [revisionRows, setRevisionRows] = useState<Revision[]>(initialRevisions);
-  const [revisionId, setRevisionId] = useState(0);
-  const [selected, setSelected] = useState<number[]>([]);
-  const [agreedPrices, setAgreedPrices] = useState<Record<number, string>>({});
-  const [adjustmentReasons, setAdjustmentReasons] = useState<Record<number, string>>({});
   // The stored elTOQUE rate wins over the last order rate; 420 only as a last resort.
   const [adoptedRates, setAdoptedRates] = useState(businessRates);
   const referenceRate = (id: number) => adoptedRates[id]?.rate ?? lastRates[id] ?? 420;
@@ -117,74 +47,39 @@ export function SalesWorkspace({
   const [notes, setNotes] = useState("");
   const [restorable, setRestorable] = useState<SaleDraft | null>(null);
   const [quotationId, setQuotationId] = useState<number | null>(null);
-  const [preview, setPreview] = useState<PriceResult | null>(null);
+  const [preview, setPreview] = useState<MultiPriceResult | null>(null);
   const [acceptedOrder, setAcceptedOrder] = useState<AcceptedOrder | null>(null);
   const [message, setMessage] = useState("");
-  const [dialog, setDialog] = useState<"customer" | "prescription" | null>(
-    null,
-  );
-  const [dialogMessage, setDialogMessage] = useState("");
-  const [savingQuick, setSavingQuick] = useState(false);
-  const [newCustomerName, setNewCustomerName] = useState("");
-  const [duplicates, setDuplicates] = useState<DuplicateCustomer[] | null>(null);
-  const [newCustomerPhones, setNewCustomerPhones] = useState<CustomerPhoneDraft[]>([{ number: "", label: "Principal", whatsappEnabled: true }]);
+  const [dialog, setDialog] = useState<Dialog>(null);
   const [pending, startTransition] = useTransition();
-  const formRef = useRef<HTMLFormElement>(null);
   // One id per quotation attempt, kept until the quote changes, so a retry after a
   // lost response reuses the quotation instead of creating another one.
   const quoteRequestId = useRef<string | null>(null);
-  // Same idea for the quick customer: a retry after a lost response reuses the customer.
-  const customerRequestId = useRef<string | null>(null);
 
-  const organization = organizations.find(
-    (entry) => `${entry.id}:${entry.branchId}` === scopeKey,
-  );
+  const organization = organizations.find((entry) => `${entry.id}:${entry.branchId}` === scopeKey);
   const organizationId = organization?.id ?? 0;
+  const scope = organization ? { id: organization.id, name: organization.name, branchId: organization.branchId, branchName: organization.branchName, canOperate: organization.canOperate } : undefined;
   const draftKey = `lensspace:sale-draft:${userId}:${scopeKey}`;
   const lastRate = referenceRate(organizationId);
   const rateValue = Number(rate);
   const rateWarning = !rate || !Number.isFinite(rateValue) || rateValue <= 0
     ? "Indica una tasa mayor que 0."
-    : Math.abs(rateValue - lastRate) / lastRate > 0.3
-      ? `La tasa se aleja más de un 30 % de la tasa de referencia (${lastRate}). Revísala antes de crear el pedido.`
-      : "";
-  const customerId = selectedCustomer?.id ?? 0;
-  const availableRecentCustomers = recentCustomers.filter(
-    (entry) =>
-      entry.organizationId === organizationId &&
-      entry.branchId === organization?.branchId,
-  );
-  const availableRevisions = revisionRows.filter(
-    (entry) => entry.customerId === customerId,
-  );
-  const availableItems = items.filter(
-    (item) =>
-      item.organizationId === null || item.organizationId === organizationId,
-  );
-  const groupedItems = Object.entries(
-    availableItems.reduce<Record<string, SaleItem[]>>((groups, item) => {
-      (groups[item.category] ??= []).push(item);
-      return groups;
-    }, {}),
-  );
-  const selectedItems = availableItems.filter((item) => selected.includes(item.id));
-  // Client-side running total (agreed prices); the server confirms it on save and may
-  // add graduation surcharges, so the UI labels it as an estimate.
-  const estimate = selectedItems.reduce<Record<string, number>>((totals, item) => {
-    const agreed = Number(agreedPrices[item.id]?.trim() || item.price);
-    totals[item.currency] = (totals[item.currency] ?? 0) + (Number.isFinite(agreed) ? agreed : item.price);
-    return totals;
-  }, {});
-  const numericRateValue = Number(rate) || 0;
-  const estimateCup = Object.entries(estimate).reduce(
-    (sum, [currency, total]) => sum + (currency === "USD" ? total * numericRateValue : total),
-    0,
-  );
+    : Math.abs(rateValue - lastRate) / lastRate > 0.3 ? `La tasa se aleja más de un 30 % de la tasa de referencia (${lastRate}). Revísala antes de crear el pedido.` : "";
+  const availableRecentCustomers = recentCustomers.filter((entry) => entry.organizationId === organizationId && entry.branchId === organization?.branchId);
+  const availableItems = items.filter((item) => item.organizationId === null || item.organizationId === organizationId);
+  const groupedItems = Object.entries(availableItems.reduce<Record<string, SaleItem[]>>((groups, item) => {
+    (groups[item.category] ??= []).push(item);
+    return groups;
+  }, {}));
+  const patientOf = (pair: PairDraft) => pair.patient ?? holder;
+  const pairLabels = pairs.map((pair, index) => `Par ${index + 1}${patientOf(pair) ? ` · ${patientOf(pair)?.name}` : ""}`);
+  const pairEstimates = pairs.map((pair) => pairEstimate(pair, availableItems));
+  const estimate = sumTotals(pairEstimates);
+  const estimateCup = toCup(estimate, Number(rate) || 0);
+  const selectedCount = pairs.reduce((sum, pair) => sum + pair.selected.length, 0);
+  const ready = Boolean(holder && pairs.every((pair) => pair.selected.length));
 
-  function selectCustomer(customer: SaleCustomer) {
-    setSelectedCustomer(customer);
-    setRevisionId(0);
-    resetQuote();
+  function loadRevisions(customer: SaleCustomer) {
     void supabase
       .from("prescription_revisions")
       .select("id, organization_id, branch_id, prescription_id, prescription_date, prescriptions!inner(customer_id)")
@@ -200,6 +95,51 @@ export function SalesWorkspace({
       });
   }
 
+  function resetQuote() {
+    quoteRequestId.current = null;
+    setQuotationId(null);
+    setPreview(null);
+  }
+  function updatePair(index: number, update: (pair: PairDraft) => PairDraft) {
+    setPairs((current) => current.map((pair, position) => (position === index ? update(pair) : pair)));
+    resetQuote();
+  }
+  function selectHolder(customer: SaleCustomer | null) {
+    setHolder(customer);
+    // Pairs worn by the holder lose a prescription that belonged to the previous holder.
+    setPairs((current) => current.map((pair) => (pair.patient ? pair : { ...pair, revisionId: 0 })));
+    if (customer) loadRevisions(customer);
+    resetQuote();
+  }
+  function setPatient(index: number, patient: SaleCustomer | null) {
+    updatePair(index, (pair) => ({ ...pair, patient, revisionId: 0 }));
+    if (patient) {
+      setRelatives((current) => [patient, ...current.filter((entry) => entry.id !== patient.id)]);
+      loadRevisions(patient);
+    }
+  }
+  function addPair() {
+    setPairs((current) => (current.length >= MAX_PAIRS ? current : [...current, newPair()]));
+    resetQuote();
+  }
+  function removePair(index: number) {
+    setPairs((current) => (current.length > 1 ? current.filter((_, position) => position !== index) : current));
+    resetQuote();
+  }
+  function startNewSale() {
+    setHolder(null);
+    setPairs([newPair()]);
+    setRelatives([]);
+    setNotes("");
+    setMessage("");
+    resetQuote();
+  }
+  function changeScope(value: string) {
+    setScopeKey(value);
+    setRate(String(referenceRate(Number(value.split(":")[0]))));
+    startNewSale();
+  }
+
   // Offer the unfinished sale once (a deep link to a customer starts a new one).
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -211,20 +151,18 @@ export function SalesWorkspace({
   }, [draftKey]);
 
   useEffect(() => {
-    if (!selectedCustomer || restorable || acceptedOrder) return;
-    const timer = window.setTimeout(() => writeDraft(draftKey, {
-      savedAt: Date.now(), customer: selectedCustomer, revisionId, selected, agreedPrices, adjustmentReasons, rate, notes,
-    }), 500);
+    if (!holder || restorable || acceptedOrder) return;
+    const timer = window.setTimeout(() => writeDraft(draftKey, { version: 2, savedAt: Date.now(), customer: holder, pairs, rate, notes }), 500);
     return () => window.clearTimeout(timer);
-  }, [acceptedOrder, adjustmentReasons, agreedPrices, draftKey, notes, rate, restorable, revisionId, selected, selectedCustomer]);
+  }, [acceptedOrder, draftKey, holder, notes, pairs, rate, restorable]);
 
   function restoreDraft(draft: SaleDraft) {
     const availableIds = new Set(availableItems.map((item) => item.id));
-    selectCustomer(draft.customer);
-    setRevisionId(draft.revisionId);
-    setSelected(draft.selected.filter((id) => availableIds.has(id)));
-    setAgreedPrices(draft.agreedPrices);
-    setAdjustmentReasons(draft.adjustmentReasons);
+    selectHolder(draft.customer);
+    setPairs(draft.pairs.map((pair) => ({ ...pair, selected: pair.selected.filter((id) => availableIds.has(id)) })));
+    const patients = draft.pairs.flatMap((pair) => (pair.patient ? [pair.patient] : []));
+    setRelatives(patients);
+    patients.forEach(loadRevisions);
     setRate(draft.rate);
     setNotes(draft.notes);
     setRestorable(null);
@@ -234,199 +172,40 @@ export function SalesWorkspace({
     setRestorable(null);
   }
 
-  function resetQuote() {
-    quoteRequestId.current = null;
-    setQuotationId(null);
-    setPreview(null);
-  }
-  function updateAgreedPrice(itemId: number, value: string) {
-    setAgreedPrices((current) => ({ ...current, [itemId]: value }));
-    resetQuote();
-  }
-  function updateAdjustmentReason(itemId: number, value: string) {
-    setAdjustmentReasons((current) => ({ ...current, [itemId]: value }));
-    resetQuote();
-  }
-  function toggle(itemId: number) {
-    // A pair of glasses has one vision type: picking another replaces the previous one.
-    const category = availableItems.find((item) => item.id === itemId)?.category;
-    const exclusiveIds = category === "vision_type"
-      ? new Set(availableItems.filter((item) => item.category === category).map((item) => item.id))
-      : null;
-    setSelected((current) =>
-      current.includes(itemId)
-        ? current.filter((id) => id !== itemId)
-        : [...current.filter((id) => !exclusiveIds?.has(id)), itemId],
-    );
-    resetQuote();
-  }
-  function changeScope(value: string) {
-    setScopeKey(value);
-    setRate(String(referenceRate(Number(value.split(":")[0]))));
-    setSelectedCustomer(null);
-    setRevisionId(0);
-    setSelected([]);
-    setAgreedPrices({});
-    setAdjustmentReasons({});
-    setMessage("");
-    resetQuote();
+  // Validates every pair; returns the RPC lines or a Spanish error message.
+  function saleLinesOrError(): SaleLine[] | string {
+    if (!organization || !holder) return "Selecciona el cliente de la venta.";
+    if (!Number.isFinite(rateValue) || rateValue <= 0) return "Indica una tasa de cambio mayor que 0.";
+    const lines: SaleLine[] = [];
+    for (const [index, pair] of pairs.entries()) {
+      const label = pairs.length > 1 ? `el par ${index + 1}` : "la venta";
+      const adjustments = pairAdjustmentsOrError(pair, availableItems, organization.canApproveLargeDiscount, label);
+      if (typeof adjustments === "string") return adjustments;
+      lines.push({ patientCustomerId: (pair.patient ?? holder).id, prescriptionRevisionId: pair.revisionId || null, itemIds: pair.selected, lineAdjustments: adjustments });
+    }
+    return lines;
   }
 
-  async function createCustomer(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!organization?.canOperate)
-      return setDialogMessage(
-        "Esta organización está en modo de solo lectura.",
-      );
-    const form = new FormData(event.currentTarget);
-    const values = customerFormValues(form, newCustomerName, newCustomerPhones);
-    const name = values.fullName;
-    if (name.length < 2 || values.phones.length !== newCustomerPhones.length)
-      return setDialogMessage(
-        "Completa el nombre y un teléfono de al menos cinco dígitos.",
-      );
-    setSavingQuick(true);
-    setDialogMessage("");
-    // QA-19: warn about a same-name or same-phone customer once; creating anyway is allowed.
-    if (duplicates === null) {
-      const matches = await findDuplicateCustomers(supabase, { organizationId: organization.id, branchId: organization.branchId }, name, values.phones.map(({ number }) => number));
-      if (matches.length) {
-        setDuplicates(matches);
-        setDialogMessage("Ya hay clientes parecidos. Usa uno de ellos o, si es otra persona, pulsa «Crear y seleccionar» de nuevo.");
-        setSavingQuick(false);
-        return;
-      }
-    }
-    customerRequestId.current ??= newRequestId();
-    const { data, error } = await supabase.rpc("create_customer_with_phones", {
-      target_organization_id: organization.id,
-      target_branch_id: organization.branchId,
-      customer_full_name: name,
-      customer_request_id: customerRequestId.current,
-      customer_national_id: values.nationalId,
-      customer_address: values.address,
-      customer_birth_date: values.birthDate,
-      customer_notes: values.notes,
-      customer_messaging_consent: values.messagingConsent,
-      phone_entries: values.phones,
-    } as never);
-    if (error) {
-      if (!isNetworkError(error)) customerRequestId.current = null;
-      setDialogMessage(friendlyError(error, "No se pudo registrar el cliente."));
-      setSavingQuick(false);
-      return;
-    }
-    customerRequestId.current = null;
-    setSelectedCustomer({
-      id: Number(data),
-      organizationId: organization.id,
-      branchId: organization.branchId,
-      name,
-    });
-    setRevisionId(0);
-    setNewCustomerName("");
-    setNewCustomerPhones([{ number: "", label: "Principal", whatsappEnabled: true }]);
-    setDuplicates(null);
-    setDialog(null);
-    setMessage(`${name} quedó seleccionado para esta venta.`);
-    setSavingQuick(false);
-  }
-
-  async function createPrescription(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!organization?.canOperate || !selectedCustomer)
-      return setDialogMessage("Selecciona primero el cliente de la receta.");
-    const form = new FormData(event.currentTarget);
-    const validationError = validatePrescriptionForm(form);
-    if (validationError) return setDialogMessage(validationError);
-    const attachment = form.get("attachment");
-    const attachmentError = prescriptionAttachmentError(attachment);
-    if (attachmentError) return setDialogMessage(attachmentError);
-    setSavingQuick(true);
-    setDialogMessage("");
-    const { data, error } = await supabase.rpc("create_prescription_revision", {
-      target_organization_id: organization.id,
-      target_branch_id: organization.branchId,
-      target_customer_id: selectedCustomer.id,
-      target_prescription_id: null,
-      ...prescriptionRevisionValues(form),
-      revision_change_reason: "",
-    } as never);
-    if (error) {
-      setDialogMessage(friendlyPrescriptionError(error.message));
-      setSavingQuick(false);
-      return;
-    }
-    const result = data as unknown as PrescriptionResult;
-    const attachmentFailed =
-      attachment instanceof File && attachment.size > 0 &&
-      !(await uploadPrescriptionOriginal(supabase, { organizationId: organization.id, branchId: organization.branchId, prescriptionId: result.prescriptionId, revisionId: result.revisionId }, attachment));
-    const date = String(form.get("prescriptionDate"));
-    const created: Revision = {
-      id: result.revisionId,
-      organizationId: organization.id,
-      branchId: organization.branchId,
-      customerId: selectedCustomer.id,
-      label: `Receta #${result.prescriptionId} · ${date}`,
-    };
-    setRevisionRows((current) => [created, ...current]);
-    setRevisionId(created.id);
-    setDialog(null);
-    setMessage(
-      attachmentFailed
-        ? "La receta quedó asociada, pero el original no pudo almacenarse. Puedes adjuntarlo desde Recetas."
-        : "La receta nueva quedó asociada a esta venta.",
-    );
-    resetQuote();
-    setSavingQuick(false);
-  }
-
-  // Validates agreed prices; returns the adjustments or a Spanish error message.
-  function lineAdjustmentsOrError(): Record<string, { amount: number; reason: string }> | string {
-    if (!organization || !customerId || !selected.length)
-      return "Selecciona cliente y al menos un concepto.";
-    if (!Number.isFinite(rateValue) || rateValue <= 0)
-      return "Indica una tasa de cambio mayor que 0.";
-    const lineAdjustments: Record<string, { amount: number; reason: string }> = {};
-    for (const item of selectedItems) {
-      const rawAmount = agreedPrices[item.id]?.trim();
-      if (!rawAmount) continue;
-      const amount = Number(rawAmount);
-      if (!Number.isFinite(amount) || amount < 0)
-        return `Indica un precio válido para ${item.name}.`;
-      if (amount === item.price) continue;
-      const reason = adjustmentReasons[item.id]?.trim() ?? "";
-      if (reason.length < 5)
-        return `Explica el ajuste de ${item.name} en al menos 5 caracteres.`;
-      if (amount < item.price * 0.9 && !organization.canApproveLargeDiscount)
-        return `El descuento de ${item.name} supera el 10 %. Debe autorizarlo un propietario.`;
-      lineAdjustments[String(item.id)] = { amount, reason };
-    }
-    return lineAdjustments;
-  }
-
-  // One round trip: save_sale_quotation saves and returns the pricing. Returns the
+  // One round trip: save_multi_line_quotation saves and returns the pricing. Returns the
   // quotation id, or null after reporting the error.
-  async function persistQuote(lineAdjustments: Record<string, { amount: number; reason: string }>) {
-    if (!organization) return null;
+  async function persistQuote(lines: SaleLine[]) {
+    if (!organization || !holder) return null;
     quoteRequestId.current ??= newRequestId();
-    const { data, error } = await supabase.rpc("save_sale_quotation", {
+    const { data, error } = await supabase.rpc("save_multi_line_quotation", {
       target_quotation_id: quotationId,
       target_organization_id: organizationId,
       target_branch_id: organization.branchId,
-      target_customer_id: customerId,
-      target_prescription_revision_id: revisionId || null,
-      selected_item_ids: selected,
+      target_customer_id: holder.id,
+      target_lines: lines,
       target_usd_to_cup_rate: rate ? Number(rate) : null,
       target_notes: notes,
-      target_line_adjustments: lineAdjustments,
       quotation_request_id: quoteRequestId.current,
     } as never);
     if (error) {
       setMessage(friendlyError(error, "No pudimos guardar la cotización."));
       return null;
     }
-    const result = data as unknown as { quotationId: number; pricing: PriceResult };
+    const result = data as unknown as { quotationId: number; pricing: MultiPriceResult };
     setPreview(result.pricing);
     setQuotationId(result.quotationId);
     return result.quotationId;
@@ -434,40 +213,32 @@ export function SalesWorkspace({
 
   function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const adjustments = lineAdjustmentsOrError();
-    if (typeof adjustments === "string") return setMessage(adjustments);
+    const lines = saleLinesOrError();
+    if (typeof lines === "string") return setMessage(lines);
     startTransition(async () => {
       setMessage("");
-      if (await persistQuote(adjustments))
-        setMessage("Cotización guardada. Confirma los importes con el cliente.");
+      if (await persistQuote(lines)) setMessage("Cotización guardada. Confirma los importes con el cliente.");
     });
   }
 
   // "Cliente acepta" works in one tap: it saves the quotation first when needed.
   function accept() {
-    const adjustments = quotationId ? {} : lineAdjustmentsOrError();
-    if (typeof adjustments === "string") return setMessage(adjustments);
+    const lines = quotationId ? [] : saleLinesOrError();
+    if (typeof lines === "string") return setMessage(lines);
     startTransition(async () => {
       setMessage("");
-      const targetQuotationId = quotationId ?? (await persistQuote(adjustments));
+      const targetQuotationId = quotationId ?? (await persistQuote(lines));
       if (!targetQuotationId) return;
       // accept_quotation is idempotent, so a dropped response is retried once.
-      const acceptOnce = () =>
-        supabase.rpc("accept_quotation", {
-          target_quotation_id: targetQuotationId,
-        } as never);
+      const acceptOnce = () => supabase.rpc("accept_quotation", { target_quotation_id: targetQuotationId } as never);
       let { data, error } = await acceptOnce();
       if (error && isNetworkError(error)) ({ data, error } = await acceptOnce());
       if (error)
-        return setMessage(
-          isNetworkError(error)
-            ? "Sin conexión: no pudimos confirmar el pedido. Pulsa “Cliente acepta” otra vez cuando vuelva la señal; no se creará un pedido duplicado."
-            : friendlyError(error, "No pudimos confirmar el pedido."),
-        );
+        return setMessage(isNetworkError(error)
+          ? "Sin conexión: no pudimos confirmar el pedido. Pulsa “Cliente acepta” otra vez cuando vuelva la señal; no se creará un pedido duplicado."
+          : friendlyError(error, "No pudimos confirmar el pedido."));
       const result = data as unknown as AcceptedOrder;
-      setMessage(
-        `Pedido ${result.orderNumber} creado con precios y tasa inmutables.`,
-      );
+      setMessage(`Pedido ${result.orderNumber} creado con precios y tasa inmutables.`);
       setAcceptedOrder(result);
       void refreshNavigationCounters();
       setQuotationId(null);
@@ -475,37 +246,19 @@ export function SalesWorkspace({
     });
   }
 
-  if (!organizations.length)
-    return <EmptyState icon={Store} title="Sin sucursal comercial" description="No tienes una sucursal comercial disponible." />;
-  if (acceptedOrder && selectedCustomer)
-    return (
-      <AcceptedOrderPanel
-        order={acceptedOrder}
-        customerName={selectedCustomer.name}
-        preview={preview}
-        onNewSale={() => {
-          setAcceptedOrder(null);
-          setSelectedCustomer(null);
-          setRevisionId(0);
-          setSelected([]);
-          setAgreedPrices({});
-          setAdjustmentReasons({});
-          setPreview(null);
-          setNotes("");
-          setMessage("");
-          writeDraft(draftKey, null);
-        }}
-      />
-    );
+  if (!organizations.length) return <EmptyState icon={Store} title="Sin sucursal comercial" description="No tienes una sucursal comercial disponible." />;
+  if (acceptedOrder && holder)
+    return <AcceptedOrderPanel order={acceptedOrder} customerName={holder.name} preview={preview} pairLabels={pairLabels} onNewSale={() => { setAcceptedOrder(null); startNewSale(); writeDraft(draftKey, null); }} />;
 
-  const currentStep = !customerId ? 0 : !selected.length ? 1 : !quotationId ? 2 : 3;
+  const dialogPair = dialog && dialog.kind !== "customer" ? pairs[dialog.pairIndex] : undefined;
+  const currentStep = !holder ? 0 : !selectedCount ? 1 : !quotationId ? 2 : 3;
   return (
     <>
-      <form ref={formRef} onSubmit={save} noValidate className="grid items-start gap-5 pb-24 xl:grid-cols-[minmax(0,1fr)_390px] xl:pb-0">
+      <form onSubmit={save} noValidate className="grid items-start gap-5 pb-24 xl:grid-cols-[minmax(0,1fr)_390px] xl:pb-0">
         <div className="flex min-w-0 flex-col gap-5">
           {restorable ? (
             <Alert tone="info" title="Tienes una venta sin terminar">
-              {restorable.customer.name} · {restorable.selected.length === 1 ? "1 concepto" : `${restorable.selected.length} conceptos`}
+              {restorable.customer.name} · {restorable.pairs.length > 1 ? `${restorable.pairs.length} pares` : `${restorable.pairs[0]?.selected.length ?? 0} conceptos`}
               <span className="mt-3 flex flex-wrap gap-2">
                 <Button size="sm" onClick={() => restoreDraft(restorable)}>Recuperar</Button>
                 <Button size="sm" variant="ghost" onClick={discardDraft}>Descartar</Button>
@@ -514,35 +267,19 @@ export function SalesWorkspace({
           ) : null}
           <Card className="flex flex-col gap-4">
             <Steps label="Progreso de la venta" steps={["Cliente", "Configuración", "Cotización", "Pedido"]} current={currentStep} />
-            <h2 className="font-display text-[17px] font-semibold text-ink">Cliente y receta</h2>
+            <h2 className="font-display text-[17px] font-semibold text-ink">Cliente</h2>
             {organizations.length > 1 ? (
               <Field label="Organización y sucursal">
-                <FormSelect
-                  ariaLabel="Organización y sucursal"
-                  value={scopeKey}
-                  onValueChange={changeScope}
-                  options={organizations.map((entry) => ({ value: `${entry.id}:${entry.branchId}`, label: `${entry.name} · ${entry.branchName}` }))}
-                />
+                <FormSelect ariaLabel="Organización y sucursal" value={scopeKey} onValueChange={changeScope} options={organizations.map((entry) => ({ value: `${entry.id}:${entry.branchId}`, label: `${entry.name} · ${entry.branchName}` }))} />
               </Field>
             ) : null}
-            <QuickPicker label="Cliente" actionLabel="Nuevo cliente" onAction={() => { setDialogMessage(""); setDialog("customer"); }}>
-              <CustomerSearchPicker
-                organizationId={organizationId}
-                branchId={organization?.branchId ?? 0}
-                recent={availableRecentCustomers}
-                selected={selectedCustomer}
-                onSelect={selectCustomer}
-                onClear={() => { setSelectedCustomer(null); setRevisionId(0); resetQuote(); }}
-              />
-            </QuickPicker>
-            <QuickPicker label="Receta" actionLabel="Nueva receta" disabled={!customerId} onAction={() => { setDialogMessage(""); setDialog("prescription"); }}>
-              <FormSelect
-                ariaLabel="Receta asociada"
-                value={String(revisionId)}
-                onValueChange={(value) => { setRevisionId(Number(value)); resetQuote(); }}
-                options={[{ value: "0", label: "Sin receta asociada" }, ...availableRevisions.map((entry) => ({ value: String(entry.id), label: entry.label }))]}
-              />
-            </QuickPicker>
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[13px] font-semibold text-text-label">Quien encarga y paga</span>
+                <Button variant="ghost" size="sm" icon={Plus} onClick={() => setDialog({ kind: "customer" })} className="-mr-2">Nuevo cliente</Button>
+              </div>
+              <CustomerSearchPicker organizationId={organizationId} branchId={organization?.branchId ?? 0} recent={availableRecentCustomers} selected={holder} onSelect={selectHolder} onClear={() => selectHolder(null)} />
+            </div>
             <div className="flex flex-col gap-3 rounded-control border border-line bg-canvas p-3.5 sm:flex-row sm:items-center">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-ink">Tasa de esta venta</p>
@@ -551,129 +288,83 @@ export function SalesWorkspace({
               <label className="flex shrink-0 items-center gap-2 text-sm font-semibold text-text-secondary">
                 <span>1 USD =</span>
                 <span className="w-28">
-                  <Input
-                    aria-label="Tasa de cambio de USD a CUP"
-                    value={rate}
-                    onChange={(event) => { setRate(event.target.value); resetQuote(); }}
-                    type="number"
-                    inputMode="decimal"
-                    min="0.01"
-                    step="0.01"
-                    numeric
-                    onBlur={() => {
-                      const numericRate = Number(rate);
-                      if (Number.isFinite(numericRate)) setRate(String(Math.round(numericRate * 100) / 100));
-                    }}
-                    required
-                  />
+                  <Input aria-label="Tasa de cambio de USD a CUP" value={rate} onChange={(event) => { setRate(event.target.value); resetQuote(); }} type="number" inputMode="decimal" min="0.01" step="0.01" numeric required
+                    onBlur={() => { const numericRate = Number(rate); if (Number.isFinite(numericRate)) setRate(String(Math.round(numericRate * 100) / 100)); }} />
                 </span>
                 <span>CUP</span>
               </label>
             </div>
             {organization?.canOperate ? (
-              <ExchangeRateRefresh
-                organizationId={organizationId}
-                current={adoptedRates[organizationId] ?? null}
-                onRefreshed={(next) => { setAdoptedRates((current) => ({ ...current, [organizationId]: next })); setRate(String(next.rate)); resetQuote(); }}
-              />
+              <ExchangeRateRefresh organizationId={organizationId} current={adoptedRates[organizationId] ?? null}
+                onRefreshed={(next) => { setAdoptedRates((current) => ({ ...current, [organizationId]: next })); setRate(String(next.rate)); resetQuote(); }} />
             ) : null}
             {rateWarning ? <Alert tone="warning">{rateWarning}</Alert> : null}
           </Card>
 
-          <Card className="flex flex-col gap-5">
-            <div>
-              <h2 className="font-display text-[17px] font-semibold text-ink">Configuración</h2>
-              <p className="mt-1 text-sm text-text-muted">Toca cada opción que formará parte de la cotización.</p>
+          {pairs.map((pair, index) => {
+            const patient = patientOf(pair);
+            return (
+              <PairEditor key={pair.key} index={index} pairCount={pairs.length} pair={pair} holder={holder}
+                scope={{ organizationId, branchId: organization?.branchId ?? 0 }}
+                relatives={[...relatives, ...availableRecentCustomers.filter((entry) => !relatives.some((relative) => relative.id === entry.id))].filter((entry) => entry.id !== holder?.id)}
+                revisions={patient ? revisionRows.filter((entry) => entry.customerId === patient.id) : []}
+                groupedItems={groupedItems}
+                onPatientChange={(next) => setPatient(index, next)}
+                onRevisionChange={(revisionId) => updatePair(index, (current) => ({ ...current, revisionId }))}
+                onToggle={(itemId) => updatePair(index, (current) => ({ ...current, selected: toggleItem(current.selected, itemId, availableItems) }))}
+                onAgreedPriceChange={(itemId, value) => updatePair(index, (current) => ({ ...current, agreedPrices: { ...current.agreedPrices, [itemId]: value } }))}
+                onAdjustmentReasonChange={(itemId, value) => updatePair(index, (current) => ({ ...current, adjustmentReasons: { ...current.adjustmentReasons, [itemId]: value } }))}
+                onNewRelative={() => setDialog({ kind: "relative", pairIndex: index })}
+                onNewPrescription={() => setDialog({ kind: "prescription", pairIndex: index })}
+                onRemove={() => removePair(index)} />
+            );
+          })}
+
+          <Card className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-ink">¿Espejuelos para otra persona?</p>
+                <p className="text-[13px] text-text-muted">Cada par lleva su receta y sus conceptos; se cobra y se entrega todo junto.</p>
+              </div>
+              <Button variant="secondary" icon={Plus} disabled={!holder || pairs.length >= MAX_PAIRS} onClick={addPair}>Agregar par</Button>
             </div>
-            <ItemPicker
-              groupedItems={groupedItems}
-              selected={selected}
-              agreedPrices={agreedPrices}
-              adjustmentReasons={adjustmentReasons}
-              onToggle={toggle}
-              onAgreedPriceChange={updateAgreedPrice}
-              onAdjustmentReasonChange={updateAdjustmentReason}
-            />
             <Field label="Notas comerciales" optional>
               <Textarea name="notes" maxLength={1000} value={notes} onChange={(event) => setNotes(event.target.value)} />
             </Field>
           </Card>
         </div>
 
-        <QuoteSummary preview={preview} estimate={estimate} estimateCup={estimateCup} selectedCount={selected.length} quotationId={quotationId} pending={pending} canOperate={Boolean(organization?.canOperate)} canAccept={Boolean(customerId && selected.length)} message={message} onAccept={accept} />
+        <QuoteSummary preview={preview} pairLabels={pairLabels} pairEstimates={pairEstimates} estimate={estimate} estimateCup={estimateCup} selectedCount={selectedCount}
+          quotationId={quotationId} pending={pending} canOperate={Boolean(organization?.canOperate)} canAccept={ready} message={message} onAccept={accept} />
       </form>
 
       {/* Below xl the summary sits after the catalog: keep total and the main action in reach. */}
       <div className="fixed inset-x-0 bottom-0 z-20 flex items-center gap-3 border-t border-line-soft bg-surface px-4 pt-3 pb-[max(env(safe-area-inset-bottom),12px)] shadow-[0_-6px_18px_rgba(7,50,47,0.08)] xl:hidden">
         <div className="min-w-0 flex-1">
-          <p className="text-[12px] text-text-muted">{preview ? "Total" : "Total estimado"} · {selected.length === 1 ? "1 concepto" : `${selected.length} conceptos`}</p>
-          <p className="truncate font-display text-lg font-bold tabular-nums text-ink">{summaryTotalLabel(preview, estimate)}</p>
+          <p className="text-[12px] text-text-muted">{preview ? "Total" : "Total estimado"} · {pairs.length > 1 ? `${pairs.length} pares` : selectedCount === 1 ? "1 concepto" : `${selectedCount} conceptos`}</p>
+          <p className="truncate font-display text-lg font-bold tabular-nums text-ink">{summaryTotalLabel(preview?.totals ?? estimate)}</p>
         </div>
-        <Button variant="ink" icon={CircleCheck} onClick={accept} disabled={pending || !organization?.canOperate || !customerId || !selected.length} className="shrink-0">{pending ? "Procesando…" : "Cliente acepta"}</Button>
+        <Button variant="ink" icon={CircleCheck} onClick={accept} disabled={pending || !organization?.canOperate || !ready} className="shrink-0">{pending ? "Procesando…" : "Cliente acepta"}</Button>
       </div>
 
-      <Dialog
-        open={dialog === "customer"}
-        onClose={() => setDialog(null)}
-        eyebrow={`${organization?.name} · ${organization?.branchName}`}
-        title="Nuevo cliente"
-        size="lg"
-        footer={<>
-          <Button variant="ghost" onClick={() => setDialog(null)}>Cancelar</Button>
-          <Button type="submit" form="sales-new-customer" formNoValidate icon={UserPlus} disabled={savingQuick}>{savingQuick ? "Guardando…" : "Crear y seleccionar"}</Button>
-        </>}
-      >
-        <form id="sales-new-customer" onSubmit={createCustomer} className="flex flex-col gap-4">
-          <CustomerFormFields fullName={newCustomerName} onFullNameChange={(value) => { setNewCustomerName(value); setDuplicates(null); }} phones={newCustomerPhones} onPhonesChange={(value) => { setNewCustomerPhones(value); setDuplicates(null); }} />
-          {dialogMessage ? <Alert tone={duplicates?.length ? "warning" : "danger"} role="alert">{dialogMessage}</Alert> : null}
-          {duplicates?.length ? (
-            <ul className="flex flex-col divide-y divide-line-soft rounded-control border border-line">
-              {duplicates.map((match) => (
-                <li key={match.id} className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5">
-                  <span className="min-w-0 text-sm"><strong className="text-ink">{match.name}</strong><span className="block text-text-muted">{match.phones.join(" · ") || "Sin teléfono"}</span></span>
-                  <Button size="sm" variant="secondary" onClick={() => { selectCustomer(match); setDuplicates(null); setDialog(null); setMessage(`${match.name} quedó seleccionado para esta venta.`); }}>Usar este cliente</Button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </form>
-      </Dialog>
-
-      <Dialog
-        open={dialog === "prescription"}
-        onClose={() => setDialog(null)}
-        eyebrow={selectedCustomer?.name ?? "Cliente"}
-        title="Nueva receta"
-        size="lg"
-        footer={<>
-          <Button variant="ghost" onClick={() => setDialog(null)}>Cancelar</Button>
-          <Button type="submit" form="sales-new-prescription" formNoValidate icon={Save} disabled={savingQuick}>{savingQuick ? "Guardando…" : "Guardar y asociar"}</Button>
-        </>}
-      >
-        <form id="sales-new-prescription" onSubmit={createPrescription} className="flex flex-col gap-4" noValidate>
-          <PrescriptionFormFields organizationId={selectedCustomer?.organizationId} />
-          {dialogMessage ? <Alert tone="danger" role="alert">{dialogMessage}</Alert> : null}
-        </form>
-      </Dialog>
+      <NewCustomerDialog open={dialog?.kind === "customer"} scope={scope} onClose={() => setDialog(null)}
+        onCreated={(customer) => { selectHolder(customer); setDialog(null); setMessage(`${customer.name} quedó seleccionado para esta venta.`); }} />
+      <NewRelativeDialog open={dialog?.kind === "relative"} scope={scope} holder={holder} onClose={() => setDialog(null)}
+        onCreated={(customer) => { if (dialog?.kind === "relative") setPatient(dialog.pairIndex, customer); setDialog(null); setMessage(`${customer.name} quedó registrado como familiar.`); }} />
+      <NewPrescriptionDialog open={dialog?.kind === "prescription"} scope={scope} patient={dialogPair ? patientOf(dialogPair) : null} onClose={() => setDialog(null)}
+        onCreated={(revision, note) => {
+          setRevisionRows((current) => [revision, ...current]);
+          if (dialog?.kind === "prescription") updatePair(dialog.pairIndex, (current) => ({ ...current, revisionId: revision.id }));
+          setDialog(null);
+          setMessage(note);
+        }} />
     </>
-  );
-}
-
-function QuickPicker({ label, actionLabel, onAction, disabled = false, children }: { label: string; actionLabel: string; onAction: () => void; disabled?: boolean; children: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-[13px] font-semibold text-text-label">{label}</span>
-        <Button variant="ghost" size="sm" icon={Plus} disabled={disabled} onClick={onAction} className="-mr-2">{actionLabel}</Button>
-      </div>
-      {children}
-    </div>
   );
 }
 
 const totalFormat = new Intl.NumberFormat("es-CU", { maximumFractionDigits: 2 });
 
-function summaryTotalLabel(preview: PriceResult | null, estimate: Record<string, number>) {
-  const totals = Object.entries(preview?.totals ?? estimate);
-  return totals.length ? totals.map(([currency, total]) => `${totalFormat.format(total)} ${currency}`).join(" + ") : "—";
+function summaryTotalLabel(totals: Record<string, number>) {
+  const entries = Object.entries(totals);
+  return entries.length ? entries.map(([currency, total]) => `${totalFormat.format(total)} ${currency}`).join(" + ") : "—";
 }

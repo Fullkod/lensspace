@@ -13,10 +13,10 @@ import { createClient } from '@/lib/supabase/client'
 import { refreshNavigationCounters } from '@/shared/lib/navigation-counters'
 import { Alert, Button, ButtonLink, Card, CardHeader, ProgressBar, Toast } from '@/shared/ui'
 
-import type { AcceptedOrder, PriceResult } from './sale-types'
+import type { AcceptedOrder, MultiPriceResult } from './sale-types'
 
 // After acceptance the seller can take the first payment with the same form as /orders.
-export function AcceptedOrderPanel({ order, customerName, preview, onNewSale }: { order: AcceptedOrder; customerName: string; preview: PriceResult | null; onNewSale: () => void }) {
+export function AcceptedOrderPanel({ order, customerName, preview, pairLabels, onNewSale }: { order: AcceptedOrder; customerName: string; preview: MultiPriceResult | null; pairLabels: string[]; onNewSale: () => void }) {
   const supabase = useMemo(() => createClient(), [])
   const [summary, setSummary] = useState<PaymentSummary | null>(null)
   const [error, setError] = useState('')
@@ -78,15 +78,20 @@ export function AcceptedOrderPanel({ order, customerName, preview, onNewSale }: 
       </div>
 
       {preview ? <Card>
-        <CardHeader title="Detalle del pedido" />
-        <div className="mt-3 divide-y divide-line-soft">
-          {preview.lineItems.map((line, index) => (
-            <div key={`${line.name}:${index}`} className="flex justify-between gap-4 py-3 text-sm">
-              <span className="text-text-secondary">{line.name}</span>
-              <strong className="shrink-0 font-display tabular-nums text-ink">{formatAmount(line.amount)} {line.currency}</strong>
+        <CardHeader title="Detalle del pedido" meta={preview.lines.length > 1 ? `${preview.lines.length} pares` : undefined} />
+        {preview.lines.map((pair) => (
+          <div key={pair.lineNumber} className="mt-3">
+            {preview.lines.length > 1 ? <p className="text-[13px] font-semibold text-ink">{pairLabels[pair.lineNumber - 1] ?? `Par ${pair.lineNumber}`}</p> : null}
+            <div className="divide-y divide-line-soft">
+              {pair.pricing.lineItems.map((line, index) => (
+                <div key={`${line.name}:${index}`} className="flex justify-between gap-4 py-3 text-sm">
+                  <span className="text-text-secondary">{line.name}</span>
+                  <strong className="shrink-0 font-display tabular-nums text-ink">{formatAmount(line.amount)} {line.currency}</strong>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
         <div className="mt-3 border-t border-dashed border-line-focus pt-3">
           {Object.entries(preview.totals).map(([currency, total]) => (
             <p key={currency} className="flex justify-between font-display text-xl font-bold tabular-nums text-ink"><span>Total</span><span>{formatAmount(total)} {currency}</span></p>

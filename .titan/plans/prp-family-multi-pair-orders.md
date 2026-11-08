@@ -287,6 +287,11 @@ advance (QA-52), messages to patients, refunds/cancellation of one pair, droppin
 - **Fix**: write the file in `supabase/migrations/`, `npx supabase db push --remote --dry-run`, then `--yes` (see `.titan/memory/reference/2026-11-07-supabase-mcp-destructive-sql.md`).
 - **Aplicar en**: every phase of this PRP.
 
+### 2026-11-08: Phase 3 is committed but not pushed until phase 5
+- **Error**: with the multi-pair sale UI live, a 2-pair order can be created, but production assignment is still per order and the transitional trigger refuses a job without a pair on a multi-pair order ("Indica el par del trabajo").
+- **Fix**: phase 3 stays as a local commit; it ships together with phases 4–5 so a family order can go through production and delivery. Single-pair sales are unchanged.
+- **Aplicar en**: any phase whose UI creates data the next phase must handle; a push to `main` deploys to Vercel.
+
 ### 2026-11-08: Phase 2 validated against production without a disposable database
 - **Context**: no local Docker stack; `supabase/tests/multi_pair_orders.sql` was run twice on production inside one transaction ending in `raise exception` (before the push, together with the migration; after the push, alone), via the Management API. Acceptance inside the test only queues a pg_net request, discarded by the rollback.
 - **Result**: all checks passed both times; fixture org/users and the new functions were absent afterwards. End to end from the current UI: `JAV-2026-000013` (1 pair, totals equal) and its WhatsApp `sent`.
