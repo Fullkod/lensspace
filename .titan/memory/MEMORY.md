@@ -19,8 +19,9 @@ Read relevant entries only. Store decisions with dates and evidence.
 
 - [2026-11-07 — Optometrist catalog, management and summary (LEN0008)](project/2026-11-07-optometrist-catalog.md)
 - [2026-11-08 — Family orders: several pairs, one payment; WhatsApp balance always in USD (LEN0006)](project/2026-11-08-family-multi-pair-orders.md)
+- [2026-11-08 — Money shown in USD everywhere; catalog, payments and cashboxes keep their currency](project/2026-11-08-money-shown-in-usd.md)
 - [2026-11-07 — Auth emails: Spanish templates from noreply@fullkod.com (LEN0004)](project/2026-11-07-auth-emails.md)
-- [2026-11-06 — Payments follow the sale currency; USD at the sale rate](project/2026-11-06-sale-currency-payments.md)
+- [2026-11-06 — Payments use the sale rate (display part superseded by 2026-11-08 money in USD)](project/2026-11-06-sale-currency-payments.md)
 - [2026-11-06 — Javier pilot kickoff: meeting plan and client handout](project/2026-11-06-javier-pilot-kickoff.md)
 - [2026-11-06 — WhatsApp message format (emoji title, bold data, italic signature)](project/2026-11-06-whatsapp-message-format.md)
 - [2026-10-19 — Product usage and organization activity (LEN0002)](project/2026-10-19-organization-activity.md)

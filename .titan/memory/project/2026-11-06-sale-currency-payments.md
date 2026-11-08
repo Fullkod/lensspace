@@ -2,6 +2,10 @@
 
 Date: 2026-11-06
 
+> **Superseded in part (2026-11-08)**: every sale is now shown and charged in USD by
+> default, not only USD-only sales; see `2026-11-08-money-shown-in-usd.md`. The rate
+> lock on USD payments below still applies.
+
 - Problem raised by Roberto: an order priced in USD showed its balance in CUP and the
   payment form opened in CUP. Each USD payment also accepted a seller-typed rate, so
   100 USD paid against a 100 USD order could leave a CUP balance or be rejected.

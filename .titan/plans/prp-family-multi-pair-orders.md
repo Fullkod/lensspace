@@ -1,6 +1,7 @@
 # PRP LEN0006 — Family / multi-pair orders (one payer, several pairs)
 
-> **Status**: APROBADO 2026-11-07 (Roberto; decisions below)
+> **Status**: IMPLEMENTADO 2026-11-08 — en producción (último deploy `08c8a72`), LEN0006 en revisión.
+> Aprobado 2026-11-07 (Roberto; decisions below).
 > **Date**: 2026-11-07
 > **Project**: LensSpace
 > **Tasknic**: LEN0006 (foundation for LEN0009 / LEN0010)
@@ -33,13 +34,13 @@ for wholesale accumulative orders (LEN0010).
 ## What
 
 ### Success criteria
-- [ ] A seller creates, in one sale, an order with 3 pairs for 3 different patients (holder + 2 relatives), each with its own prescription and concepts, including the **same** catalog item in two pairs; totals and graduation surcharges are correct per pair and in total.
-- [ ] The order has one number, one payment ledger and one balance; an advance on the whole order (e.g. half) is one normal payment; delivery stays blocked while any balance remains.
-- [ ] Each pair has its own lens/mounting jobs (assignable to different providers); providers see "OJV-2026-000012 · Par 2 de 3" and the prescription, never prices, payments or the patient's identity.
-- [ ] Exactly one "Pedido confirmado", one "Tu pedido está listo" and one "Pedido entregado" message go to the holder; "Avisar: listo para recoger" warns (does not block) while any pair is unfinished.
-- [ ] Every order created before this change shows exactly as before (backfilled as one pair, same totals, same production, same history); a new single-pair sale looks and works like today.
-- [ ] RLS: sellers only see their own sales (all pairs included), providers only their jobs; SQL rollback tests cover multi-pair acceptance, price change rejection, retry idempotency and production per pair.
-- [ ] Works at 390 px; `npm run lint`, `npm run typecheck`, `npm run build` and `supabase db lint` pass.
+- [x] A seller creates, in one sale, an order with 3 pairs for 3 different patients (holder + 2 relatives), each with its own prescription and concepts, including the **same** catalog item in two pairs; totals and graduation surcharges are correct per pair and in total. *(3 pairs + same item + per-pair surcharge in `multi_pair_orders.sql`; 2 pairs end to end in the UI, JAV-2026-000014)*
+- [x] The order has one number, one payment ledger and one balance; an advance on the whole order (e.g. half) is one normal payment; delivery stays blocked while any balance remains. *(delivery block unchanged; a partial payment on a family order was not run end to end)*
+- [x] Each pair has its own lens/mounting jobs (assignable to different providers); providers see "OJV-2026-000012 · Par 2 de 3" and the prescription, never prices, payments or the patient's identity. *(`production_per_pair.sql` + UI)*
+- [ ] Exactly one "Pedido confirmado", one "Tu pedido está listo" and one "Pedido entregado" message go to the holder; "Avisar: listo para recoger" warns (does not block) while any pair is unfinished. *(confirmed and ready verified `sent`; "Pedido entregado" on a family order not yet run)*
+- [x] Every order created before this change shows exactly as before (backfilled as one pair, same totals, same production, same history); a new single-pair sale looks and works like today. *(backfill checks phase 1; single-pair messages byte-identical)*
+- [x] RLS: sellers only see their own sales (all pairs included), providers only their jobs; SQL rollback tests cover multi-pair acceptance, price change rejection, retry idempotency and production per pair. *(lines/items inherit RLS through the parent order; seller isolation not re-tested specifically)*
+- [x] Works at 390 px; `npm run lint`, `npm run typecheck`, `npm run build` and `supabase db lint` pass. *(lint/typecheck local, build on Vercel, `supabase db lint` clean on 2026-11-08)*
 
 ### Expected behaviour (happy path)
 
@@ -260,11 +261,11 @@ advance (QA-52), messages to patients, refunds/cancellation of one pair, droppin
 ### Phase 7: Documentation and final validation
 **Objective**: `BUSINESS_LOGIC.md` (flow, states, provider assignment per pair), user manual, memory entry; end-to-end on «Óptica Javier Prueba».
 **Validation**:
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes
-- [ ] `npm run build` succeeds
-- [ ] Playwright screenshots at 390 px confirm sale, order, production and delivery
-- [ ] Success criteria met
+- [x] `npm run typecheck` passes
+- [x] `npm run lint` passes
+- [x] `npm run build` succeeds (Vercel; not run locally next to the dev server)
+- [ ] Playwright screenshots at 390 px confirm sale, order, production and delivery (delivery pending)
+- [ ] Success criteria met (pending: delivery of a family order, reviewer OK in Tasknic)
 
 ---
 
@@ -307,20 +308,30 @@ advance (QA-52), messages to patients, refunds/cancellation of one pair, droppin
 - **Error**: in a test, calling a mutating RPC inside a `WHERE id = f()` ran it once per scanned row (second call hit the unique index).
 - **Fix**: assign the RPC result to a variable first. **Aplicar en**: every SQL test calling volatile functions.
 
+### 2026-11-08: Money shown in USD (owner decision, after phase 7)
+- **Decision**: WhatsApp balances always in USD; then every order amount in the app in USD (balance, total, paid, KPIs, owner dashboard, quote equivalent), each order at its own frozen rate. Payment form defaults to USD.
+- **Base unchanged**: catalog prices, payments and cashboxes keep their currency; balances stay CUP equivalents. Catalog price preview and the platform activity panel stay in CUP.
+- **Where**: `20261108050000_whatsapp_balance_always_usd.sql`, `20261108060000_money_in_usd_views.sql` (`saleRate` in the orders list, `get_order_kpis` *Usd keys, dashboard *Usd figures), `sale-currency.ts` (`saleCurrency()` = USD, `isUsdOnly`, `toUsd`).
+- **Aplicar en**: LEN0009/LEN0010 and any new money figure: show USD, keep the stored currency.
+
+### Pending after closing
+- Deliver a family order end to end (payment to zero → "Marcar como entregado" → one "Pedido entregado").
+- Drop the transitional `default_*_line` triggers once no caller inserts without a line.
+
 ---
 
 ## Gotchas
 
-- [ ] `calculate_catalog_price` rejects duplicate item ids and reads one revision: call it per line, never with the concatenated items of all pairs.
-- [ ] `line_adjustments` are keyed by item id; with pairs they must be keyed per line (same item, different agreed price in two pairs).
-- [ ] `order_items` and `order_confirmations` have immutability triggers: the backfill must disable/enable them inside the migration (pattern in `20260921015206`).
-- [ ] The quotations UPDATE policy hides accepted rows from `FOR UPDATE` (QA-04): keep the existing retry lookup in `accept_quotation`.
-- [ ] Unique index `production_jobs_one_current_type_idx (order_id, job_type)` must be replaced, not kept, or the second pair can never get a job.
-- [ ] Notification dispatch keys are per order/event (`order_accepted:<id>`): keep them per order so a multi-pair order still sends one message.
-- [ ] Supabase MCP auto-declines destructive SQL: use the CLI for migrations with drops (`reference/2026-11-07-supabase-mcp-destructive-sql.md`).
-- [ ] WhatsApp formatting breaks with `*`/`_` in names; `{{pairs_summary}}` adds more names (first names only).
-- [ ] `event.currentTarget` is null after an `await` in form handlers (`reference/2026-11-07-event-currenttarget-after-await.md`).
-- [ ] Every view must work on mobile; pairs must be collapsible cards, not a wide table.
+- [x] `calculate_catalog_price` rejects duplicate item ids and reads one revision: call it per line, never with the concatenated items of all pairs.
+- [x] `line_adjustments` are keyed by item id; with pairs they must be keyed per line (same item, different agreed price in two pairs).
+- [x] `order_items` and `order_confirmations` have immutability triggers: the backfill must disable/enable them inside the migration (pattern in `20260921015206`).
+- [x] The quotations UPDATE policy hides accepted rows from `FOR UPDATE` (QA-04): keep the existing retry lookup in `accept_quotation`.
+- [x] Unique index `production_jobs_one_current_type_idx (order_id, job_type)` must be replaced, not kept, or the second pair can never get a job.
+- [x] Notification dispatch keys are per order/event (`order_accepted:<id>`): keep them per order so a multi-pair order still sends one message.
+- [x] Supabase MCP auto-declines destructive SQL: use the CLI for migrations with drops (`reference/2026-11-07-supabase-mcp-destructive-sql.md`).
+- [x] WhatsApp formatting breaks with `*`/`_` in names; `{{pairs_summary}}` adds more names (first names only).
+- [x] `event.currentTarget` is null after an `await` in form handlers (`reference/2026-11-07-event-currenttarget-after-await.md`).
+- [x] Every view must work on mobile; pairs must be collapsible cards, not a wide table.
 
 ## Anti-patterns
 
