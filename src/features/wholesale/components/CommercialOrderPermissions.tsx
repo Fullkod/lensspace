@@ -8,8 +8,8 @@ import { Alert, Card, CardHeader, Switch } from '@/shared/ui'
 
 type SellerPermission = { membershipId: number; name: string; branchName: string | null; enabled: boolean }
 
-// LEN0010 exception: the owner lets a seller see every commercial order of their branch,
-// change its status (close, reopen, ready, deliver) and collect. Audited server-side.
+// Exception: the owner lets a seller work every order of their branch (retail and
+// commercial): see balances, collect, notify, manage production and deliver. Audited server-side.
 export function CommercialOrderPermissions({ organizationId, canManage }: { organizationId: number; canManage: boolean }) {
   const supabase = useMemo(() => createClient(), [])
   const [sellers, setSellers] = useState<SellerPermission[] | null>(null)
@@ -38,8 +38,8 @@ export function CommercialOrderPermissions({ organizationId, canManage }: { orga
   if (sellers && sellers.length === 0) return null
   return <Card className="flex flex-col gap-4">
     <div className="flex flex-col gap-1">
-      <CardHeader title="Pedidos a ópticas: permiso especial" />
-      <p className="text-[13px] text-text-muted">Úsalo solo como excepción. El vendedor autorizado ve todos los pedidos a ópticas de su sucursal, puede cerrarlos, reabrirlos, entregarlos y cobrarlos. Las fichas y los precios de las ópticas siguen siendo solo tuyos.</p>
+      <CardHeader title="Permiso especial: todos los pedidos de la sucursal" />
+      <p className="text-[13px] text-text-muted">Úsalo solo como excepción. El vendedor autorizado ve todos los pedidos de su sucursal, ventas normales y pedidos a ópticas, con lo pagado y lo que se debe. Puede cobrarlos, avisar por WhatsApp, mover su producción y entregarlos, y cerrar o reabrir los pedidos a ópticas. Lo que cobre entra en su caja. Las cajas de los demás vendedores y las fichas y precios de las ópticas no los ve.</p>
     </div>
     {sellers === null ? <p className="text-sm text-text-muted">{error ?? 'Cargando vendedores…'}</p>
       : <div className="overflow-hidden rounded-card border border-line">

@@ -17,6 +17,7 @@ Read relevant entries only. Store decisions with dates and evidence.
 
 ## Project decisions
 
+- [2026-11-09 — Special seller permission covers every order of the branch](project/2026-11-09-special-permission-branch-orders.md)
 - [2026-11-09 — Client guide PDF: single guide in the Kshop format](project/2026-11-09-client-guide.md)
 - [2026-11-09 — Android APK: analysis and parked plan (GitHub Action + Vercel)](project/2026-11-09-android-apk-plan.md)
 - [2026-11-08 — Retail opticians: accounts, prices, accumulative commercial orders and collections (LEN0009 + LEN0010)](project/2026-11-08-retail-optician-commercial-orders.md)

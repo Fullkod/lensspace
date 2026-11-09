@@ -29,7 +29,7 @@ realmente el cambio.
 - El dueño consulta resultados consolidados o filtrados por sucursal.
 - Supabase RLS debe garantizar el aislamiento multiempresa en la base de datos.
 - El vendedor solo consulta sus propios pedidos, cobros y caja; no ve las ventas de
-  otros vendedores de la misma sucursal.
+  otros vendedores de la misma sucursal, salvo que el dueño le dé el permiso especial.
 - Todos los vendedores de una sucursal pueden buscar y reutilizar la ficha básica
   de sus clientes y las recetas necesarias, sin acceder a importes o pagos ajenos.
 - El MVP no tendrá roles separados de administrador general o encargado de sucursal.
@@ -100,9 +100,9 @@ organización registra sus pedidos.
   reabre (con motivo); un pedido cerrado no admite cambios sin reabrirlo. Reabrir no
   toca los trabajos que ya están en producción.
 - **Permiso especial:** como excepción, el dueño puede autorizar a un vendedor para
-  ver todos los pedidos comerciales de su sucursal, cambiar su estado (incluido
+  ver todos los pedidos de su sucursal (ventas normales y comerciales, con lo pagado y el saldo), avisar por WhatsApp, gestionar la producción y entregar, cambiar el estado de los comerciales (incluido
   cerrar y reabrir) y cobrar. Sin ese permiso, cada vendedor solo ve los suyos. Las
-  fichas y los precios siguen siendo solo del dueño.
+  fichas y los precios siguen siendo solo del dueño; lo que cobra entra en su caja y no ve las cotizaciones ni las cajas de otros vendedores.
 - **Entrega:** todo el pedido o trabajo por trabajo, quedando registrado quién
   entrega cada uno. Se puede entregar con saldo pendiente (a crédito).
 - **Cobro:** se registra una vez, en la caja de quien cobra, y se reparte entre uno o
