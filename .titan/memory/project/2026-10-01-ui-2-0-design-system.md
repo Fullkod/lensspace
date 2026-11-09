@@ -40,6 +40,9 @@ tooling and never ships.
 
 - 2026-10-01: every page header uses the featured ink `PageHeader` (with or without
   stat cards); the guide's white "simple" header is not used.
+- 2026-11-09: on phones (below `md`) the featured header shows only title and actions; the
+  stat cards, eyebrow and description open with a «Resumen» button, closed by default.
+  Pages without stats have no button. Desktop is unchanged.
 
 ## Constraints
 

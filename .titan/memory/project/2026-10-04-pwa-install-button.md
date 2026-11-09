@@ -20,5 +20,10 @@ never need to know the browser steps.
   from the SVG if the mark changes. Installed apps keep the old icon until reinstalled.
 - Install prompts only appear in production builds (the service worker registers only
   there). QA evidence: `.titan/qa/2026-10-04-pwa-install/`.
+- 2026-11-09: a phone showed Chrome's toolbar (X, title, URL) over the app. The production
+  manifest is correct. `lensspace.vercel.app` 307-redirects to `lensspace.fullkod.com`, so a
+  PWA installed from the old host runs out of scope and shows that bar (likely cause, not
+  confirmed on the device); a link opened as a Custom Tab looks the same. Fix: uninstall and
+  reinstall from `lensspace.fullkod.com`.
 - If a real store APK is ever needed, the free route is a Capacitor shell or TWA
   (Bubblewrap) pointing at the deployed URL, built with a manual GitHub Actions workflow.
