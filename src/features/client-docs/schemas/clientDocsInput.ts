@@ -4,7 +4,7 @@ import type { ClientDocsInput } from '../generators/types'
 export const clientDocsInput = {
   appName: 'LensSpace',
   clientName: 'la óptica',
-  appUrl: 'https://lensspace.vercel.app',
+  appUrl: 'https://lensspace.fullkod.com',
   modules: [
     {
       name: 'Panel principal',

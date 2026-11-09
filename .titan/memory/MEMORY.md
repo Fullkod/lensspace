@@ -17,6 +17,7 @@ Read relevant entries only. Store decisions with dates and evidence.
 
 ## Project decisions
 
+- [2026-11-09 — Client guide PDF: single guide in the Kshop format](project/2026-11-09-client-guide.md)
 - [2026-11-09 — Android APK: analysis and parked plan (GitHub Action + Vercel)](project/2026-11-09-android-apk-plan.md)
 - [2026-11-08 — Retail opticians: accounts, prices, accumulative commercial orders and collections (LEN0009 + LEN0010)](project/2026-11-08-retail-optician-commercial-orders.md)
 - [2026-11-07 — Optometrist catalog, management and summary (LEN0008)](project/2026-11-07-optometrist-catalog.md)
