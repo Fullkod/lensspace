@@ -27,3 +27,4 @@ never need to know the browser steps.
   reinstall from `lensspace.fullkod.com`.
 - If a real store APK is ever needed, the free route is a Capacitor shell or TWA
   (Bubblewrap) pointing at the deployed URL, built with a manual GitHub Actions workflow.
+  Parked plan since 2026-11-09: `project/2026-11-09-android-apk-plan.md`.
