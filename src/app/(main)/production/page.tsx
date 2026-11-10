@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { ProductionWorkspace, type AssignmentOrder, type ProductionJob, type Provider } from '@/features/production/components'
+import { getAccessSummary, isAccountUserOnly } from '@/lib/supabase/access'
 import { getCurrentUser } from '@/lib/supabase/current-user'
 import { createClient } from '@/lib/supabase/server'
 import { PageContainer } from '@/shared/ui'
@@ -8,6 +9,7 @@ export default async function ProductionPage() {
   const supabase = await createClient()
   const user = await getCurrentUser()
   if (!user) redirect('/login')
+  if (isAccountUserOnly(await getAccessSummary())) redirect('/account-jobs')
   const [{ data: jobData }, { data: currentMembershipData }] = await Promise.all([
     supabase.rpc('list_accessible_production_jobs'),
     supabase.from('organization_memberships').select('organization_id, role').eq('user_id', user.id).eq('status', 'active'),

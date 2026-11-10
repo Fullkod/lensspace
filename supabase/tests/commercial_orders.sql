@@ -31,9 +31,9 @@ insert into public.organization_modules (organization_id, module_key, changed_by
   (960000001, 'production', '96000000-0000-0000-0000-000000000001'),
   (960000001, 'cashbox', '96000000-0000-0000-0000-000000000001'),
   (960000002, 'optical_sales', '96000000-0000-0000-0000-000000000005');
-insert into public.catalog_items (id, organization_id, category, code, name, sale_price, currency, is_active) overriding system value values
-  (960000001, 960000001, 'vision_type', 'co_single', 'Monofocal CO', 100, 'USD', true),
-  (960000002, 960000001, 'frame', 'co_frame', 'Armadura CO', 3000, 'CUP', true);
+insert into public.catalog_items (id, organization_id, category, code, name, sale_price, currency, is_active, sales_channel) overriding system value values
+  (960000001, 960000001, 'vision_type', 'co_single', 'Monofocal CO', 100, 'USD', true, 'wholesale'),
+  (960000002, 960000001, 'frame', 'co_frame', 'Armadura CO', 3000, 'CUP', true, 'wholesale');
 insert into public.commercial_accounts (id, organization_id, name, discount_percent, created_by) overriding system value values
   (960000001, 960000001, 'Óptica Mayor', 10, '96000000-0000-0000-0000-000000000001');
 

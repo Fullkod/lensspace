@@ -17,6 +17,7 @@ Read relevant entries only. Store decisions with dates and evidence.
 
 ## Project decisions
 
+- [2026-11-09 — Wholesale catalog, prices per optician and optician users](project/2026-11-09-wholesale-catalog-account-users.md)
 - [2026-11-09 — Special seller permission covers every order of the branch](project/2026-11-09-special-permission-branch-orders.md)
 - [2026-11-09 — Client guide PDF: single guide in the Kshop format](project/2026-11-09-client-guide.md)
 - [2026-11-09 — Android APK: analysis and parked plan (GitHub Action + Vercel)](project/2026-11-09-android-apk-plan.md)

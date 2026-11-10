@@ -31,6 +31,7 @@ const navigationSections: { label: string; items: { href: string; label: string;
       { href: '/production', label: 'Producción', icon: Factory },
       { href: '/cashbox', label: 'Caja y cierres', icon: Wallet },
       { href: '/wholesale-orders', label: 'Pedidos a ópticas', icon: Truck },
+      { href: '/account-jobs', label: 'Mis trabajos', icon: Truck },
     ],
   },
   {

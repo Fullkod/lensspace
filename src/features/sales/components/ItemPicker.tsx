@@ -23,9 +23,10 @@ type ItemPickerProps = {
   onToggle: (itemId: number) => void
   onAgreedPriceChange: (itemId: number, value: string) => void
   onAdjustmentReasonChange: (itemId: number, value: string) => void
+  readOnlyPrices?: boolean
 }
 
-export function ItemPicker({ groupedItems, selected, agreedPrices, adjustmentReasons, onToggle, onAgreedPriceChange, onAdjustmentReasonChange }: ItemPickerProps) {
+export function ItemPicker({ groupedItems, selected, agreedPrices, adjustmentReasons, onToggle, onAgreedPriceChange, onAdjustmentReasonChange, readOnlyPrices = false }: ItemPickerProps) {
   return (
     <div className="flex flex-col gap-5">
       {groupedItems.map(([category, categoryItems]) => (
@@ -44,10 +45,10 @@ export function ItemPicker({ groupedItems, selected, agreedPrices, adjustmentRea
                     </span>
                     <span className="min-w-0">
                       <strong className="block font-display text-[15px] font-semibold text-ink [overflow-wrap:anywhere]">{item.name}</strong>
-                      <span className="mt-0.5 block text-sm font-semibold tabular-nums text-action">Base: {item.price.toLocaleString('es-CU')} {item.currency}</span>
+                      <span className="mt-0.5 block text-sm font-semibold tabular-nums text-action">{readOnlyPrices ? '' : 'Base: '}{item.price.toLocaleString('es-CU')} {item.currency}</span>
                     </span>
                   </button>
-                  {active ? (
+                  {active && !readOnlyPrices ? (
                     <div className="flex flex-col gap-3 border-t border-line px-3.5 pb-3.5 pt-3">
                       <Field label={`Precio acordado (${item.currency})`}>
                         <Input type="number" inputMode="decimal" min="0" step="0.01" value={agreedAmount} onChange={(event) => onAgreedPriceChange(item.id, event.target.value)} numeric />

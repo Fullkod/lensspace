@@ -15,8 +15,9 @@ const roleLabels: Record<string, string> = {
   seller: 'Vendedor',
   lens_provider: 'Cristalero/laboratorio',
   mounting_provider: 'Montador',
+  account_user: 'Usuario de óptica',
 }
-const rolePriority = ['owner', 'seller', 'lens_provider', 'mounting_provider']
+const rolePriority = ['owner', 'seller', 'lens_provider', 'mounting_provider', 'account_user']
 
 export const metadata: Metadata = {
   robots: {
@@ -111,6 +112,7 @@ async function loadShell(supabase: SupabaseServerClient, userId: string, email: 
   const mainRole = rolePriority.find((role) => memberships.some((membership) => membership.role === role))
   const identity: ShellIdentity = { ...account, roleLabel: mainRole ? roleLabels[mainRole] : 'Sin acceso activo', organizationName: 'Gestión óptica' }
   if (!organizationIds.length) return { allowedHrefs: ['/dashboard', '/manual'], counts: {}, identity, notices }
+  if (memberships.every(({ role }) => role === 'account_user')) return { allowedHrefs: ['/account-jobs'], counts: {}, identity, notices }
 
   const [{ data: moduleData }, { data: organizationData }] = await Promise.all([
     supabase.from('organization_modules').select('organization_id, module_key').in('organization_id', organizationIds).eq('is_enabled', true),
@@ -134,6 +136,7 @@ async function loadShell(supabase: SupabaseServerClient, userId: string, email: 
   // QA-64: every role reads the manual.
   const allowed = ['/dashboard', '/manual']
   if (memberships.some((membership) => membership.role === 'owner')) allowed.push('/team')
+  if (memberships.some((membership) => membership.role === 'account_user')) allowed.push('/account-jobs')
   if (hasAccess(['owner', 'seller'], 'optical_sales')) allowed.push(...commercialHrefs)
   if (hasAccess(['owner'], 'optical_sales')) allowed.push('/wholesale')
   if (hasAccess(['owner', 'seller'], 'optical_sales')) allowed.push('/wholesale-orders')

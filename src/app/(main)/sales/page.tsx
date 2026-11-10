@@ -19,7 +19,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   const [{ data: organizationData }, { data: branchData }, { data: itemData }, { data: overrideData }, { data: rateData }] = await Promise.all([
     organizationIds.length ? supabase.from('organizations').select('id, name, usd_to_cup_rate, usd_rate_date').in('id', organizationIds) : empty,
     organizationIds.length ? supabase.from('branches').select('id, organization_id, name').in('organization_id', organizationIds).eq('is_active', true) : empty,
-    organizationIds.length ? supabase.from('catalog_items').select('id, organization_id, category, name, sale_price, currency').eq('is_active', true).order('category').order('name') : empty,
+    organizationIds.length ? supabase.from('catalog_items').select('id, organization_id, category, name, sale_price, currency').eq('is_active', true).eq('sales_channel', 'retail').order('category').order('name') : empty,
     organizationIds.length ? supabase.from('catalog_item_overrides').select('organization_id, catalog_item_id, sale_price, currency, is_enabled').in('organization_id', organizationIds) : empty,
     // Latest rate used per organization: a better default than a fixed 420 (QA-22).
     organizationIds.length ? supabase.from('orders').select('organization_id, usd_to_cup_rate').in('organization_id', organizationIds).order('created_at', { ascending: false }).limit(50) : empty,

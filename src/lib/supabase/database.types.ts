@@ -348,6 +348,7 @@ export type Database = {
           name: string
           organization_id: number | null
           sale_price: number
+          sales_channel: string
           updated_at: string
         }
         Insert: {
@@ -363,6 +364,7 @@ export type Database = {
           name: string
           organization_id?: number | null
           sale_price: number
+          sales_channel?: string
           updated_at?: string
         }
         Update: {
@@ -378,6 +380,7 @@ export type Database = {
           name?: string
           organization_id?: number | null
           sale_price?: number
+          sales_channel?: string
           updated_at?: string
         }
         Relationships: [
@@ -403,27 +406,30 @@ export type Database = {
           catalog_item_id: number
           changed_at: string
           changed_by: string
-          currency: string
+          currency: string | null
+          is_offered: boolean
           organization_id: number
-          sale_price: number
+          sale_price: number | null
         }
         Insert: {
           account_id: number
           catalog_item_id: number
           changed_at?: string
           changed_by: string
-          currency: string
+          currency?: string | null
+          is_offered?: boolean
           organization_id: number
-          sale_price: number
+          sale_price?: number | null
         }
         Update: {
           account_id?: number
           catalog_item_id?: number
           changed_at?: string
           changed_by?: string
-          currency?: string
+          currency?: string | null
+          is_offered?: boolean
           organization_id?: number
-          sale_price?: number
+          sale_price?: number | null
         }
         Relationships: [
           {
@@ -566,6 +572,7 @@ export type Database = {
           created_by: string
           full_name: string
           id: number
+          is_account_patient: boolean
           messaging_consent: boolean
           national_id: string | null
           notes: string | null
@@ -583,6 +590,7 @@ export type Database = {
           created_by: string
           full_name: string
           id?: never
+          is_account_patient?: boolean
           messaging_consent?: boolean
           national_id?: string | null
           notes?: string | null
@@ -600,6 +608,7 @@ export type Database = {
           created_by?: string
           full_name?: string
           id?: never
+          is_account_patient?: boolean
           messaging_consent?: boolean
           national_id?: string | null
           notes?: string | null
@@ -1467,6 +1476,7 @@ export type Database = {
         Row: {
           branch_id: number | null
           can_manage_commercial_orders: boolean
+          commercial_account_id: number | null
           created_at: string
           id: number
           organization_id: number
@@ -1478,6 +1488,7 @@ export type Database = {
         Insert: {
           branch_id?: number | null
           can_manage_commercial_orders?: boolean
+          commercial_account_id?: number | null
           created_at?: string
           id?: never
           organization_id: number
@@ -1489,6 +1500,7 @@ export type Database = {
         Update: {
           branch_id?: number | null
           can_manage_commercial_orders?: boolean
+          commercial_account_id?: number | null
           created_at?: string
           id?: never
           organization_id?: number
@@ -1503,6 +1515,13 @@ export type Database = {
             columns: ["branch_id", "organization_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id", "organization_id"]
+          },
+          {
+            foreignKeyName: "organization_memberships_commercial_account_fkey"
+            columns: ["commercial_account_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_accounts"
             referencedColumns: ["id", "organization_id"]
           },
           {
@@ -2572,9 +2591,18 @@ export type Database = {
         }
         Returns: Json
       }
+      add_my_account_job: {
+        Args: {
+          request_id?: string
+          target_line: Json
+          target_membership_id: number
+        }
+        Returns: Json
+      }
       add_organization_member: {
         Args: {
           actor_user_id: string
+          target_account_id?: number
           target_branch_id: number
           target_organization_id: number
           target_role: string
@@ -2742,6 +2770,10 @@ export type Database = {
             }
             Returns: number
           }
+      create_my_account_prescription: {
+        Args: { revision: Json; target_membership_id: number }
+        Returns: Json
+      }
       create_optometrist: {
         Args: { optometrist_name: string; target_organization_id: number }
         Returns: number
@@ -2807,6 +2839,10 @@ export type Database = {
         Args: { target_session_id: number }
         Returns: boolean
       }
+      ensure_commercial_order_patient: {
+        Args: { target_order_id: number }
+        Returns: Json
+      }
       find_auth_user_by_email: {
         Args: { target_email: string }
         Returns: {
@@ -2824,6 +2860,7 @@ export type Database = {
         Returns: Json
       }
       get_error_group: { Args: { target_group_id: number }; Returns: Json }
+      get_my_account_portal: { Args: never; Returns: Json }
       get_my_subscription_notices: { Args: never; Returns: Json }
       get_navigation_counters: { Args: never; Returns: Json }
       get_openwa_runtime_config: { Args: never; Returns: Json }
@@ -3010,6 +3047,10 @@ export type Database = {
       }
       respond_to_organization_invitation: {
         Args: { accept: boolean; target_membership_id: number }
+        Returns: undefined
+      }
+      save_commercial_account_prices: {
+        Args: { entries: Json; target_account_id: number }
         Returns: undefined
       }
       save_multi_line_quotation: {

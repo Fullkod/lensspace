@@ -23,7 +23,7 @@ const measures = [
 const prismBases = [{ value: '', label: 'Sin base' }, { value: 'up', label: 'Arriba' }, { value: 'down', label: 'Abajo' }, { value: 'in', label: 'Interna' }, { value: 'out', label: 'Externa' }]
 
 // One block per eye: 3 columns on mobile, 6 from md, so no horizontal scroll is needed.
-export function PrescriptionFormFields({ organizationId }: { organizationId?: number }) {
+export function PrescriptionFormFields({ organizationId, allowAttachment = true }: { organizationId?: number; allowAttachment?: boolean }) {
   return (
     <div className="flex flex-col gap-5">
       {eyes.map((eye) => (
@@ -56,13 +56,15 @@ export function PrescriptionFormFields({ organizationId }: { organizationId?: nu
         <Field label="Observaciones" className="md:col-span-2 lg:col-span-3"><Textarea name="notes" rows={3} /></Field>
       </div>
 
-      <label className="flex cursor-pointer flex-col gap-2 rounded-card border border-dashed border-line-focus bg-action-wash p-4 text-[15px] text-text transition hover:border-action">
-        <span className="flex items-center gap-2 font-semibold text-ink">
-          <Upload aria-hidden="true" size={18} className="text-action" />
-          Original privado <span className="text-[13px] font-normal text-text-muted">(opcional, JPG, PNG, WebP o PDF, máx. 10 MB)</span>
-        </span>
-        <input className="block w-full text-sm text-text-muted file:mr-3 file:min-h-10 file:cursor-pointer file:rounded-[8px] file:border-0 file:bg-action-soft file:px-3 file:font-display file:text-[13px] file:font-semibold file:text-action" name="attachment" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" />
-      </label>
+      {allowAttachment ? (
+        <label className="flex cursor-pointer flex-col gap-2 rounded-card border border-dashed border-line-focus bg-action-wash p-4 text-[15px] text-text transition hover:border-action">
+          <span className="flex items-center gap-2 font-semibold text-ink">
+            <Upload aria-hidden="true" size={18} className="text-action" />
+            Original privado <span className="text-[13px] font-normal text-text-muted">(opcional, JPG, PNG, WebP o PDF, máx. 10 MB)</span>
+          </span>
+          <input className="block w-full text-sm text-text-muted file:mr-3 file:min-h-10 file:cursor-pointer file:rounded-[8px] file:border-0 file:bg-action-soft file:px-3 file:font-display file:text-[13px] file:font-semibold file:text-action" name="attachment" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" />
+        </label>
+      ) : null}
     </div>
   )
 }

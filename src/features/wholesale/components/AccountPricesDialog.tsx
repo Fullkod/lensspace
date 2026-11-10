@@ -1,113 +1,105 @@
 'use client'
 
-import { Tags, Trash2 } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { Copy, Tags } from 'lucide-react'
+import { useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
 import { FormSelect } from '@/shared/components'
 import { friendlyError } from '@/shared/lib/friendly-error'
-import { Alert, Button, Dialog, Field, IconButton, Input, SegmentedControl } from '@/shared/ui'
+import { Alert, Button, Dialog, Input, Switch } from '@/shared/ui'
 
-import { accountPrice, categoryLabels, discountLabel, formatPrice, parseDecimal, type AccountPrice, type CatalogOption, type CommercialAccount, type Currency } from '../types'
+import { accountPrice, categoryLabels, discountLabel, formatPrice, parseDecimal, type AccountPrice, type CatalogOption, type CommercialAccount } from '../types'
 
-// Fixed prices per catalog item for one retail optician (LEN0009). The fixed price wins
-// over the general discount; items without one get the discount on the catalog price.
-export function AccountPricesDialog({ account, catalog, prices, canManage, onClose, onChanged }: {
+type Draft = { price: string; currency: string; offered: boolean }
+
+function draftFor(item: CatalogOption, row?: AccountPrice): Draft {
+  return { price: row?.sale_price == null ? '' : String(row.sale_price).replace('.', ','), currency: row?.currency ?? item.currency, offered: row?.is_offered ?? true }
+}
+
+// Every wholesale product for one optician in a single table. An empty price means the
+// base price (with the general discount, if any); only the differences are stored.
+export function AccountPricesDialog({ account, catalog, prices, otherAccounts, otherPrices, canManage, onClose, onChanged }: {
   account: CommercialAccount
   catalog: CatalogOption[]
   prices: AccountPrice[]
+  otherAccounts: Pick<CommercialAccount, 'id' | 'name'>[]
+  otherPrices: AccountPrice[]
   canManage: boolean
   onClose: () => void
   onChanged: (prices: AccountPrice[]) => void
 }) {
-  const [itemId, setItemId] = useState('')
-  const [amount, setAmount] = useState('')
-  const [currency, setCurrency] = useState<Currency>('USD')
+  const discount = Number(account.discount_percent)
+  const [drafts, setDrafts] = useState<Record<number, Draft>>(() => Object.fromEntries(catalog.map((item) => [item.id, draftFor(item, prices.find(({ catalog_item_id }) => catalog_item_id === item.id))])))
+  const [sourceId, setSourceId] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const discount = Number(account.discount_percent)
-  const fixedFor = (id: number) => prices.find(({ catalog_item_id }) => catalog_item_id === id)
-  const fixedItems = catalog.filter(({ id }) => fixedFor(id))
-  const formId = `account-prices-${account.id}`
 
-  function pickItem(value: string) {
-    setItemId(value)
-    setError(null)
-    const item = catalog.find(({ id }) => id === Number(value))
-    const fixed = item ? fixedFor(item.id) : undefined
-    setAmount(fixed ? String(fixed.sale_price).replace('.', ',') : '')
-    setCurrency(((fixed?.currency ?? item?.currency) === 'CUP' ? 'CUP' : 'USD'))
+  const change = (id: number, patch: Partial<Draft>) => setDrafts((current) => ({ ...current, [id]: { ...current[id], ...patch } }))
+
+  function copyFrom() {
+    const source = otherPrices.filter(({ account_id }) => account_id === Number(sourceId))
+    setDrafts(Object.fromEntries(catalog.map((item) => [item.id, draftFor(item, source.find(({ catalog_item_id }) => catalog_item_id === item.id))])))
   }
 
-  async function save(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const item = catalog.find(({ id }) => id === Number(itemId))
-    if (!item) return setError('Elige un artículo del catálogo.')
-    const price = parseDecimal(amount)
-    if (price === null || Number.isNaN(price)) return setError('Escribe un precio válido, por ejemplo 25 o 25,50.')
+  async function save() {
+    const next: AccountPrice[] = []
+    for (const item of catalog) {
+      const draft = drafts[item.id]
+      const price = parseDecimal(draft.price)
+      if (Number.isNaN(price)) return setError(`Revisa el precio de ${item.name}: escribe por ejemplo 25 o 25,50.`)
+      if (price !== null || !draft.offered) next.push({ account_id: account.id, catalog_item_id: item.id, sale_price: price, currency: price === null ? null : draft.currency, is_offered: draft.offered })
+    }
     setPending(true); setError(null)
-    const supabase = createClient()
-    const exists = Boolean(fixedFor(item.id))
-    // UPDATE is granted only on price and currency, so an upsert would be refused.
-    const { error: saveError } = exists
-      ? await supabase.from('commercial_account_prices').update({ sale_price: price, currency } as never).eq('account_id', account.id).eq('catalog_item_id', item.id)
-      : await supabase.from('commercial_account_prices').insert({ account_id: account.id, organization_id: account.organization_id, catalog_item_id: item.id, sale_price: price, currency } as never)
+    const entries = catalog.map((item) => {
+      const saved = next.find(({ catalog_item_id }) => catalog_item_id === item.id)
+      return { item_id: item.id, price: saved?.sale_price ?? null, currency: saved?.currency ?? null, offered: drafts[item.id].offered }
+    })
+    const { error: saveError } = await createClient().rpc('save_commercial_account_prices', { target_account_id: account.id, entries } as never)
     setPending(false)
-    if (saveError) return setError(friendlyError(saveError, 'No pudimos guardar el precio.'))
-    const entry: AccountPrice = { account_id: account.id, catalog_item_id: item.id, sale_price: price, currency }
-    onChanged([...prices.filter(({ catalog_item_id }) => catalog_item_id !== item.id), entry])
-    setItemId(''); setAmount('')
+    if (saveError) return setError(friendlyError(saveError, 'No pudimos guardar los precios.'))
+    onChanged(next)
+    onClose()
   }
-
-  async function remove(item: CatalogOption) {
-    setPending(true); setError(null)
-    const { error: removeError } = await createClient().from('commercial_account_prices').delete().eq('account_id', account.id).eq('catalog_item_id', item.id)
-    setPending(false)
-    if (removeError) return setError(friendlyError(removeError, 'No pudimos quitar el precio.'))
-    onChanged(prices.filter(({ catalog_item_id }) => catalog_item_id !== item.id))
-  }
-
-  const options = [{ value: '', label: 'Elige un artículo' }, ...catalog.map((item) => ({
-    value: String(item.id),
-    label: `${categoryLabels[item.category] ?? item.category} · ${item.name} (${formatPrice(item.price, item.currency)})`,
-  }))]
 
   return <Dialog
     open
     onClose={() => { if (!pending) onClose() }}
     eyebrow={account.name}
     title="Precios de la óptica"
-    description={discount ? `${discountLabel(discount)} sobre el catálogo. Los precios fijos lo sustituyen.` : 'Sin descuento general: lo que no tenga precio fijo sale a precio de catálogo.'}
+    description={`Deja vacío lo que vaya a precio base${discount ? ` (con ${discountLabel(discount).toLowerCase()})` : ''}. Solo escribe lo que sea diferente.`}
     icon={Tags}
-    size="md"
-    footer={<Button variant="ghost" onClick={onClose} disabled={pending}>Cerrar</Button>}
+    size="lg"
+    footer={<>
+      <Button variant="ghost" onClick={onClose} disabled={pending}>{canManage ? 'Cancelar' : 'Cerrar'}</Button>
+      {canManage && catalog.length ? <Button onClick={() => void save()} disabled={pending}>{pending ? 'Guardando…' : 'Guardar precios'}</Button> : null}
+    </>}
   >
     <div className="flex flex-col gap-4">
-      {fixedItems.length === 0 ? <p className="text-sm text-text-muted">Aún no hay precios fijos para esta óptica.</p>
-        : <div className="overflow-hidden rounded-card border border-line">
-          {fixedItems.map((item) => {
-            const fixed = accountPrice(item, discount, fixedFor(item.id))
-            return <div key={item.id} className="flex items-center gap-3 border-b border-line-soft px-4 py-3 last:border-b-0">
-              <div className="flex min-w-0 flex-1 flex-col">
+      {catalog.length === 0 ? <p className="text-sm text-text-muted">Primero crea los productos en «Catálogo para ópticas».</p> : <>
+        {canManage && otherAccounts.length ? <div className="flex flex-wrap items-end gap-2 rounded-card border border-line-soft bg-field p-3">
+          <div className="min-w-[200px] flex-1"><FormSelect ariaLabel="Óptica de la que copiar" value={sourceId} onValueChange={setSourceId} options={[{ value: '', label: 'Copiar precios de otra óptica' }, ...otherAccounts.map(({ id, name }) => ({ value: String(id), label: name }))]} /></div>
+          <Button variant="ghost" icon={Copy} disabled={!sourceId || pending} onClick={copyFrom}>Copiar</Button>
+        </div> : null}
+
+        <div className="overflow-hidden rounded-card border border-line">
+          {catalog.map((item) => {
+            const draft = drafts[item.id]
+            const base = accountPrice(item, discount)
+            return <div key={item.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line-soft px-4 py-3 last:border-b-0">
+              <div className="flex min-w-0 flex-1 basis-full flex-col sm:basis-0">
                 <span className="truncate text-[15px] font-semibold text-ink">{item.name}</span>
-                <span className="text-[13px] text-text-muted">{categoryLabels[item.category] ?? item.category} · catálogo {formatPrice(item.price, item.currency)}</span>
+                <span className="text-[13px] text-text-muted">{categoryLabels[item.category] ?? item.category} · base {formatPrice(item.price, item.currency)}</span>
               </div>
-              <span className="shrink-0 font-display text-[15px] font-bold tabular-nums text-ink">{formatPrice(fixed.price, fixed.currency)}</span>
-              {canManage ? <IconButton icon={Trash2} label={`Quitar precio fijo de ${item.name}`} onClick={() => void remove(item)} disabled={pending} /> : null}
+              <div className="flex items-center gap-1.5">
+                <div className="w-24"><Input aria-label={`Precio de ${item.name} para ${account.name}`} value={draft.price} placeholder={String(base.price).replace('.', ',')} disabled={!canManage || !draft.offered} onChange={(event) => change(item.id, { price: event.target.value })} inputMode="decimal" maxLength={12} autoComplete="off" /></div>
+                <span className="text-[13px] font-semibold text-text-muted">{draft.currency}</span>
+              </div>
+              <Switch checked={draft.offered} disabled={!canManage} onChange={(offered) => change(item.id, { offered })} label={draft.offered ? 'Se ofrece' : 'No se ofrece'} />
             </div>
           })}
-        </div>}
-
-      {canManage ? <form id={formId} onSubmit={save} className="flex flex-col gap-3 rounded-card border border-line-soft bg-field p-4" noValidate>
-        <p className="text-[13px] font-semibold text-text-label">Agregar o cambiar un precio fijo</p>
-        <Field as="div" label="Artículo"><FormSelect ariaLabel="Artículo" value={itemId} onValueChange={pickItem} options={options} /></Field>
-        <div className="flex flex-wrap items-end gap-3">
-          <Field label="Precio para esta óptica" className="min-w-[140px] flex-1"><Input value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="decimal" maxLength={12} autoComplete="off" /></Field>
-          <SegmentedControl label="Moneda" value={currency} onChange={setCurrency} options={[{ value: 'USD', label: 'USD' }, { value: 'CUP', label: 'CUP' }]} />
         </div>
-        {error ? <Alert tone="danger" role="alert">{error}</Alert> : null}
-        <div className="flex justify-end"><Button type="submit" form={formId} disabled={pending || !itemId}>{pending ? 'Guardando…' : 'Guardar precio'}</Button></div>
-      </form> : error ? <Alert tone="danger" role="alert">{error}</Alert> : null}
+      </>}
+      {error ? <Alert tone="danger" role="alert">{error}</Alert> : null}
     </div>
   </Dialog>
 }

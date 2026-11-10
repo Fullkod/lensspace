@@ -42,7 +42,7 @@ export default async function CatalogPage() {
     }
   }))
 
-  const itemsQuery = supabase.from('catalog_items').select('*').order('category').order('name')
+  const itemsQuery = supabase.from('catalog_items').select('*').eq('sales_channel', 'retail').order('category').order('name')
   const rulesQuery = supabase.from('graduation_rules').select('*').eq('is_active', true).order('name')
   const [{ data: items }, { data: overrides }, { data: rules }, { data: revisions }] = await Promise.all([
     isPlatformAdmin ? itemsQuery.is('organization_id', null) : itemsQuery,

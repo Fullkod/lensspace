@@ -4,10 +4,10 @@ export type Currency = 'CUP' | 'USD'
 
 export type CommercialAccount = Tables<'commercial_accounts'>
 
-export type AccountPrice = Pick<Tables<'commercial_account_prices'>, 'account_id' | 'catalog_item_id' | 'sale_price' | 'currency'>
+export type AccountPrice = Pick<Tables<'commercial_account_prices'>, 'account_id' | 'catalog_item_id' | 'sale_price' | 'currency' | 'is_offered'>
 
-// Catalog item as the organization sells it at retail (its override applied).
-export type CatalogOption = { id: number; category: string; name: string; price: number; currency: string }
+// Wholesale product with its base price.
+export type CatalogOption = { id: number; category: string; name: string; price: number; currency: string; isActive: boolean }
 
 export type WholesaleOrganization = { id: number; name: string; canManage: boolean; catalog: CatalogOption[] }
 
@@ -33,9 +33,9 @@ export function parseDecimal(value: string) {
 
 export const discountLabel = (percent: number) => `Descuento ${amountFormat.format(Number(percent))} %`
 
-// Retail price with the account rules: fixed price wins, otherwise the general discount.
+// Base price with the account rules: fixed price wins, otherwise the general discount.
 export function accountPrice(item: CatalogOption, discountPercent: number, fixed?: AccountPrice) {
-  if (fixed) return { price: Number(fixed.sale_price), currency: fixed.currency, source: 'fixed' as const }
+  if (fixed?.sale_price != null && fixed.currency) return { price: Number(fixed.sale_price), currency: fixed.currency, source: 'fixed' as const }
   const price = Math.round(item.price * (1 - Number(discountPercent) / 100) * 100) / 100
   return { price, currency: item.currency, source: Number(discountPercent) > 0 ? ('discount' as const) : ('catalog' as const) }
 }

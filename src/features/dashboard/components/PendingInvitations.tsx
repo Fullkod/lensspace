@@ -10,7 +10,7 @@ import { Alert, Button } from '@/shared/ui'
 
 export type PendingInvitation = { membershipId: number; organizationName: string; role: string; branchName: string | null }
 
-const roleLabels: Record<string, string> = { seller: 'vendedor', lens_provider: 'cristalero/laboratorio', mounting_provider: 'montador' }
+const roleLabels: Record<string, string> = { seller: 'vendedor', lens_provider: 'cristalero/laboratorio', mounting_provider: 'montador', account_user: 'usuario de óptica' }
 
 // QA-39: an existing account joins an organization only after accepting here.
 export function PendingInvitations({ invitations }: { invitations: PendingInvitation[] }) {

@@ -9,7 +9,8 @@ const corsHeaders = {
 type InvitationRequest = {
   organizationId: number
   branchId: number | null
-  role: 'seller' | 'lens_provider' | 'mounting_provider'
+  role: 'seller' | 'lens_provider' | 'mounting_provider' | 'account_user'
+  commercialAccountId?: number | null
   displayName: string
   email: string
 }
@@ -28,7 +29,8 @@ function isValidRequest(value: unknown): value is InvitationRequest {
   return (
     Number.isSafeInteger(input.organizationId) &&
     (input.branchId === null || Number.isSafeInteger(input.branchId)) &&
-    ['seller', 'lens_provider', 'mounting_provider'].includes(input.role ?? '') &&
+    ['seller', 'lens_provider', 'mounting_provider', 'account_user'].includes(input.role ?? '') &&
+    (input.role !== 'account_user' || Number.isSafeInteger(input.commercialAccountId)) &&
     typeof input.displayName === 'string' &&
     input.displayName.trim().length > 0 &&
     typeof input.email === 'string' &&
@@ -164,8 +166,9 @@ Deno.serve(async (request) => {
       actor_user_id: actor.id,
       target_user_id: targetUserId,
       target_organization_id: payload.organizationId,
-      target_branch_id: payload.role === 'seller' ? payload.branchId : null,
+      target_branch_id: payload.role === 'seller' || payload.role === 'account_user' ? payload.branchId : null,
       target_role: payload.role,
+      target_account_id: payload.role === 'account_user' ? payload.commercialAccountId : null,
       // QA-39: never enroll someone without consent. New accounts activate when they
       // confirm the invitation email; existing ones accept it from their dashboard.
       target_status: 'invited',

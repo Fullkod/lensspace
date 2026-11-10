@@ -11,6 +11,7 @@ import { formatUsd } from '../order-types'
 import { discountLabel, type AccountPrice, type CommercialAccount, type WholesaleOrganization } from '../types'
 import { AccountFormDialog } from './AccountFormDialog'
 import { AccountPricesDialog } from './AccountPricesDialog'
+import { WholesaleCatalog } from './WholesaleCatalog'
 
 type Action = { kind: 'form'; organization: WholesaleOrganization; account: CommercialAccount | null } | { kind: 'prices'; organization: WholesaleOrganization; account: CommercialAccount }
 
@@ -56,11 +57,13 @@ export function WholesaleWorkspace({ userId, organizations, initialAccounts, ini
       const own = accounts.filter(({ organization_id }) => organization_id === organization.id)
       const archived = own.filter(({ archived_at }) => archived_at)
       const visible = showArchived ? own : own.filter(({ archived_at }) => !archived_at)
-      return <Card key={organization.id} className="flex flex-col gap-4">
+      return <div key={organization.id} className="flex flex-col gap-5">
+      <WholesaleCatalog organizationId={organization.id} userId={userId} items={organization.catalog} canManage={organization.canManage} />
+      <Card className="flex flex-col gap-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <CardHeader title={organizations.length > 1 ? organization.name : 'Ópticas minoristas'} meta={String(own.length - archived.length)} />
-            <p className="text-[13px] text-text-muted">Ópticas a las que vendes. No necesitan usuario en LensSpace; cada una puede tener su descuento y sus precios fijos.</p>
+            <p className="text-[13px] text-text-muted">Ópticas a las que vendes. Cada una compra del catálogo para ópticas a sus propios precios.</p>
           </div>
           {organization.canManage ? <Button icon={Plus} onClick={() => setAction({ kind: 'form', organization, account: null })}>Nueva óptica</Button> : null}
         </div>
@@ -68,7 +71,7 @@ export function WholesaleWorkspace({ userId, organizations, initialAccounts, ini
         {visible.length === 0 ? <EmptyState icon={Store} title="Aún no hay ópticas minoristas" description="Agrega la primera para darle precios propios." />
           : <div className="overflow-hidden rounded-card border border-line">
             {visible.map((account) => {
-              const fixedCount = prices.filter(({ account_id }) => account_id === account.id).length
+              const fixedCount = prices.filter(({ account_id, sale_price }) => account_id === account.id && sale_price !== null).length
               const details = [account.contact_name, account.phone].filter(Boolean).join(' · ')
               return <div key={account.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line-soft px-4 py-3 last:border-b-0">
                 <div className="flex min-w-0 flex-1 basis-full flex-col gap-1 sm:basis-0">
@@ -100,6 +103,7 @@ export function WholesaleWorkspace({ userId, organizations, initialAccounts, ini
           {showArchived ? 'Ocultar archivadas' : `Ver archivadas (${archived.length})`}
         </button> : null}
       </Card>
+      </div>
     })}
 
     {action?.kind === 'form' ? <AccountFormDialog
@@ -112,8 +116,10 @@ export function WholesaleWorkspace({ userId, organizations, initialAccounts, ini
     /> : null}
     {action?.kind === 'prices' ? <AccountPricesDialog
       account={action.account}
-      catalog={action.organization.catalog}
+      catalog={action.organization.catalog.filter(({ isActive }) => isActive)}
       prices={prices.filter(({ account_id }) => account_id === action.account.id)}
+      otherAccounts={accounts.filter(({ id, organization_id, archived_at }) => id !== action.account.id && organization_id === action.organization.id && !archived_at)}
+      otherPrices={prices}
       canManage={action.organization.canManage && !action.account.archived_at}
       onClose={() => setAction(null)}
       onChanged={(next) => setPrices((current) => [...current.filter(({ account_id }) => account_id !== action.account.id), ...next])}

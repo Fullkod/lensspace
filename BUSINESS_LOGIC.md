@@ -76,21 +76,29 @@ realmente el cambio.
 ### Venta a ópticas minoristas (LEN0009 + LEN0010, 2026-11-08)
 
 La organización también puede trabajar como proveedora de otras ópticas («ópticas
-minoristas»). Esas ópticas no tienen usuario en LensSpace: el personal de la
-organización registra sus pedidos.
+minoristas»). El personal de la organización registra sus pedidos, y cada óptica
+puede tener además sus propios usuarios para agregar trabajos.
 
 - **Ficha de la óptica:** nombre, persona de contacto, teléfono, correo, dirección,
   condiciones de pago (texto y días de crédito opcionales) y notas. Pertenece a la
   organización (se comparte entre sucursales). Solo el dueño la crea, la edita o la
   archiva; archivarla no borra su historial.
-- **Precios propios:** cada óptica puede tener un descuento general (%) sobre el
-  precio de catálogo y precios fijos para artículos concretos; el precio fijo gana.
-  Los recargos por graduación también llevan el descuento. Estos precios no cambian
-  el catálogo ni los precios de otras ópticas o de la venta al detalle. Solo el
-  dueño los ve y los cambia.
-- **Pacientes:** cada trabajo es para un paciente de la óptica minorista, con su
-  receta. Se guardan como clientes ligados a esa óptica (teléfono de la óptica,
-  WhatsApp desactivado) y no aparecen en la lista de clientes de la sucursal.
+- **Catálogo para ópticas:** los productos que se venden a ópticas son distintos de
+  los de la venta normal y no se mezclan: cada producto pertenece a un solo catálogo.
+  Solo el dueño los crea y les pone un precio base.
+- **Precios de cada óptica:** una óptica nueva compra a los precios base. El dueño
+  puede ponerle un descuento general (%), un precio propio por producto (gana sobre el
+  descuento), ocultarle productos o copiar los precios de otra óptica. Los recargos por
+  graduación llevan el descuento. Solo el dueño ve y cambia estas condiciones.
+- **Trabajos sin paciente:** al agregar un trabajo no se pide paciente. Por dentro se
+  guarda con el nombre de la óptica, y no aparece en la lista de clientes de la sucursal.
+  Cada trabajo se distingue por su número y su receta.
+- **Usuario de la óptica:** el dueño puede invitar a uno o varios usuarios por óptica,
+  eligiendo la sucursal que recibe sus trabajos. Ese usuario solo agrega trabajos a los
+  precios de su óptica, sin poder cambiarlos ni quitar trabajos, y ve sus trabajos, su
+  estado y lo que debe. El primer trabajo abre el pedido con la tasa de la organización y
+  los siguientes se suman mientras siga abierto. No ve pagos, otras ópticas, clientes,
+  caja ni producción.
 - **Pedido comercial:** se abre para una óptica, en una sucursal, y acumula trabajos
   con receta durante varios días (hasta 200). Cada trabajo se valora con los precios
   de la óptica y queda fijo al agregarlo, con quién lo agregó y cuándo. Un trabajo

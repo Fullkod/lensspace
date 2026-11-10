@@ -25,9 +25,13 @@ export const getAccessSummary = cache(async (): Promise<AccessSummary> => {
 export const isProviderOnly = ({ isPlatformAdmin, roles }: AccessSummary) =>
   !isPlatformAdmin && roles.length > 0 && !roles.some((role) => commercialRoles.includes(role))
 
+export const isAccountUserOnly = ({ isPlatformAdmin, roles }: AccessSummary) =>
+  !isPlatformAdmin && roles.length > 0 && roles.every((role) => role === 'account_user')
+
 // QA-46: providers never see commercial pages (RLS already hides the rows; this
 // avoids misleading empty states and CTAs such as 'Nueva venta').
 export async function requireCommercialRole() {
   const access = await getAccessSummary()
+  if (isAccountUserOnly(access)) redirect('/account-jobs')
   if (isProviderOnly(access)) redirect('/production')
 }

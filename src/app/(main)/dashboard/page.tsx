@@ -9,7 +9,7 @@ import { formatAmount } from '@/features/orders/format'
 import { loadPlatformOrganizations } from '@/features/admin/load-platform-organizations'
 import { loadOwnedOrganizations } from '@/features/team/load-owned-organizations'
 import type { Tables } from '@/lib/supabase/database.types'
-import { getAccessSummary, isProviderOnly } from '@/lib/supabase/access'
+import { getAccessSummary, isAccountUserOnly, isProviderOnly } from '@/lib/supabase/access'
 import { getCurrentUser } from '@/lib/supabase/current-user'
 import { createClient } from '@/lib/supabase/server'
 import { ButtonLink, EmptyState, PageContainer, PageHeader, StatCard } from '@/shared/ui'
@@ -47,7 +47,7 @@ export default async function DashboardPage() {
   // QA-45: a provider's home is the job list; stay only to answer an invitation.
   if (isProviderOnly(access)) {
     const { data: pending } = await supabase.rpc('list_my_pending_invitations')
-    if (!(pending as unknown[] | null)?.length) redirect('/production')
+    if (!(pending as unknown[] | null)?.length) redirect(isAccountUserOnly(access) ? '/account-jobs' : '/production')
   }
 
   // QA-31: independent loads in parallel. Memberships include the owner role, so the

@@ -105,7 +105,7 @@ export function CommercialOrderDetail({ order, items, scope, canApproveLargeDisc
       {error && !action ? <Alert tone="danger" role="alert">{error}</Alert> : null}
     </Card>
 
-    {adding ? <AddJobEditor orderId={order.id} accountId={order.accountId} scope={scope} items={items} canApproveLargeDiscount={canApproveLargeDiscount}
+    {adding ? <AddJobEditor orderId={order.id} scope={scope} items={items} canApproveLargeDiscount={canApproveLargeDiscount}
       onCancel={() => setAdding(false)} onAdded={(message) => { setAdding(false); setToast(message); router.refresh() }} /> : null}
 
     <CommercialOrderLines lines={order.lines} canRemove={order.status === 'open' && order.canWork} onRemove={(line) => open({ kind: 'remove', line })} />

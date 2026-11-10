@@ -24,9 +24,9 @@ insert into public.organization_modules (organization_id, module_key, changed_by
   (950000001, 'optical_sales', '95000000-0000-0000-0000-000000000001'),
   (950000002, 'optical_sales', '95000000-0000-0000-0000-000000000003');
 
-insert into public.catalog_items (id, organization_id, category, code, name, sale_price, currency, is_active) overriding system value values
-  (950000001, 950000001, 'vision_type', 'cp_progressive', 'Progresivo CP', 100, 'USD', true),
-  (950000002, 950000001, 'frame', 'cp_frame', 'Armadura CP', 3000, 'CUP', true);
+insert into public.catalog_items (id, organization_id, category, code, name, sale_price, currency, is_active, sales_channel) overriding system value values
+  (950000001, 950000001, 'vision_type', 'cp_progressive', 'Progresivo CP', 100, 'USD', true, 'wholesale'),
+  (950000002, 950000001, 'frame', 'cp_frame', 'Armadura CP', 3000, 'CUP', true, 'wholesale');
 insert into public.graduation_rules (organization_id, code, name, applies_to_item_id, minimum_absolute_sphere, surcharge_amount, surcharge_currency, message) values
   (950000001, 'cp_high_power', 'Recargo CP', 950000001, 4, 900, 'CUP', 'Graduación alta.');
 insert into public.customers (id, organization_id, branch_id, full_name, created_by) overriding system value values
@@ -55,7 +55,7 @@ select set_config('request.jwt.claim.sub', '95000000-0000-0000-0000-000000000002
 do $$
 declare
   items bigint[] := array[950000001, 950000002];
-  retail jsonb := public.calculate_sale_price(950000001, items, 950000001, 400, '{}'::jsonb);
+  retail jsonb := public.calculate_catalog_price(950000001, items, 950000001, 400);
   x jsonb := public.calculate_sale_price(950000001, items, 950000001, 400, '{}'::jsonb, 950000001);
   y jsonb := public.calculate_sale_price(950000001, items, 950000001, 400, '{}'::jsonb, 950000002);
   sources text;
