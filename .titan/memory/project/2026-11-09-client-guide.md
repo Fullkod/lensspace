@@ -17,3 +17,10 @@ because the web and the future APK offer the same options.
   no longer exist, so retaking them needs a test login.
 - Support number on the last page: +1 575 263 9686 (Roberto's decision, 2026-11-09).
 - The web address in client documents is `lensspace.fullkod.com`.
+- Second guide, same folder: `lensspace-guia-opticas-minoristas.pdf` (6 pages A4, wholesale catalog, prices
+  and optician users). Source in `_fuente/opticas-minoristas/`: `guia.html`, `shots/`; rebuild with
+  `node build.cjs`.
+- Roberto wants these guides as local files, not as published Artifacts (2026-11-09).
+- Screenshots without a test login: a temporary route rendering the real components with fictitious data
+  («QA …» names), and Playwright answering every request outside localhost. Delete the route afterwards
+  and restore `next-env.d.ts`, which `next dev` rewrites.

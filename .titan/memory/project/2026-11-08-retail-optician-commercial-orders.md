@@ -2,6 +2,10 @@
 
 Date: 2026-11-08
 
+Superseded in part on 2026-11-09 by `2026-11-09-wholesale-catalog-account-users.md`: jobs no longer ask
+for a patient, wholesale has its own catalog, and opticians can have their own users. The exceptional
+seller permission now covers every order of the branch (`2026-11-09-special-permission-branch-orders.md`).
+
 Decision (Roberto, 2026-11-08): the organization also sells wholesale to other opticians
 that have no LensSpace user. Plan, decisions and learnings:
 `.titan/plans/prp-retail-optician-commercial-orders.md`. Business rules: «Venta a ópticas

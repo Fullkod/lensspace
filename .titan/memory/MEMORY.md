@@ -19,9 +19,9 @@ Read relevant entries only. Store decisions with dates and evidence.
 
 - [2026-11-09 — Wholesale catalog, prices per optician and optician users](project/2026-11-09-wholesale-catalog-account-users.md)
 - [2026-11-09 — Special seller permission covers every order of the branch](project/2026-11-09-special-permission-branch-orders.md)
-- [2026-11-09 — Client guide PDF: single guide in the Kshop format](project/2026-11-09-client-guide.md)
+- [2026-11-09 — Client guide PDFs (Kshop format and optician guide), local files only](project/2026-11-09-client-guide.md)
 - [2026-11-09 — Android APK: analysis and parked plan (GitHub Action + Vercel)](project/2026-11-09-android-apk-plan.md)
-- [2026-11-08 — Retail opticians: accounts, prices, accumulative commercial orders and collections (LEN0009 + LEN0010)](project/2026-11-08-retail-optician-commercial-orders.md)
+- [2026-11-08 — Retail opticians: accounts, prices, accumulative commercial orders and collections (LEN0009 + LEN0010; patient and price parts superseded 2026-11-09)](project/2026-11-08-retail-optician-commercial-orders.md)
 - [2026-11-07 — Optometrist catalog, management and summary (LEN0008)](project/2026-11-07-optometrist-catalog.md)
 - [2026-11-08 — Family orders: several pairs, one payment; WhatsApp balance always in USD (LEN0006)](project/2026-11-08-family-multi-pair-orders.md)
 - [2026-11-08 — Money shown in USD everywhere; catalog, payments and cashboxes keep their currency](project/2026-11-08-money-shown-in-usd.md)

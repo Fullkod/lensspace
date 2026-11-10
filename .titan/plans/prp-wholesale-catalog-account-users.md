@@ -1,6 +1,6 @@
 # PRP — Wholesale catalog, prices per optician and retail optician users
 
-> **Status**: APROBADO 2026-11-09
+> **Status**: IMPLEMENTADO 2026-11-09 (commit `514be14`). Migrations, web and the invitation function are in production. Real-account walkthrough pending.
 > **Date**: 2026-11-09
 > **Project**: LensSpace
 > **Tasknic**: not created yet. Extends LEN0009 + LEN0010 (`prp-retail-optician-commercial-orders.md`).
@@ -26,17 +26,17 @@ have a user of its own who only adds jobs at the prices already set for it.
 
 ### Success criteria
 
-- [ ] Adding a job asks for no patient. The job is stored under a hidden patient named after the optician, and the name follows a rename of the optician.
-- [ ] The retail catalog, retail sales and their pricing never show or accept wholesale products, and wholesale orders never show or accept retail products.
-- [ ] The owner creates, edits and deactivates wholesale products in their own screen.
-- [ ] A new optician can order at once at the wholesale base prices, without any setup.
-- [ ] In one screen the owner sees every wholesale product for an optician: base price, price for that optician, offered or not. Only the differences are stored.
-- [ ] The owner can copy prices from another optician in one action.
-- [ ] A product not offered to an optician does not appear on its jobs and the server refuses it.
-- [ ] The owner invites a user tied to one optician. That user only sees «Mis trabajos»: add a job, their prices, the jobs of their own optician with their status, and what the optician owes.
-- [ ] That user cannot change prices (the server refuses `lineAdjustments`) and cannot read other opticians, retail customers or orders, the catalog tables, payment detail, cashbox or production.
-- [ ] A seller with the special permission adds jobs for every optician, sees what each owes, collects and delivers. A regression test covers it (the code already allows it).
-- [ ] Retail sales, family orders, payments, production and WhatsApp behave as today. Works at 390 px. Lint, typecheck and rollback SQL tests pass.
+- [x] Adding a job asks for no patient. The job is stored under a hidden patient named after the optician, and the name follows a rename of the optician.
+- [x] The retail catalog, retail sales and their pricing never show or accept wholesale products, and wholesale orders never show or accept retail products.
+- [x] The owner creates, edits and deactivates wholesale products in their own screen.
+- [x] A new optician can order at once at the wholesale base prices, without any setup.
+- [x] In one screen the owner sees every wholesale product for an optician: base price, price for that optician, offered or not. Only the differences are stored.
+- [x] The owner can copy prices from another optician in one action.
+- [x] A product not offered to an optician does not appear on its jobs and the server refuses it.
+- [x] The owner invites a user tied to one optician. That user only sees «Mis trabajos»: add a job, their prices, the jobs of their own optician with their status, and what the optician owes.
+- [x] That user cannot change prices (the server refuses `lineAdjustments`) and cannot read other opticians, retail customers or orders, the catalog tables, payment detail, cashbox or production.
+- [x] A seller with the special permission adds jobs for every optician, sees what each owes, collects and delivers. A regression test covers it (the code already allows it).
+- [ ] Retail sales, family orders, payments, production and WhatsApp behave as today. Works at 390 px. Lint, typecheck and rollback SQL tests pass. *(Regression, lint, typecheck and build pass. Screens were captured at 430 px, not checked at 390 px.)*
 
 ### Behaviour
 
@@ -75,7 +75,7 @@ to the user.
 
 ### Touch points
 
-- `add_commercial_order_line`: `patientCustomerId` becomes optional and resolves to `private.ensure_account_patient`. Refuses retail or not-offered items and, for `account_user`, any `lineAdjustments`.
+- `add_commercial_order_line`: staff still send `patientCustomerId`; the form gets the hidden patient from `ensure_commercial_order_patient`. Channel and not-offered checks live in `calculate_sale_price`. `add_my_account_job` resolves the patient itself and refuses any `lineAdjustments`.
 - `get_commercial_price_list`: wholesale items only, honoring `is_offered`.
 - `calculate_catalog_price`, `apply_account_prices`: channel check. Their role checks must accept `account_user` when pricing their own account.
 - Retail readers to filter: `catalog/page.tsx`, `sales/page.tsx`, `wholesale/page.tsx`.
@@ -113,9 +113,20 @@ to the user.
 Importing prices from Excel, price lists shared between groups of opticians, WhatsApp to the
 optician, a payment detail view for the optician's user.
 
+## Implementation status (2026-11-09)
+
+- In production: migrations `20261109130000`, `20261109140000`, `20261109150000`, web (commit `514be14`) and the `invite-organization-member` function.
+- Verified: rollback SQL tests (new and regression), typecheck, lint, build, and the real components rendered with mocked data.
+- Not verified: the full flow with real logged-in users (create a product, invite, the optician's user adds a job).
+- Pending: the saved `manual_documents` row does not include this feature; the default text in `clientDocsInput.ts` does. No wholesale products exist yet, so jobs show nothing to pick until the owner creates them.
+- User guide: `_materiales/LensSpace/guias/lensspace-guia-opticas-minoristas.pdf`.
+
 ## Learnings
 
 - `add_commercial_order_line` is a thin wrapper over `private.insert_commercial_line`, so the optician's user never needs `private.lock_commercial_order`, which also guards delivery, close and removal.
 - `calculate_catalog_price` and `apply_account_prices` check owner/seller. Rather than add the role, they accept `private.in_commercial_rpc()`, otherwise the user could read retail prices directly.
+- The optician's screen is `/account-jobs`. On a phone, «Lo que debes» sits inside the collapsed «Resumen» of the page header.
+- `create_my_account_prescription` wraps `create_prescription_revision` as definer, so `can_read_branch_clinical_data` stayed untouched. The optician's user cannot attach the prescription image.
+- `list_accessible_production_jobs` and similar readers join profiles: see `2026-11-09-special-permission-branch-orders.md`.
 - SQL tests: the RPC flag stays on for the rest of the transaction. Clear it before asserting a refusal.
 - Old tests mixed one catalog item in retail and account pricing. Fixtures now declare the channel.

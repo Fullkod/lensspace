@@ -23,4 +23,10 @@ price parts of `2026-11-08-retail-optician-commercial-orders.md`.
   asserting that a direct call is refused.
 - Test: `supabase/tests/retail_optician_users.sql`, `wholesale_catalog.sql`,
   `commercial_job_without_patient.sql`.
-- `supabase functions deploy` refuses to run from an agent without the user's explicit OK.
+- `supabase functions deploy` refuses to run from an agent without the user's explicit OK; with it, pass `--yes`.
+- Shipped in commit `514be14`: migrations, web and the invitation function are in production.
+- Not verified with real logged-in users yet. No wholesale products exist yet: jobs show nothing to pick until the owner creates them.
+- The saved `/manual` content (`manual_documents`) does not cover this feature; only the default text in `clientDocsInput.ts` does.
+- On a phone, «Lo que debes» is inside the collapsed «Resumen» of `/account-jobs`.
+- Task codes: this work has no Tasknic task of its own yet; it extends LEN0009 and LEN0010.
+- `FormSelect` renders its menu in `<body>` with fixed coordinates: an absolute menu was clipped by the scrolling body of `Dialog`.
