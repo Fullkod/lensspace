@@ -7,7 +7,7 @@ export type CommercialAccount = Tables<'commercial_accounts'>
 export type AccountPrice = Pick<Tables<'commercial_account_prices'>, 'account_id' | 'catalog_item_id' | 'sale_price' | 'currency' | 'is_offered'>
 
 // Wholesale product with its base price.
-export type CatalogOption = { id: number; category: string; name: string; price: number; currency: string; isActive: boolean }
+export type CatalogOption = { id: number; category: string; name: string; description: string | null; price: number; currency: string; isActive: boolean }
 
 export type WholesaleOrganization = { id: number; name: string; canManage: boolean; catalog: CatalogOption[] }
 

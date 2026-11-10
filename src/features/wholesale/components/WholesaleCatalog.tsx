@@ -39,12 +39,13 @@ export function WholesaleCatalog({ organizationId, userId, items, canManage }: {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
     const name = String(form.get('name') ?? '').trim()
+    const description = String(form.get('description') ?? '').trim() || null
     const price = parseDecimal(String(form.get('price') ?? ''))
     if (name.length < 2) return setError('Escribe el nombre del producto.')
     if (price === null || Number.isNaN(price)) return setError('Escribe un precio válido, por ejemplo 25 o 25,50.')
     setPending(true); setError(null)
     const supabase = createClient()
-    const changes = { name, category, sale_price: price, currency, is_active: active }
+    const changes = { name, description, category, sale_price: price, currency, is_active: active }
     const { error: saveError } = current
       ? await supabase.from('catalog_items').update(changes as never).eq('id', current.id)
       : await supabase.from('catalog_items').insert({ ...changes, organization_id: organizationId, code: `wh_${Date.now().toString(36)}`, cost_amount: 0, sales_channel: 'wholesale', created_by: userId } as never)
@@ -69,6 +70,7 @@ export function WholesaleCatalog({ organizationId, userId, items, canManage }: {
           <div className="flex min-w-0 flex-1 basis-full flex-col sm:basis-0">
             <span className="truncate text-[15px] font-semibold text-ink">{item.name}</span>
             <span className="text-[13px] text-text-muted">{categoryLabels[item.category] ?? item.category}</span>
+            {item.description ? <span className="text-[13px] text-text-muted">{item.description}</span> : null}
           </div>
           {!item.isActive ? <Badge>Inactivo</Badge> : null}
           <span className="shrink-0 font-display text-[15px] font-bold tabular-nums text-ink">{formatPrice(item.price, item.currency)}</span>
@@ -91,6 +93,7 @@ export function WholesaleCatalog({ organizationId, userId, items, canManage }: {
       <form key={current?.id ?? 'new'} id={`wholesale-item-${organizationId}`} onSubmit={save} className="flex flex-col gap-4" noValidate>
         <Field label="Nombre"><Input name="name" defaultValue={current?.name ?? ''} maxLength={120} autoComplete="off" /></Field>
         <Field as="div" label="Tipo"><FormSelect ariaLabel="Tipo de producto" value={category} onValueChange={setCategory} options={categoryOptions} /></Field>
+        <Field label="Descripción" optional><Input name="description" defaultValue={current?.description ?? ''} maxLength={300} autoComplete="off" /></Field>
         <div className="flex flex-wrap items-end gap-3">
           <Field label="Precio base" className="min-w-[140px] flex-1"><Input name="price" defaultValue={current ? String(current.price).replace('.', ',') : ''} inputMode="decimal" maxLength={12} autoComplete="off" /></Field>
           <SegmentedControl label="Moneda" value={currency} onChange={setCurrency} options={[{ value: 'USD', label: 'USD' }, { value: 'CUP', label: 'CUP' }]} />

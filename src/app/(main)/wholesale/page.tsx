@@ -8,11 +8,11 @@ import { getCurrentUser } from '@/lib/supabase/current-user'
 import { createClient } from '@/lib/supabase/server'
 import { PageContainer, PageHeader } from '@/shared/ui'
 
-type Item = Pick<Tables<'catalog_items'>, 'id' | 'organization_id' | 'category' | 'name' | 'sale_price' | 'currency' | 'is_active'>
+type Item = Pick<Tables<'catalog_items'>, 'id' | 'organization_id' | 'category' | 'name' | 'description' | 'sale_price' | 'currency' | 'is_active'>
 
 const catalogFor = (organizationId: number, items: Item[]): CatalogOption[] => items
   .filter((item) => item.organization_id === organizationId)
-  .map((item) => ({ id: item.id, category: item.category, name: item.name, price: Number(item.sale_price), currency: item.currency, isActive: item.is_active }))
+  .map((item) => ({ id: item.id, category: item.category, name: item.name, description: item.description, price: Number(item.sale_price), currency: item.currency, isActive: item.is_active }))
 
 export default async function WholesalePage() {
   const supabase = await createClient()
@@ -27,7 +27,7 @@ export default async function WholesalePage() {
     supabase.from('organizations').select('id, name').in('id', organizationIds).order('name'),
     supabase.from('commercial_accounts').select('*').in('organization_id', organizationIds).order('name'),
     supabase.from('commercial_account_prices').select('account_id, catalog_item_id, sale_price, currency, is_offered').in('organization_id', organizationIds),
-    supabase.from('catalog_items').select('id, organization_id, category, name, sale_price, currency, is_active').eq('sales_channel', 'wholesale').in('organization_id', organizationIds).order('category').order('name'),
+    supabase.from('catalog_items').select('id, organization_id, category, name, description, sale_price, currency, is_active').eq('sales_channel', 'wholesale').in('organization_id', organizationIds).order('category').order('name'),
   ])
   const { data: orderData } = await supabase.rpc('list_commercial_orders')
   const debts: Record<number, number> = {}
