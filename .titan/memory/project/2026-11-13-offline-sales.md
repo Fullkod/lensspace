@@ -22,3 +22,6 @@ Decision (Roberto, 2026-11-13). Plan: `.titan/plans/prp-offline-sales.md`. The A
 - `experimental.useOffline` (already on) only retries soft navigations and Server Actions; it does
   not open the app cold without network.
 - Reference implementation: Kshop `prp-pos-offline.md`.
+- 2026-11-13: `record_offline_sale` and `offline_sales` are in production (migration
+  `20261113120000_offline_sales.sql`). Roberto confirmed that an uploaded offline sale sends the same
+  WhatsApp messages as an online one («pedido aceptado», «pago recibido»).

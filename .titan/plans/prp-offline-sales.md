@@ -1,6 +1,6 @@
 # PRP — Offline sales (LEN0011), then the Android APK
 
-> **Status**: APPROVED by Roberto (2026-11-13). Phases 1-2 done (not deployed); Phase 3 written and dry-run green, migration NOT applied (waiting for Roberto's OK).
+> **Status**: APPROVED by Roberto (2026-11-13). Phases 1-2 done (web not deployed); Phase 3 migration applied to production 2026-11-13; next: Phase 4.
 > **Date**: 2026-11-13
 > **Project**: LensSpace
 > **Tasknic**: LEN0011 «trabajo Offline» (this plan). The Android APK follows as LEN0012 and its own plan
@@ -104,7 +104,7 @@ itself), the APK (own plan).
 | D9 | A pending sale can be discarded only with confirmation; discarded sales are kept locally (not uploaded) for 30 days | Simpler than Kshop D12 for the first stage; revisit if owners ask for the trace |
 | D10 | Snapshot and queue are keyed by user id; logout clears the snapshot, never pending sales without confirmation | Prescriptions are health data; pending money must not vanish |
 | D11 | Offline access expires 7 days after the last server confirmation (R3) | Protects against removed accounts |
-| D12 | On upload the existing triggers queue «pedido aceptado» and «pago recibido» as for an online sale (proposed 2026-11-13, pending Roberto's confirmation) | It is a normal order of a customer with a phone (unlike Kshop's anonymous counter); the receipt reaches the customer when the signal returns. Suppressing would need a flag in two notify triggers |
+| D12 | On upload the existing triggers queue «pedido aceptado» and «pago recibido» as for an online sale (confirmed by Roberto 2026-11-13) | It is a normal order of a customer with a phone (unlike Kshop's anonymous counter); the receipt reaches the customer when the signal returns. Suppressing would need a flag in two notify triggers |
 
 ### Proposed architecture
 
@@ -165,7 +165,7 @@ logout, persistent storage requested.
 **Validation**: snapshot written after visiting the app online, readable offline, per user, removed on logout; size
 measured with the pilot data.
 
-### Phase 3: Server — WRITTEN, dry run green (2026-11-13); not applied to production
+### Phase 3: Server — DONE (2026-11-13, migration applied to production)
 **Objective**: `offline_sales` + `record_offline_sale` (idempotent, flags, payment on the sale day, post-close), grants
 and RLS.
 **Validation**: SQL tests: repeat does not duplicate, price change flags and does not fail, isolation between
@@ -277,3 +277,7 @@ organizations, seller without permission refused, payment lands in the right day
   **Apply in:** any RPC that must change a column the API roles cannot write.
 - **Error:** a CUP payment without a rate violated `payments.applied_rate not null`. **Fix:** default 1, as
   `PaymentForm` sends online.
+- **Applied** 2026-11-13 with `npx supabase db push --remote --yes` after a `--dry-run` that listed only this file
+  (Roberto's OK). Re-ran `offline_sales`, `cashbox_closures`, `multi_pair_orders` against it (rolled back): green.
+  Security advisors: nothing new. Performance advisor: `offline_sales_branch_id_fkey` has no single-column index
+  (INFO, like 19 others in the project; the composite index leads with organization_id).
