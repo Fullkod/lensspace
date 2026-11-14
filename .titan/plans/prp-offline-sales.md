@@ -345,3 +345,11 @@ organizations, seller without permission refused, payment lands in the right day
   (25 assets, all 200) before deploying.
 - **Apply in:** always run `node scripts/qa-offline.mjs https://lensspace.fullkod.com` after a deploy that touches the
   worker; local builds do not reproduce Vercel's asset paths.
+
+### 2026-11-13: QA side effect
+- **Error:** after phase 5 made uploads automatic, three QA runs without `QA_UPLOAD` went back online at the end and
+  uploaded their test sale with 100 CUP: orders `JAV-2026-000018`-`000020` and three payments in the demo cashbox of
+  2026-11-13 (WhatsApp blocked by `missing_consent`). They cannot be removed (immutable orders and payments).
+- **Fix:** `qa-offline.mjs` blocks `record_offline_sale` at the network and discards the test sale unless
+  `QA_UPLOAD=1`; verified against production (20/20, no new order).
+- **Apply in:** any QA that creates data meant to stay local once a background sync exists: block the sync endpoint.

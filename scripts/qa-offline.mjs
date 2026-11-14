@@ -49,6 +49,9 @@ if (shots) await cold.screenshot({ path: `${shots}/desk-online-390.png`, fullPag
 // 4. Signed-in seller (only with QA_EMAIL and QA_PASSWORD; use a demo organization).
 if (process.env.QA_EMAIL && process.env.QA_PASSWORD) {
   const seller = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'es-ES' })
+  // Uploads are automatic once the signal returns. Without QA_UPLOAD=1 the upload RPC is blocked at
+  // the network so no order reaches production (2026-11-13: three runs uploaded orders by accident).
+  if (process.env.QA_UPLOAD !== '1') await seller.route('**/rest/v1/rpc/record_offline_sale', (route) => route.abort('blockedbyclient'))
   const app = await seller.newPage()
   await app.goto(`${base}/login`)
   await app.locator('input[name="email"]').fill(process.env.QA_EMAIL)
@@ -129,6 +132,12 @@ if (process.env.QA_EMAIL && process.env.QA_PASSWORD) {
   check('payload matches record_offline_sale', Boolean(payload?.holder?.new?.fullName === customerName && payload.pairs[0]?.prescription?.new?.rightSphere === -1.25
     && payload.pairs[0].itemIds.length === 1 && (upload ? payload.payment === null : payload.payment?.amount === 100) && payload.device?.cupEquivalent > 0 && /^SC-[0-9A-F]{4}-\d+$/.test(payload.localNumber)),
     JSON.stringify(payload).slice(0, 200))
+  if (!upload) {
+    // Leave nothing waiting on the device: the sign-out guard would ask, and nothing must upload.
+    await desk.getByRole('button', { name: 'Descartar' }).first().click()
+    await desk.getByRole('button', { name: 'Sí, descartar esta venta' }).click()
+    check('test sale discarded (never uploaded)', await desk.getByText('Descartada').first().isVisible().catch(() => false))
+  }
 
   // Phase 5 (QA_UPLOAD=1 only: writes one order to the demo organization in production).
   if (upload) {

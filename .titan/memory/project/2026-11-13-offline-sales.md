@@ -28,7 +28,10 @@ Decision (Roberto, 2026-11-13). Plan: `.titan/plans/prp-offline-sales.md`. The A
 - QA of real uploads: only in the demo organization «Óptica Javier Prueba», customer without WhatsApp
   consent and **without payment** (retail orders and payments cannot be cancelled or deleted). Run
   `QA_UPLOAD=1 node scripts/qa-offline.mjs` against `ERROR_LOG_INGEST_SECRET= npx next start`. Left on
-  2026-11-13: order `JAV-2026-000017`, customer `QA Offline 1794618423951`.
+  2026-11-13: orders `JAV-2026-000017` to `000020` with customers `QA Offline …` (no consent, no WhatsApp
+  sent); 018-020 each have a 100 CUP payment in Javier's cashbox of 2026-11-13. 018-020 were uploaded by
+  accident by runs without `QA_UPLOAD` (uploads are automatic once the signal returns); since then the script
+  blocks `record_offline_sale` and discards the test sale unless `QA_UPLOAD=1`.
 - 2026-11-13 state: phases 1-7 built and tested in Playwright (`scripts/qa-offline.mjs`; `QA_UPLOAD=1` writes
   to the demo org). Web not deployed yet; real Android test pending. Key files: `public/sw.js`,
   `src/app/sin-conexion/`, `src/features/offline/`, `src/features/sales/load-sale-context.ts`, migrations
