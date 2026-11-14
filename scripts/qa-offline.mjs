@@ -1,4 +1,6 @@
-// LEN0011 offline QA. Needs a production server: `npm run build && npx next start -p 3100`.
+// LEN0011 offline QA. Needs a production server: `npm run build`, then
+// `ERROR_LOG_INGEST_SECRET= npx next start -p 3100`. The empty secret keeps this run out of
+// the production error log: cutting the network mid-render is expected here (error #6).
 // Usage: node scripts/qa-offline.mjs [baseUrl] [screenshotDir]
 import { chromium } from 'playwright'
 

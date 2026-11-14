@@ -15,8 +15,10 @@ export type ErrorReport = {
 export const connectivityPattern = /fetch|network|load failed|aborted|timeout|timed out/i
 
 // Navigation control flow, deploy chunk skew, browser extensions and opaque
-// cross-origin scripts are not bugs we can fix.
-const ignoredMessagePattern = /^NEXT_(REDIRECT|NOT_FOUND|HTTP_ERROR_FALLBACK)|DYNAMIC_SERVER_USAGE|BAILOUT_TO_CLIENT_SIDE_RENDERING|^Script error\.?$|ResizeObserver loop|Loading chunk|dynamically imported module|AbortError/i
+// cross-origin scripts are not bugs we can fix. «The destination stream closed early»
+// is the browser hanging up mid-render (left the page or lost signal; error #6,
+// 2026-11-13).
+const ignoredMessagePattern = /^NEXT_(REDIRECT|NOT_FOUND|HTTP_ERROR_FALLBACK)|DYNAMIC_SERVER_USAGE|BAILOUT_TO_CLIENT_SIDE_RENDERING|^Script error\.?$|ResizeObserver loop|Loading chunk|dynamically imported module|AbortError|destination stream closed early/i
 const ignoredStackPattern = /(chrome|moz|safari)-extension:\/\//
 
 export function describeError(error: unknown) {
