@@ -100,7 +100,7 @@ function refreshShell() {
     for (const asset of [...assets]) {
       if (!asset.endsWith('.css')) continue
       const css = await fetch(asset).then((res) => (res.ok ? res.text() : ''))
-      for (const nested of buildAssets(css)) assets.add(nested)
+      for (const nested of cssAssets(css, asset)) assets.add(nested)
     }
     const list = [...assets].sort()
     const name = SHELL_PREFIX + (await digest(list.join('\n') + html.length))
@@ -108,7 +108,14 @@ function refreshShell() {
     if (!keys.includes(name)) {
       await caches.delete(`${name}-partial`)
       const temp = await caches.open(`${name}-partial`)
-      await temp.addAll([...list, ...SHELL_EXTRA])
+      // One by one: a single missing file must not leave the desk without any cache.
+      const stored = await Promise.all([...list, ...SHELL_EXTRA].map(async (path) => {
+        const asset = await fetch(path).catch(() => null)
+        if (!asset?.ok) return false
+        await temp.put(path, asset)
+        return true
+      }))
+      if (!stored.some(Boolean)) throw new Error('desk assets unavailable')
       await temp.put(SHELL_URL, response)
       const cache = await caches.open(name)
       for (const req of await temp.keys()) await cache.put(req, await temp.match(req))
@@ -122,10 +129,18 @@ function refreshShell() {
   return shellRefresh
 }
 
-// Matches "/_next/static/..." and the "static/chunks/..." form used inside the RSC payload.
+// Matches "/_next/static/..." and the "static/..." form used inside the RSC payload, with or
+// without the "immutable/" segment Vercel adds (static/immutable/chunks/x.js).
 function buildAssets(text) {
-  const found = text.match(/(?:\/_next\/)?static\/(?:chunks|css|media)\/[^"'\s\\)?#]+/g) || []
+  const found = text.match(/(?:\/_next\/)?static\/[\w\-./~%]+\.(?:js|css|woff2?|ttf|otf)\b/g) || []
   return found.map((path) => (path.startsWith('/_next/') ? path : `/_next/${path}`))
+}
+
+// Fonts inside the CSS are relative to the CSS file in production: url(../media/x.woff2).
+function cssAssets(css, cssPath) {
+  const base = new URL(cssPath, self.location.origin)
+  const urls = [...css.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)].map((match) => match[1]).filter((value) => !value.startsWith('data:'))
+  return urls.map((value) => new URL(value, base)).filter((url) => url.origin === self.location.origin).map((url) => url.pathname)
 }
 
 async function digest(text) {

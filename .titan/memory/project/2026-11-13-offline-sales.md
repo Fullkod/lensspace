@@ -34,3 +34,5 @@ Decision (Roberto, 2026-11-13). Plan: `.titan/plans/prp-offline-sales.md`. The A
   `src/app/sin-conexion/`, `src/features/offline/`, `src/features/sales/load-sale-context.ts`, migrations
   `20261113120000_offline_sales.sql` and `20261113130000_offline_sales_phone_match.sql`.
 - The saved `/manual` (`manual_documents`) does not include «Vender cuando no hay señal»; only the default does.
+- Vercel serves build files under `/_next/static/immutable/` and CSS fonts as relative `url(../media/…)`; local
+  builds do not. After any deploy touching `public/sw.js`, run `node scripts/qa-offline.mjs https://lensspace.fullkod.com`.

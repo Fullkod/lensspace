@@ -334,3 +334,14 @@ organizations, seller without permission refused, payment lands in the right day
   them yet: whoever edits the manual must add them there (or reset that section to the default).
 - **Pending for Roberto:** deploy (push `main`), real Android test in airplane mode with an installed PWA and in
   Chrome (cold start, sale, reload, upload when the signal returns, sign-out warning), then LEN0012.
+
+### 2026-11-13: Production-only failure after the first deploy
+- **Error:** on Vercel the build files live under `/_next/static/immutable/chunks/…` and the CSS loads fonts as
+  `url(../media/x.woff2)`. The worker's pattern only knew `static/chunks|css|media/` and absolute paths, so it cached 4
+  entries: the desk opened offline but did not hydrate (no JS). Local `next start` has no `immutable/` segment, so the
+  local QA was green.
+- **Fix:** match any `static/…` path with a build-file extension, resolve CSS `url()` against the CSS URL, and store
+  assets one by one (one 404 no longer leaves the desk without cache). Checked against the real production HTML/CSS
+  (25 assets, all 200) before deploying.
+- **Apply in:** always run `node scripts/qa-offline.mjs https://lensspace.fullkod.com` after a deploy that touches the
+  worker; local builds do not reproduce Vercel's asset paths.
