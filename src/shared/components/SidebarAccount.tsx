@@ -1,8 +1,8 @@
-import { LogOut } from 'lucide-react'
 import Link from 'next/link'
 
-import { signOut } from '@/features/auth/actions'
 import { Avatar } from '@/shared/ui'
+
+import { SignOutForm } from './SignOutForm'
 
 export type ShellIdentity = { userId: string; displayName: string; phone: string | null; roleLabel: string; organizationName: string }
 
@@ -17,11 +17,7 @@ export function SidebarAccount({ identity, onNavigate }: { identity: ShellIdenti
           <span className="block truncate text-xs text-on-ink-subtle">{identity.roleLabel}</span>
         </span>
       </Link>
-      <form action={signOut}>
-        <button type="submit" aria-label="Cerrar sesión" title="Cerrar sesión" className="grid size-9 place-items-center rounded-[8px] text-on-ink-subtle transition hover:bg-ink hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint">
-          <LogOut aria-hidden="true" size={18} />
-        </button>
-      </form>
+      <SignOutForm />
     </div>
   )
 }

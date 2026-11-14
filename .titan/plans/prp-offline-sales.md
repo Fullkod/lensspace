@@ -1,6 +1,6 @@
 # PRP — Offline sales (LEN0011), then the Android APK
 
-> **Status**: APPROVED by Roberto (2026-11-13). Phase 1 done (not deployed); next: Phase 2.
+> **Status**: APPROVED by Roberto (2026-11-13). Phases 1-2 done (not deployed); next: Phase 3.
 > **Date**: 2026-11-13
 > **Project**: LensSpace
 > **Tasknic**: LEN0011 «trabajo Offline» (this plan). The Android APK follows as LEN0012 and its own plan
@@ -158,7 +158,7 @@ navigations; cache refreshed per deploy.
 **Validation**: `next build && next start`, Playwright: load once online, go offline, open `/dashboard` cold in a new
 page → the offline desk renders; `offline.html` still works before the first cache.
 
-### Phase 2: Data on the device
+### Phase 2: Data on the device — DONE (2026-11-13, not deployed)
 **Objective**: `OfflineStore` (IndexedDB), snapshot captured online for the logged-in seller, expiry (R3), cleared on
 logout, persistent storage requested.
 **Validation**: snapshot written after visiting the app online, readable offline, per user, removed on logout; size
@@ -209,6 +209,22 @@ organizations, seller without permission refused, payment lands in the right day
   offline on `/dashboard` lands on the desk, reload offline needs no network, styles and fonts render. Screenshots in
   `.titan/qa/2026-11-13-offline-sales/`.
 - **Not yet tested:** installed PWA and Chrome on a real Android in airplane mode; deploy refresh of the desk cache.
+
+### 2026-11-13: Phase 2 (data on the device)
+- **Pieces:** `src/features/sales/load-sale-context.ts` (scopes, retail catalog priced per organization, rates; now used
+  by `/sales` and by the snapshot, so both price the same way), `src/features/offline/` (`types.ts`, `store/` with the
+  `OfflineStore` interface and `indexedDbStore`, `snapshot/` capture, sync and 7-day expiry, `OfflineSnapshotSync` in
+  the `(main)` layout for users with `/sales`), `src/shared/components/SignOutForm.tsx`.
+- **Decisions:** the desk opens for `meta.lastUserId`, not for the cookie session (offline `getSession` with an expired
+  token is unreliable). The snapshot refreshes at most every 2 h, on load, on `online` and on tab focus; capturing for
+  a user deletes any other user's saved data (shared phones), never sales. Customers carry phones and prescription
+  revision ids/labels only, no graduation values or amounts. Paged by 1 000 rows (`max_rows`), capped at 10 000.
+- **IndexedDB writes resolve on transaction `complete`,** not on request success: a sale counts as saved only once durable.
+- **Measured:** `qa-offline.mjs` 11/11 with the demo owner of «Óptica Javier Prueba» (`QA_EMAIL`/`QA_PASSWORD`):
+  snapshot 3.8 KB (11 customers, 13 items, 3 optometrists), read offline, expired after 8 days, removed on sign-out.
+- **Error:** typing the shared loader with `SupabaseClient<Database>` from `@supabase/supabase-js` failed: `@supabase/ssr`
+  bundles different generics. **Fix:** type it as `ReturnType<typeof createClient>` from `@/lib/supabase/client`.
+  **Apply in:** any helper shared by the server and browser Supabase clients.
 
 ---
 

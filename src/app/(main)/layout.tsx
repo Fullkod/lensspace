@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Plus } from 'lucide-react'
 
+import { OfflineSnapshotSync } from '@/features/offline'
 import type { Tables } from '@/lib/supabase/database.types'
 import { getAccessSummary } from '@/lib/supabase/access'
 import { getCurrentUser } from '@/lib/supabase/current-user'
@@ -71,6 +72,8 @@ async function AuthenticatedLayout({ children }: { children: React.ReactNode }) 
         <OfflineBanner />
         <SubscriptionBanner notices={notices} />
         <RefreshOnFocus />
+        {/* LEN0011: keep the offline desk data for whoever can sell. */}
+        {allowedHrefs.includes('/sales') ? <OfflineSnapshotSync userId={user.id} /> : null}
         <main>{children}</main>
         <div className="flex justify-end px-4 pb-6 pt-2 md:px-8">
           <FullkodCredit />
