@@ -43,3 +43,10 @@ D3 (`com.fullkod.lensspace`, permanent after the first install). Phase 1 built: 
 `scripts/android-build.mjs`, workflow «Android app» (debug APK, no secrets); `android/` is generated, not
 versioned. Open: D4 (Vercel plan, keystore backup owner), D5, and D6 proposed: Supabase Storage instead of
 Vercel Blob for the APK (reachable from Cuba, as Kshop does).
+
+2026-11-13 later: D6 decided (Supabase Storage, keep only the latest version). Release flow: run the
+«Android app» workflow (signed with the key in `%USERPROFILE%\.lensspace\keystores`, backed up by Roberto;
+GitHub secrets ANDROID_KEYSTORE / ANDROID_KEYSTORE_PASSWORD), then `node scripts/android-publish.mjs`.
+The installed app offers updates by itself (`AndroidUpdatePrompt`). First phone test showed Capacitor's
+`error.html`: likely the system WebView is older than 111 (not updatable from Google Play in Cuba);
+`error.html` now reports it. Published: 1.0.2.

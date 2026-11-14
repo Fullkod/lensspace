@@ -1,6 +1,6 @@
 # PRP — Android APK with Capacitor, Vercel distribution and in-app updates
 
-> **Status**: IN PROGRESS (2026-11-13). Phase 1 built (shell + manual CI debug APK); waiting for the real-phone go/no-go. D1-D3 decided by Roberto 2026-11-13; D4, D5 and D6 (distribution host) open.
+> **Status**: IN PROGRESS (2026-11-13). Signed APK 1.0.2 published in Supabase Storage with in-app updates; the first phone test (debug APK) showed `error.html`, diagnosis pending with 1.0.2. D1-D3 and D6 decided by Roberto 2026-11-13; D4 (Vercel plan) and D5 open.
 > **Amendments 2026-11-13** (from the LEN0011 analysis):
 > - Offline is solved in the web layer (`prp-offline-sales.md`). Phase 1 go/no-go adds: **cold start in airplane mode must render `/sin-conexion` from the service worker inside the Capacitor WebView**. If it fails, fall back to a TWA (real Chrome, guaranteed service worker; updates through a banner that opens the download).
 > - Inside the shell the offline queue uses `@capacitor/filesystem` through the `OfflineStore` interface (the WebView may clear web storage, a Kshop lesson).
@@ -81,7 +81,7 @@ iOS, Google Play, OTA web bundles (`@capgo/capacitor-updater` solves a problem w
 | D3 | `applicationId` (**cannot change after the first install**). | `com.fullkod.lensspace`. |
 | D4 | Vercel plan, and who keeps the keystore backup? | Confirm the plan. Vercel's docs restrict Hobby to non-commercial personal use, so a paid SaaS needs Pro or Enterprise regardless of this APK. Keep the keystore in a password manager outside the repo. |
 | D5 | Google developer verification (see Gotchas). | Accept for the pilot. Decide on registering before the 2027 global rollout. |
-| D6 | (2026-11-13) Where the APK and `latest.json` live. | **Supabase Storage**, like Kshop (`store-apps` bucket): the app already depends on Supabase from Cuba, while the Vercel Blob host is untested there and Hobby limits apply. Changes the 2026-11-09 «Vercel» decision, so Roberto decides. |
+| D6 | (2026-11-13) Where the APK and `latest.json` live. | **Supabase Storage**, like Kshop (`store-apps` bucket): the app already depends on Supabase from Cuba, while the Vercel Blob host is untested there and Hobby limits apply. Changes the 2026-11-09 «Vercel» decision. **Decided by Roberto 2026-11-13: Supabase Storage, always only one version.** |
 
 **Answers (Roberto, 2026-11-13):** D1 APK first on Android, PWA kept as fallback (only path on iPhone). D2 manual `workflow_dispatch`. D3 `com.fullkod.lensspace`.
 
@@ -244,3 +244,25 @@ External cost for direct distribution: USD 0 on top of the current Vercel plan. 
 ---
 
 *PRP parked on 2026-11-09. No code has been modified.*
+
+### 2026-11-13: First phone test, signing, distribution and in-app updates
+- **Phone test of the debug APK (Roberto):** the app stayed on the local `error.html`, apparently with signal.
+  Capacitor 8.6.0 loads `server.errorPath` in three cases (`Bridge.java`, `BridgeWebViewClient.java`): the system
+  WebView is older than `android.minWebViewVersion` (111) at start-up, a main-frame load error, or a main-frame HTTP
+  error. Most likely the first: in Cuba Google Play does not update «Android System WebView», while Chrome is updated
+  by hand (the PWA works). `error.html` now shows the WebView version, connectivity and the fix; waiting for the
+  screenshot of 1.0.2 to confirm.
+- **Signing:** one key, `%USERPROFILE%\.lensspace\keystores\lensspace.jks` + `lensspace.password.txt` (backup is
+  Roberto's), GitHub secrets `ANDROID_KEYSTORE` / `ANDROID_KEYSTORE_PASSWORD` (`scripts/android-keystore.mjs`). Debug
+  APKs used a random key per run: 1.0.1 must be uninstalled once before installing a signed version.
+- **Distribution (D6):** migration `20261113140000_android_releases.sql` (public bucket `android-app`, APK only, 50 MB;
+  table `android_releases` readable by anon, written only with the service role). `scripts/android-publish.mjs`
+  downloads the workflow artifact, checks sha256, refuses a versionCode that is not higher, uploads, registers and
+  deletes the older rows and files. The service key is fetched at run time through the Management API.
+- **In-app update (Kshop KSH0008):** `AndroidUpdatePrompt` in the root layout (only inside the shell): on open and on
+  return (max every 10 min) compares `App.getInfo().build` with the published row; «Actualizar» downloads with
+  `@capacitor/file-transfer` and opens the installer with `@capawesome-team/capacitor-file-opener`
+  (`REQUEST_INSTALL_PACKAGES` added by the build script); mandatory below `min_supported_version_code`. The URL is
+  built from our bucket, never taken from input. Plugins pinned to Kshop's tested versions and loaded by dynamic
+  import only.
+- **Published:** 1.0.2 (versionCode 2), run 43543189287. To test the update: install 1.0.2, then publish a higher one.
