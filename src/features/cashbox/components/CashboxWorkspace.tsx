@@ -1,7 +1,8 @@
 'use client'
 
 import { ArrowLeft, Lock, Wallet } from 'lucide-react'
-import { FormEvent, useMemo, useState, useTransition } from 'react'
+import { FormEvent, useEffect, useMemo, useState, useTransition } from 'react'
+import { countWaitingOfflineSales } from '@/features/offline'
 import { createClient } from '@/lib/supabase/client'
 import { FilterPanel, FormSelect } from '@/shared/components'
 import { Alert, Badge, Button, Card, CardHeader, EmptyState, Field, Input, ListItem, PageHeader, StatCard, Toast, cx } from '@/shared/ui'
@@ -25,6 +26,13 @@ export function CashboxWorkspace({ initialCashboxes, currentUserId }: { initialC
   const [branchFilter, setBranchFilter] = useState('')
   const [sellerFilter, setSellerFilter] = useState('')
   const [pending, startTransition] = useTransition()
+  // LEN0011: sales made offline on this phone and not uploaded yet would add payments to
+  // a day after its closure; warn once before closing (they still land as post-close).
+  const [waitingOffline, setWaitingOffline] = useState(0)
+  const [offlineAcknowledged, setOfflineAcknowledged] = useState(false)
+  useEffect(() => {
+    if ('indexedDB' in window) countWaitingOfflineSales(currentUserId).then(setWaitingOffline, () => undefined)
+  }, [currentUserId])
   const selected = cashboxes.find((cashbox) => cashbox.id === selectedId) ?? null
   const isOwnCashbox = selected?.sellerId === currentUserId
   const visibleCashboxes = cashboxes.filter((cashbox) => (!dateFilter || cashbox.businessDate === dateFilter) && (!branchFilter || cashbox.branchName === branchFilter) && (!sellerFilter || cashbox.sellerId === sellerFilter))
@@ -41,6 +49,10 @@ export function CashboxWorkspace({ initialCashboxes, currentUserId }: { initialC
     if (!selected) return
     const form = new FormData(event.currentTarget)
     const closureType = selected.primaryClosed ? 'complementary' : 'primary'
+    if (waitingOffline && !offlineAcknowledged) {
+      setOfflineAcknowledged(true)
+      return setMessage(`${waitingOffline === 1 ? 'Hay 1 venta hecha sin conexión' : `Hay ${waitingOffline} ventas hechas sin conexión`} en este teléfono que aún no subió. Si cierras ahora, sus cobros entrarán después como posteriores al cierre. Espera a que suban o pulsa cerrar otra vez para continuar.`)
+    }
     setMessage('')
     startTransition(async () => {
       const { error } = await supabase.rpc('close_cashbox', { target_cashbox_id: selected.id, closure_type: closureType, declared_amount: Number(form.get('declaredAmount')) } as never)
@@ -127,7 +139,7 @@ export function CashboxWorkspace({ initialCashboxes, currentUserId }: { initialC
             </div>
             {selected.primaryClosed ? <p className="text-[13px] text-text-muted">Pendiente posterior al cierre: {money(selected.pendingPostCloseAmount, selected.currency)}</p> : null}
           </form> : <Alert tone="info">Vista de revisión. Solo quien recibió el efectivo puede cerrar esta caja.</Alert>}
-          {message ? <Alert tone="danger" role="alert">{message}</Alert> : null}
+          {message ? <Alert tone={offlineAcknowledged && message.includes('sin conexión') ? 'warning' : 'danger'} role="alert">{message}</Alert> : null}
           <Alert tone="info" title="Cómo funciona tu caja.">Cada moneda se cierra por separado. Los cobros posteriores permanecen disponibles para un cierre complementario sin alterar el principal.</Alert>
         </Card>
       </div> : null}

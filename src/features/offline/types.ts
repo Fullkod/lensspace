@@ -11,6 +11,22 @@ export type OfflineCustomer = {
   revisions: { id: number; label: string }[]
 }
 
+// Own orders (RLS scope of list_accessible_orders) to answer a customer with no network.
+export type OfflineOrder = {
+  id: number
+  orderNumber: string
+  customerName: string
+  customerPhone: string | null
+  pairCount: number
+  commercialStatus: string
+  paymentStatus: string
+  totalCup: number
+  balanceCup: number
+  saleRate: number | null
+  createdAt: string
+  hasOpenIncident: boolean
+}
+
 // Everything the offline desk reads, saved for one signed-in seller (LEN0011, D10).
 export type OfflineSnapshot = {
   version: 1
@@ -23,6 +39,8 @@ export type OfflineSnapshot = {
   businessRates: Record<number, SaleBusinessRate>
   customers: OfflineCustomer[]
   optometrists: { organizationId: number; name: string }[]
+  // Missing in snapshots saved before phase 6.
+  orders?: OfflineOrder[]
 }
 
 export type OfflineSaleStatus = 'pending' | 'uploading' | 'uploaded' | 'retained' | 'discarded'

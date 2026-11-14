@@ -69,7 +69,7 @@ async function AuthenticatedLayout({ children }: { children: React.ReactNode }) 
             <MobileSidebar allowedHrefs={allowedHrefs} counts={counts} identity={identity} canCreateSale={canCreateSale} />
           </div>
         </header>
-        <OfflineBanner />
+        <OfflineBanner canSellOffline={allowedHrefs.includes('/sales')} />
         <SubscriptionBanner notices={notices} />
         <RefreshOnFocus />
         {/* LEN0011: keep the offline desk data for whoever can sell. */}

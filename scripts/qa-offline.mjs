@@ -73,10 +73,24 @@ if (process.env.QA_EMAIL && process.env.QA_PASSWORD) {
   await app.waitForFunction(async () => (await caches.keys()).some((key) => key.startsWith('lensspace-shell-') && !key.endsWith('-partial')), null, { timeout: 30_000 })
 
   await seller.setOffline(true)
+  // Phase 6: the signed-in app offers the offline desk when the signal drops.
+  await app.getByRole('link', { name: 'Vender sin conexión' }).waitFor({ timeout: 10_000 }).catch(() => undefined)
+  check('offline banner offers the desk', await app.getByRole('link', { name: 'Vender sin conexión' }).isVisible().catch(() => false))
+  await app.getByRole('link', { name: 'Vender sin conexión' }).click().catch(() => undefined)
+  await app.getByRole('heading', { name: 'Venta sin conexión' }).waitFor({ timeout: 15_000 }).catch(() => undefined)
+  check('banner link opens the desk with no network', new URL(app.url()).pathname === '/sin-conexion')
   const desk = await seller.newPage()
   await desk.goto(`${base}/orders`).catch(() => undefined)
   await desk.getByText(/Datos guardados de hoy/).waitFor({ timeout: 15_000 }).catch(() => undefined)
   check('offline desk reads the saved data', await desk.getByText(/Datos guardados de hoy/).isVisible().catch(() => false))
+  const firstOrder = (snapshot?.orders ?? [])[0]
+  check('own orders listed offline', Boolean(firstOrder) && await desk.getByRole('heading', { name: 'Pedidos' }).isVisible().catch(() => false), `${snapshot?.orders?.length ?? 0} orders saved`)
+  if (firstOrder) {
+    await desk.getByLabel('Buscar pedido').fill(firstOrder.orderNumber)
+    check('offline order search by number', await desk.getByText(`${firstOrder.orderNumber} ·`, { exact: false }).first().isVisible().catch(() => false))
+    if (shots) await desk.getByRole('heading', { name: 'Pedidos' }).screenshot({ path: `${shots}/orders-heading.png` }).catch(() => undefined)
+    await desk.getByLabel('Buscar pedido').fill('')
+  }
   if (shots) await desk.screenshot({ path: `${shots}/desk-with-data-390.png`, fullPage: true })
 
   // Phase 4: a complete sale with no network, saved on the device (not uploaded here).

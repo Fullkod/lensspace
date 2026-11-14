@@ -14,6 +14,7 @@ import type { OfflineSalePayload } from '../sale/payload'
 import { saveOfflineSale } from '../sale/save-sale'
 import { indexedDbStore } from '../store/indexeddb-store'
 import type { OfflineSale, OfflineSnapshot } from '../types'
+import { OfflineOrdersList } from './OfflineOrdersList'
 import { OfflineSaleForm } from './OfflineSaleForm'
 import { OfflineSalesList } from './OfflineSalesList'
 
@@ -93,6 +94,7 @@ export function OfflineDesk() {
         {state.kind === 'ready' || state.kind === 'expired'
           ? <OfflineSalesList sales={sales} needsLogin={needsLogin} onRetry={retry} onDiscard={discard} customerName={(id) => state.snapshot.customers.find((entry) => entry.id === id)?.name ?? null} />
           : null}
+        {state.kind === 'ready' && state.snapshot.orders ? <OfflineOrdersList orders={state.snapshot.orders} confirmedAt={state.snapshot.confirmedAt} /> : null}
       </PageContainer>
     </main>
   )

@@ -1,6 +1,6 @@
 # PRP — Offline sales (LEN0011), then the Android APK
 
-> **Status**: APPROVED by Roberto (2026-11-13). Phases 1-2 done (web not deployed); Phase 3 migration applied to production 2026-11-13; Phases 4-5 done (web not deployed); phone-match fix applied 2026-11-13; next: Phase 6.
+> **Status**: APPROVED by Roberto (2026-11-13). Phases 1-2 done (web not deployed); Phase 3 migration applied to production 2026-11-13; Phases 1-6 done (web not deployed); phone-match fix applied 2026-11-13; next: Phase 7.
 > **Date**: 2026-11-13
 > **Project**: LensSpace
 > **Tasknic**: LEN0011 «trabajo Offline» (this plan). The Android APK follows as LEN0012 and its own plan
@@ -179,7 +179,7 @@ organizations, seller without permission refused, payment lands in the right day
 **Objective**: automatic serial upload on reconnection, retained with reason, logout guard, flags visible in the order.
 **Validation**: Playwright with intermittent network, lost response after save (one order only), expired session retained.
 
-### Phase 6: Consult own orders offline and entry points
+### Phase 6: Consult own orders offline and entry points — DONE (2026-11-13, not deployed)
 **Objective**: own recent orders readable offline; banner/entry to the offline desk when the app loses connection.
 **Validation**: offline list matches the last snapshot; banner appears and disappears with connectivity.
 
@@ -317,4 +317,13 @@ organizations, seller without permission refused, payment lands in the right day
 - **QA data left in production (demo org «Óptica Javier Prueba»):** order `JAV-2026-000017`, customer
   `QA Offline 1794618423951` (no consent), no payment. Retail orders cannot be cancelled or deleted (business rule,
   immutable payments), so QA uploads must go without payment and to the demo organization only.
-- **Not done:** blocking cashbox closing while sales wait on a device (late payments already land as post-close).
+- **Cashbox (done after phase 5):** `CashboxWorkspace` warns once before closing when this device has offline sales
+  waiting for the user; a second press closes (late payments still land as post-close, so it is not a hard block).
+
+### 2026-11-13: Phase 6 (own orders offline, entry point)
+- **Pieces:** the snapshot also keeps `list_accessible_orders(finished_since = 30 days)` (RLS scope: a seller's own
+  orders, the owner's branch orders), max 300, display fields only; `OfflineOrdersList` (search by number, customer or
+  phone; amounts in USD like `/orders`); `OfflineBanner` in the `(main)` layout links «Vender sin conexión» for users
+  with `/sales` (plain `<a>`, served by the worker offline).
+- **Measured:** `qa-offline.mjs` 19/19 without upload: banner link opens the desk with no network, 14 orders saved and
+  searchable; snapshot 8.1 KB with the demo data.
