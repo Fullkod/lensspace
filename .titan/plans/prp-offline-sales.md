@@ -1,6 +1,6 @@
 # PRP — Offline sales (LEN0011), then the Android APK
 
-> **Status**: APPROVED by Roberto (2026-11-13). Phases 1-2 done (web not deployed); Phase 3 migration applied to production 2026-11-13; next: Phase 4.
+> **Status**: APPROVED by Roberto (2026-11-13). Phases 1-2 done (web not deployed); Phase 3 migration applied to production 2026-11-13; Phase 4 done; phone-match fix migration written, not applied; next: Phase 5.
 > **Date**: 2026-11-13
 > **Project**: LensSpace
 > **Tasknic**: LEN0011 «trabajo Offline» (this plan). The Android APK follows as LEN0012 and its own plan
@@ -171,7 +171,7 @@ and RLS.
 **Validation**: SQL tests: repeat does not duplicate, price change flags and does not fail, isolation between
 organizations, seller without permission refused, payment lands in the right day/cashbox, no WhatsApp attempt.
 
-### Phase 4: Offline sale screen
+### Phase 4: Offline sale screen — DONE (2026-11-13, not deployed)
 **Objective**: the seller completes a sale offline reusing `features/sales`, saved before the screen closes.
 **Validation**: Playwright offline at 390 px: new customer + prescription + 2 pairs + payment saved; reload offline keeps it.
 
@@ -281,3 +281,22 @@ organizations, seller without permission refused, payment lands in the right day
   (Roberto's OK). Re-ran `offline_sales`, `cashbox_closures`, `multi_pair_orders` against it (rolled back): green.
   Security advisors: nothing new. Performance advisor: `offline_sales_branch_id_fkey` has no single-column index
   (INFO, like 19 others in the project; the composite index leads with organization_id).
+
+### 2026-11-13: Phase 4 (offline sale screen)
+- **Pieces:** `src/features/offline/components/OfflineSaleForm.tsx` (twin of `SalesWorkspace`: same `PairEditor`,
+  `ItemPicker`, `sale-pricing`), `OfflineSaleDialogs.tsx` (customer, relative, prescription; same form fields),
+  `OfflinePaymentCard.tsx`, `OfflineSalesList.tsx`; `sale/payload.ts`, `sale/local-customers.ts`, `sale/save-sale.ts`.
+  Shared components gained optional local-data props, unchanged online: `CustomerSearchPicker.search`,
+  `PairEditor.searchCustomers`, `PrescriptionFormFields.optometristNames` → `OptometristInput.knownNames`.
+- **Decisions:** customers and prescriptions created offline get negative ids and travel as `{new}`; a new prescription
+  is offered only in the pair it was made for, and new customers are not searchable (each would be created once per
+  pair on upload). No prescription original offline (attach later from Recetas). Payment optional; cannot exceed the
+  estimated total. Provisional number `SC-<device 4>-<n>`. The form stays visible when the signal returns.
+- **Measured:** `qa-offline.mjs` 15/15 (new customer, item, new prescription, 100 CUP, saved, survives an offline
+  reload). The real payload replayed against production `record_offline_sale` as the demo owner, rolled back:
+  order `JAV-2026-000017`, no flags, dated at sale time, payment on business day 2026-11-13. Nothing persisted.
+- **Error:** a background snapshot capture that started before sign-out finished after it and wrote the data back.
+  **Fix:** `syncOfflineSnapshot` saves only if `meta.lastUserId` is still the same user. **Apply in:** any async write
+  of per-user device data that can outlive the session.
+- **Error (phase 3 migration):** the duplicate-phone flag compared raw digits while `normalized_phone` prefixes 53 to
+  8-digit numbers. **Fix:** `20261113130000_offline_sales_phone_match.sql` (written, test covers it, not applied).

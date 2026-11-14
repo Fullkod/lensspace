@@ -27,11 +27,13 @@ type PairEditorProps = {
   onNewRelative: () => void;
   onNewPrescription: () => void;
   onRemove: () => void;
+  // Offline desk: search the customers saved on the device instead of the server.
+  searchCustomers?: (term: string) => SaleCustomer[];
 };
 
 // One pair of glasses: who wears them, their prescription and the concepts. With a single
 // pair worn by the holder it reads like the classic sale ("Configuración").
-export function PairEditor({ index, pairCount, pair, holder, scope, relatives, revisions, groupedItems, onPatientChange, onRevisionChange, onToggle, onAgreedPriceChange, onAdjustmentReasonChange, onNewRelative, onNewPrescription, onRemove }: PairEditorProps) {
+export function PairEditor({ index, pairCount, pair, holder, scope, relatives, revisions, groupedItems, onPatientChange, onRevisionChange, onToggle, onAgreedPriceChange, onAdjustmentReasonChange, onNewRelative, onNewPrescription, onRemove, searchCustomers }: PairEditorProps) {
   const [searching, setSearching] = useState(false);
   const patient = pair.patient ?? holder;
   const multi = pairCount > 1;
@@ -50,7 +52,7 @@ export function PairEditor({ index, pairCount, pair, holder, scope, relatives, r
       <PairRow label="Para quién" actionLabel="Nuevo familiar" actionDisabled={!holder} onAction={onNewRelative}>
         {searching ? (
           <div className="flex flex-col gap-2">
-            <CustomerSearchPicker organizationId={scope.organizationId} branchId={scope.branchId} recent={relatives} selected={null}
+            <CustomerSearchPicker organizationId={scope.organizationId} branchId={scope.branchId} recent={relatives} selected={null} search={searchCustomers}
               onSelect={(customer) => { onPatientChange(customer.id === holder?.id ? null : customer); setSearching(false); }} onClear={() => setSearching(false)} />
             <Button variant="ghost" size="sm" onClick={() => setSearching(false)} className="self-start">Cancelar</Button>
           </div>

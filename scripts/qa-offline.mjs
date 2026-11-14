@@ -79,6 +79,41 @@ if (process.env.QA_EMAIL && process.env.QA_PASSWORD) {
   check('offline desk reads the saved data', await desk.getByText(/Datos guardados de hoy/).isVisible().catch(() => false))
   if (shots) await desk.screenshot({ path: `${shots}/desk-with-data-390.png`, fullPage: true })
 
+  // Phase 4: a complete sale with no network, saved on the device (not uploaded here).
+  const customerName = `QA Offline ${Date.now()}`
+  await desk.getByRole('button', { name: 'Nuevo cliente' }).click()
+  await desk.locator('input[name="fullName"]').fill(customerName)
+  await desk.getByLabel('Teléfono 1', { exact: true }).fill(`5299${String(Date.now()).slice(-4)}`)
+  await desk.getByRole('button', { name: 'Crear y seleccionar' }).click()
+  if (await desk.getByText('Ya hay clientes parecidos').isVisible().catch(() => false)) await desk.getByRole('button', { name: 'Crear y seleccionar' }).click()
+  check('new customer selected offline', await desk.getByText(customerName).first().isVisible().catch(() => false))
+  await desk.locator('button[aria-pressed]').first().click()
+  await desk.getByRole('button', { name: 'Nueva receta' }).click()
+  await desk.locator('input[name="rightSphere"]').fill('-1.25')
+  await desk.locator('input[name="leftSphere"]').fill('-1')
+  await desk.getByRole('button', { name: 'Guardar y asociar' }).click()
+  await desk.getByLabel('Recibido').fill('100')
+  await desk.getByRole('button', { name: 'Guardar venta' }).click()
+  await desk.getByText(/guardada en este teléfono/).waitFor({ timeout: 10_000 }).catch(() => undefined)
+  check('offline sale saved before the screen frees', await desk.getByText(/guardada en este teléfono/).isVisible().catch(() => false))
+  if (shots) await desk.screenshot({ path: `${shots}/sale-saved-390.png`, fullPage: true })
+  await desk.reload().catch(() => undefined)
+  await desk.getByText('Por subir').first().waitFor({ timeout: 15_000 }).catch(() => undefined)
+  check('saved sale survives an offline reload', await desk.getByText('Por subir').first().isVisible().catch(() => false))
+  const queued = await desk.evaluate(() => new Promise((resolve) => {
+    const request = indexedDB.open('lensspace-offline')
+    request.onsuccess = () => {
+      const all = request.result.transaction('sales').objectStore('sales').getAll()
+      all.onsuccess = () => resolve(all.result)
+    }
+  }))
+  const payload = queued.at(-1)?.payload
+  // QA_PAYLOAD_OUT: keep the real payload to replay it against record_offline_sale in a rolled-back transaction.
+  if (process.env.QA_PAYLOAD_OUT) (await import('node:fs')).writeFileSync(process.env.QA_PAYLOAD_OUT, JSON.stringify({ id: queued.at(-1)?.id, payload }))
+  check('payload matches record_offline_sale', Boolean(payload?.holder?.new?.fullName === customerName && payload.pairs[0]?.prescription?.new?.rightSphere === -1.25
+    && payload.pairs[0].itemIds.length === 1 && payload.payment?.amount === 100 && payload.device?.cupEquivalent > 0 && /^SC-[0-9A-F]{4}-\d+$/.test(payload.localNumber)),
+    JSON.stringify(payload).slice(0, 200))
+
   // Expiry (R3): pretend the server last answered 8 days ago.
   await desk.evaluate(() => new Promise((resolve) => {
     const request = indexedDB.open('lensspace-offline')

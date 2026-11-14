@@ -1,15 +1,19 @@
 'use client'
 
 import { Wifi, WifiOff } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { LensSpaceLogo } from '@/shared/components/LensSpaceLogo'
 import { Alert, Badge, Button, buttonClasses, Card, PageContainer } from '@/shared/ui'
 
 import { useNetworkStatus } from '../hooks/use-network-status'
 import { isOfflineAccessExpired, offlineAccessEndsAt, snapshotAge } from '../snapshot/expiry'
+import type { OfflineSalePayload } from '../sale/payload'
+import { saveOfflineSale } from '../sale/save-sale'
 import { indexedDbStore } from '../store/indexeddb-store'
-import type { OfflineSnapshot } from '../types'
+import type { OfflineSale, OfflineSnapshot } from '../types'
+import { OfflineSaleForm } from './OfflineSaleForm'
+import { OfflineSalesList } from './OfflineSalesList'
 
 type DeskState = { kind: 'loading' } | { kind: 'empty' } | { kind: 'expired'; snapshot: OfflineSnapshot } | { kind: 'ready'; snapshot: OfflineSnapshot }
 
@@ -21,15 +25,29 @@ async function loadDesk(): Promise<DeskState> {
 }
 
 // Offline desk (LEN0011). Reads only what the app saved on this device for the last
-// signed-in seller; the sale form arrives in phase 4. Plain <a>, not next/link: a
-// client navigation would ask the server for data.
+// signed-in seller. Plain <a>, not next/link: a client navigation would ask the server
+// for data.
 export function OfflineDesk() {
   const online = useNetworkStatus()
   const [state, setState] = useState<DeskState>({ kind: 'loading' })
+  const [sales, setSales] = useState<OfflineSale[]>([])
+  const userId = state.kind === 'ready' || state.kind === 'expired' ? state.snapshot.userId : null
+
+  const reloadSales = useCallback(() => {
+    if (userId) indexedDbStore.listSales(userId).then(setSales, () => undefined)
+  }, [userId])
 
   useEffect(() => {
     loadDesk().then(setState, () => setState({ kind: 'empty' }))
   }, [])
+  useEffect(reloadSales, [reloadSales])
+
+  async function save(build: (ids: { deviceId: string; localNumber: string; soldAt: string }) => OfflineSalePayload) {
+    if (state.kind !== 'ready') throw new Error('offline desk not ready')
+    const sale = await saveOfflineSale(indexedDbStore, state.snapshot.userId, build)
+    reloadSales()
+    return sale
+  }
 
   return (
     <main className="min-h-screen bg-canvas">
@@ -55,6 +73,10 @@ export function OfflineDesk() {
           </div>
         </Card>
         <DeskData state={state} />
+        {state.kind === 'ready' ? <OfflineSaleForm snapshot={state.snapshot} onSave={save} /> : null}
+        {state.kind === 'ready' || state.kind === 'expired'
+          ? <OfflineSalesList sales={sales} customerName={(id) => state.snapshot.customers.find((entry) => entry.id === id)?.name ?? null} />
+          : null}
       </PageContainer>
     </main>
   )

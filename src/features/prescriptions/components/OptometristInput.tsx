@@ -20,14 +20,16 @@ export function normalizePersonName(value: string) {
 
 // LEN0008: free text with suggestions from the organization's catalog. A name that is not
 // in the catalog is added by create_prescription_revision when the prescription is saved.
-export function OptometristInput({ organizationId, className }: { organizationId?: number; className?: string }) {
+// `knownNames` (offline desk, LEN0011) replaces the query when the list is already on the device.
+export function OptometristInput({ organizationId, className, knownNames }: { organizationId?: number; className?: string; knownNames?: string[] }) {
   const supabase = useMemo(() => createClient(), [])
   const listId = useId()
-  const [names, setNames] = useState<string[]>([])
+  const [loadedNames, setNames] = useState<string[]>([])
+  const names = knownNames ?? loadedNames
   const [value, setValue] = useState('')
 
   useEffect(() => {
-    if (!organizationId) return
+    if (!organizationId || knownNames) return
     let cancelled = false
     void supabase
       .from('optometrists')
@@ -38,7 +40,7 @@ export function OptometristInput({ organizationId, className }: { organizationId
         if (!cancelled) setNames((data ?? []).map(({ full_name }) => full_name))
       })
     return () => { cancelled = true }
-  }, [organizationId, supabase])
+  }, [knownNames, organizationId, supabase])
 
   const known = useMemo(() => new Set(names.map(normalizePersonName)), [names])
   const typed = normalizePersonName(value)

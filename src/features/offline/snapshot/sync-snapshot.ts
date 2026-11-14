@@ -18,6 +18,8 @@ export function syncOfflineSnapshot(userId: string, { force = false } = {}) {
     const current = await store.getSnapshot(userId)
     if (!force && current && Date.now() - new Date(current.confirmedAt).getTime() < REFRESH_MS) return
     const snapshot = await captureSnapshot(createClient(), userId)
+    // A sign-out (or another user) may have happened while reading: never resurrect data.
+    if (await store.getMeta('lastUserId') !== userId) return
     await store.putSnapshot(snapshot)
     // Ask the browser not to evict the desk data under storage pressure (best effort).
     await navigator.storage?.persist?.().catch(() => false)

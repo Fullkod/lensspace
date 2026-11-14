@@ -12,13 +12,15 @@ const normalizePhone = (value: string) => value.replace(/\D/g, '')
 
 // Query on demand instead of preloading every customer: works past the old 200 cap
 // and keeps the /sales payload small on slow links. Name or any part of a phone.
-export function CustomerSearchPicker({ organizationId, branchId, recent, selected, onSelect, onClear }: {
+// `search` replaces the query (offline desk, LEN0011: customers saved on the device).
+export function CustomerSearchPicker({ organizationId, branchId, recent, selected, onSelect, onClear, search }: {
   organizationId: number
   branchId: number
   recent: SaleCustomer[]
   selected: SaleCustomer | null
   onSelect: (customer: SaleCustomer) => void
   onClear: () => void
+  search?: (term: string) => SaleCustomer[]
 }) {
   const supabase = useMemo(() => createClient(), [])
   const [term, setTerm] = useState('')
@@ -27,8 +29,11 @@ export function CustomerSearchPicker({ organizationId, branchId, recent, selecte
   const [failed, setFailed] = useState(false)
   const query = term.trim()
 
+  // Local search answers synchronously: no debounce, no loading state.
+  const localResults = search && query.length >= 2 ? search(query) : null
+
   useEffect(() => {
-    if (query.length < 2) return
+    if (query.length < 2 || search) return
     let cancelled = false
     const timer = setTimeout(async () => {
       setLoading(true)
@@ -50,7 +55,7 @@ export function CustomerSearchPicker({ organizationId, branchId, recent, selecte
       setResults(((data ?? []) as { id: number; organization_id: number; branch_id: number; full_name: string }[]).map((row) => ({ id: row.id, organizationId: row.organization_id, branchId: row.branch_id, name: row.full_name })))
     }, 300)
     return () => { cancelled = true; clearTimeout(timer) }
-  }, [branchId, organizationId, query, supabase])
+  }, [branchId, organizationId, query, search, supabase])
 
   if (selected) {
     return (
@@ -62,12 +67,12 @@ export function CustomerSearchPicker({ organizationId, branchId, recent, selecte
   }
 
   const searching = query.length >= 2
-  const options = searching ? results ?? [] : recent
+  const options = searching ? localResults ?? results ?? [] : recent
   return (
     <div className="flex flex-col gap-2">
       <Input leadingIcon={Search} value={term} onChange={(event) => setTerm(event.target.value)} placeholder="Buscar por nombre o teléfono" aria-label="Buscar cliente" autoComplete="off" />
       <p className="text-[12px] text-text-muted">
-        {searching ? (loading ? 'Buscando…' : failed ? 'No pudimos buscar. Revisa la señal e inténtalo de nuevo.' : options.length ? 'Toca un cliente para seleccionarlo.' : 'Sin resultados. Usa «Nuevo cliente» para registrarlo.') : options.length ? 'Recientes' : 'Escribe al menos 2 letras o dígitos del teléfono.'}
+        {searching ? (loading && !localResults ? 'Buscando…' : failed && !localResults ? 'No pudimos buscar. Revisa la señal e inténtalo de nuevo.' : options.length ? 'Toca un cliente para seleccionarlo.' : 'Sin resultados. Usa «Nuevo cliente» para registrarlo.') : options.length ? 'Recientes' : 'Escribe al menos 2 letras o dígitos del teléfono.'}
       </p>
       {options.length ? (
         <ul className="flex max-h-64 flex-col overflow-y-auto rounded-control border border-line bg-surface">
