@@ -1,10 +1,14 @@
 # PRP — Android APK with Capacitor, Vercel distribution and in-app updates
 
-> **Status**: PARKED (analysis only, Roberto 2026-11-09: "no lo vamos a hacer ahora mismo"; decisions D1-D5 below are open)
+> **Status**: APPROVED to follow LEN0011 (Roberto 2026-11-13). Starts after `prp-offline-sales.md`; decisions D1-D5 below are still open.
+> **Amendments 2026-11-13** (from the LEN0011 analysis):
+> - Offline is solved in the web layer (`prp-offline-sales.md`). Phase 1 go/no-go adds: **cold start in airplane mode must render `/sin-conexion` from the service worker inside the Capacitor WebView**. If it fails, fall back to a TWA (real Chrome, guaranteed service worker; updates through a banner that opens the download).
+> - Inside the shell the offline queue uses `@capacitor/filesystem` through the `OfflineStore` interface (the WebView may clear web storage, a Kshop lesson).
+> - Reuse Kshop's pieces: the GitHub Actions workflow, keystore scripts and `installApk` (`@capacitor/file-transfer` + `@capawesome-team/capacitor-file-opener`, tested on a real phone). See `../kshop/docs/APPS.md`.
 > **Decided by Roberto (2026-11-09)**: the APK is built by a GitHub Action and stored and downloaded through Vercel. Vercel Blob is this plan's reading of "Vercel".
 > **Date**: 2026-11-09
 > **Project**: LensSpace
-> **Tasknic**: no LEN code assigned yet.
+> **Tasknic**: LEN0012 (blocked by LEN0011).
 > **Supersedes if approved**: part of `.titan/memory/project/2026-10-04-pwa-install-button.md` ("PWA instead of an APK"). That entry already names a Capacitor shell pointing at the deployed URL, built by a manual GitHub Actions workflow, as the free route.
 
 ---

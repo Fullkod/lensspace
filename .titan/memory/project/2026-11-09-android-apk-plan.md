@@ -2,7 +2,9 @@
 
 Date: 2026-11-09
 
-Status: parked. Roberto asked for the analysis and the plan only ("no lo vamos a hacer ahora
+Status: unparked 2026-11-13 — follows LEN0011 (offline sales), see
+`project/2026-11-13-offline-sales.md`; the remote shell alone does not work offline.
+Previously parked. Roberto asked for the analysis and the plan only ("no lo vamos a hacer ahora
 mismo"). Plan: `.titan/plans/prp-android-apk-capacitor.md`. Nothing is implemented.
 
 Decided by Roberto: a GitHub Action builds the APK, and Vercel stores it and serves the

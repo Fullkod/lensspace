@@ -28,5 +28,6 @@ How LensSpace keeps data fresh on weak Cuban links (QA-24..27). No polling, no R
   `list_accessible_orders(finished_since)` (90 days of finished orders).
 - Sidebar prefetch only for `/orders` and `/sales`; other links show the
   `useLinkStatus` spinner. Each prefetch re-sends the ~2.6 KB auth cookie.
-- `public/sw.js` only serves `public/offline.html` for failed navigations; it must
-  never cache tenant data, RSC or API responses. Bump `CACHE` when changing it.
+- `public/sw.js` must never cache tenant data, RSC or API responses. Since LEN0011
+  (2026-11-13) it also caches the static offline desk `/sin-conexion` and its hashed
+  `/_next/static` files (see `project/2026-11-13-offline-sales.md`). Bump `FALLBACK_CACHE` when changing `offline.html`.
