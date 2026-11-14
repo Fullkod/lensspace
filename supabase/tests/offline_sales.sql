@@ -118,8 +118,9 @@ begin
   result := public.record_offline_sale('93000000-0000-0000-0000-0000000000a2', jsonb_build_object(
     'organizationId', 930000001, 'branchId', 930000001, 'soldAt', now() + interval '2 hours', 'localNumber', 'SC-AB12-2',
     'deviceId', '93000000-0000-0000-0000-0000000000d1', 'usdToCupRate', 400,
+    -- Typed without 53: must still match the existing «+53 5555 0001».
     'holder', jsonb_build_object('new', jsonb_build_object('fullName', 'Posible Repetido',
-      'phones', jsonb_build_array(jsonb_build_object('number', '+53 5555 0001')))),
+      'phones', jsonb_build_array(jsonb_build_object('number', '5555 0001')))),
     'pairs', jsonb_build_array(jsonb_build_object('itemIds', jsonb_build_array(930000001))),
     'payment', jsonb_build_object('amount', 3500, 'currency', 'CUP'),
     'device', jsonb_build_object('totals', jsonb_build_object('CUP', 3500), 'cupEquivalent', 3500)
