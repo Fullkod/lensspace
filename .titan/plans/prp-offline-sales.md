@@ -1,6 +1,6 @@
 # PRP — Offline sales (LEN0011), then the Android APK
 
-> **Status**: APPROVED by Roberto (2026-11-13). Phases 1-2 done (not deployed); next: Phase 3.
+> **Status**: APPROVED by Roberto (2026-11-13). Phases 1-2 done (not deployed); Phase 3 written and dry-run green, migration NOT applied (waiting for Roberto's OK).
 > **Date**: 2026-11-13
 > **Project**: LensSpace
 > **Tasknic**: LEN0011 «trabajo Offline» (this plan). The Android APK follows as LEN0012 and its own plan
@@ -42,8 +42,8 @@ the device until it uploads by itself as a normal order once the connection retu
       **before** the screen closes, survives closing the tab/app, and uploads exactly once even if the upload is cut or
       repeated.
 - [ ] An uploaded sale becomes a normal order with its real number, counts on the day it was made
-      (`payments.received_at` / `business_date`), lands in the seller's cashbox (post-close if that day was closed) and
-      sends no WhatsApp by itself.
+      (`orders.created_at`/`accepted_at`, `payments.received_at`/`business_date`), lands in the seller's cashbox
+      (post-close if that day was closed) and sends the same WhatsApp messages as an online sale (D12).
 - [ ] No sale is lost to a rejection: if the upload fails (no session, permission removed, organization suspended) it is
       retained on the device with the reason visible, and logging out asks for confirmation while sales are pending.
 - [ ] What did not match (price changed, prescription data, possible duplicate customer, device clock) is recorded and
@@ -104,6 +104,7 @@ itself), the APK (own plan).
 | D9 | A pending sale can be discarded only with confirmation; discarded sales are kept locally (not uploaded) for 30 days | Simpler than Kshop D12 for the first stage; revisit if owners ask for the trace |
 | D10 | Snapshot and queue are keyed by user id; logout clears the snapshot, never pending sales without confirmation | Prescriptions are health data; pending money must not vanish |
 | D11 | Offline access expires 7 days after the last server confirmation (R3) | Protects against removed accounts |
+| D12 | On upload the existing triggers queue «pedido aceptado» and «pago recibido» as for an online sale (proposed 2026-11-13, pending Roberto's confirmation) | It is a normal order of a customer with a phone (unlike Kshop's anonymous counter); the receipt reaches the customer when the signal returns. Suppressing would need a flag in two notify triggers |
 
 ### Proposed architecture
 
@@ -164,7 +165,7 @@ logout, persistent storage requested.
 **Validation**: snapshot written after visiting the app online, readable offline, per user, removed on logout; size
 measured with the pilot data.
 
-### Phase 3: Server
+### Phase 3: Server — WRITTEN, dry run green (2026-11-13); not applied to production
 **Objective**: `offline_sales` + `record_offline_sale` (idempotent, flags, payment on the sale day, post-close), grants
 and RLS.
 **Validation**: SQL tests: repeat does not duplicate, price change flags and does not fail, isolation between
@@ -222,7 +223,7 @@ organizations, seller without permission refused, payment lands in the right day
 - **IndexedDB writes resolve on transaction `complete`,** not on request success: a sale counts as saved only once durable.
 - **Measured:** `qa-offline.mjs` 11/11 with the demo owner of «Óptica Javier Prueba» (`QA_EMAIL`/`QA_PASSWORD`):
   snapshot 3.8 KB (11 customers, 13 items, 3 optometrists), read offline, expired after 8 days, removed on sign-out.
-- **Error:** typing the shared loader with `SupabaseClient<Database>` from `@supabase/supabase-js` failed: `@supabase/ssr`
+- **Error (phase 2):** typing the shared loader with `SupabaseClient<Database>` from `@supabase/supabase-js` failed: `@supabase/ssr`
   bundles different generics. **Fix:** type it as `ReturnType<typeof createClient>` from `@/lib/supabase/client`.
   **Apply in:** any helper shared by the server and browser Supabase clients.
 
@@ -251,3 +252,28 @@ organizations, seller without permission refused, payment lands in the right day
 ---
 
 *PRP approved on 2026-11-13.*
+
+### 2026-11-13: Phase 3 (server), written and dry-run tested
+- **Pieces:** `supabase/migrations/20261113120000_offline_sales.sql` (`offline_sales` with select-only RLS,
+  `record_offline_sale`, helpers `offline_sale_time`, `same_money_totals`, `offline_key`, `offline_new_customer`,
+  `offline_new_revision`, definer `insert_offline_sale` and `stamp_offline_order`; `prepare_cash_payment` replaced with
+  two changes), `supabase/tests/offline_sales.sql`.
+- **How it works:** one transaction per sale reusing the online RPCs (`create_customer_with_phones`,
+  `create_prescription_revision`, `save_multi_line_quotation`, `accept_quotation`, `register_cash_payment`) with stable
+  keys derived from the sale id (`md5(sale_id:part)::uuid`). The payment trigger takes the sale time and skips the
+  overpayment refusal **only** while `lensspace.offline_sold_at` is set (transaction-local, cleared right after; not
+  settable through the API). Flags: `price_mismatch`, `overpaid`, `possible_duplicate_customer` (same phone in the
+  branch, not for relatives who copy the holder's phone), `clock_skew` (> 10 min ahead), `late_upload` (> 8 days old).
+- **Payload** (camelCase): `organizationId, branchId, soldAt, localNumber, deviceId, usdToCupRate, notes?,
+  holder: {id} | {new: {fullName, phones[], ...}}, pairs[1..10]: {patient?: {id} | {new} (default holder),
+  prescription?: {revisionId} | {new: {prescriptionDate, prescriberName, rightSphere, ...}}, itemIds, lineAdjustments?},
+  payment?: {amount, currency, appliedRate?, notes?}, device: {totals, cupEquivalent}`.
+- **Measured:** dry run (migration + tests in one transaction ending in `raise exception`, Management API) green for
+  `offline_sales.sql` and, with the migration in place, `cashbox_closures`, `multi_pair_orders`,
+  `pending_start_and_fair_payment`, `commercial_orders`, `special_permission_branch_orders`, `retail_optician_users`.
+  Checked afterwards: nothing persisted.
+- **Error:** `update public.orders` from the invoker RPC → `permission denied for table orders` (sellers have no UPDATE
+  grant). **Fix:** definer helper `stamp_offline_order` that only touches the caller's retail order.
+  **Apply in:** any RPC that must change a column the API roles cannot write.
+- **Error:** a CUP payment without a rate violated `payments.applied_rate not null`. **Fix:** default 1, as
+  `PaymentForm` sends online.
