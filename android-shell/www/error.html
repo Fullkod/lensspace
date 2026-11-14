@@ -10,7 +10,7 @@
   h1 { font-size: 22px; margin: 0 0 8px; }
   p { margin: 0 0 20px; color: #4b6563; line-height: 1.5; }
   a { display: inline-block; border-radius: 12px; padding: 12px 20px; background: #0d7a72; color: #fff; font-weight: 600; font-size: 15px; text-decoration: none; }
-  small { display: block; margin-top: 28px; color: #8aa09e; font-size: 12px; }
+  small { display: block; margin-top: 28px; color: #8aa09e; font-size: 12px; word-break: break-all; }
 </style>
 </head>
 <body>
@@ -36,7 +36,12 @@
       document.getElementById('title').textContent = 'LensSpace no respondió'
       document.getElementById('text').textContent = 'Hay señal, pero LensSpace no cargó. Puede ser una conexión muy lenta. Inténtalo de nuevo.'
     }
-    document.getElementById('diagnostic').textContent = 'WebView ' + (webview || '?') + ' · ' + (online ? 'con conexión' : 'sin conexión') + ' · ' + (navigator.userAgent.indexOf('LensSpaceAndroid') >= 0 ? 'app' : 'navegador')
+    // MainActivity passes #reason=…&url=… (Android error code, HTTP status or SSL error).
+    var hash = new URLSearchParams(location.hash.slice(1))
+    var reason = hash.get('reason')
+    var failed = hash.get('url')
+    document.getElementById('diagnostic').textContent = 'WebView ' + (webview || '?') + ' · ' + (online ? 'con conexión' : 'sin conexión') + ' · ' + (navigator.userAgent.indexOf('LensSpaceAndroid') >= 0 ? 'app' : 'navegador') +
+      (reason ? ' · ' + reason : '') + (failed ? ' · ' + failed : '')
     window.addEventListener('online', function () { if (!webview || webview >= MIN_WEBVIEW) location.href = 'https://lensspace.fullkod.com/' })
   })()
 </script>

@@ -44,6 +44,9 @@ mkdirSync(join(res, 'mipmap-anydpi-v26'), { recursive: true })
 for (const name of ['ic_launcher.xml', 'ic_launcher_round.xml']) copyFileSync(join(root, 'android-shell/res/ic_launcher.xml'), join(res, 'mipmap-anydpi-v26', name))
 writeFileSync(join(res, 'values/ic_launcher_background.xml'), '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#07322F</color>\n</resources>\n')
 
+// Main activity with the load-error diagnostics (android-shell/java/MainActivity.java).
+copyFileSync(join(root, 'android-shell/java/MainActivity.java'), join(root, 'android/app/src/main/java/com/fullkod/lensspace/MainActivity.java'))
+
 // Updates install from inside the app (Kshop KSH0008): Android asks the user once to allow it.
 const manifestPath = join(root, 'android/app/src/main/AndroidManifest.xml')
 const installPermission = '<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />'
