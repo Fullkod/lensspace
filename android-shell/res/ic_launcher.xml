@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- LEN0012: the maskable brand icon, inset so the mark stays inside the 66 % adaptive safe zone. -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background"/>
+    <foreground>
+        <inset android:drawable="@mipmap/ic_launcher_foreground" android:inset="14%"/>
+    </foreground>
+</adaptive-icon>

@@ -37,3 +37,9 @@ Open before starting: decisions D1-D5 in the plan, the Blob host reachable from 
 Google developer verification (global rollout planned for 2027, registration from Cuba unknown).
 
 Estimate: 25-36 engineering hours. External cost USD 0 on top of the current Vercel plan.
+
+2026-11-13 (LEN0012): Roberto decided D1 (APK first on Android, PWA as fallback), D2 (manual workflow) and
+D3 (`com.fullkod.lensspace`, permanent after the first install). Phase 1 built: Capacitor 8.6.0 shell,
+`scripts/android-build.mjs`, workflow «Android app» (debug APK, no secrets); `android/` is generated, not
+versioned. Open: D4 (Vercel plan, keystore backup owner), D5, and D6 proposed: Supabase Storage instead of
+Vercel Blob for the APK (reachable from Cuba, as Kshop does).

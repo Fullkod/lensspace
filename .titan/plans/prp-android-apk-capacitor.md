@@ -1,6 +1,6 @@
 # PRP — Android APK with Capacitor, Vercel distribution and in-app updates
 
-> **Status**: APPROVED to follow LEN0011 (Roberto 2026-11-13). Starts after `prp-offline-sales.md`; decisions D1-D5 below are still open.
+> **Status**: IN PROGRESS (2026-11-13). Phase 1 built (shell + manual CI debug APK); waiting for the real-phone go/no-go. D1-D3 decided by Roberto 2026-11-13; D4, D5 and D6 (distribution host) open.
 > **Amendments 2026-11-13** (from the LEN0011 analysis):
 > - Offline is solved in the web layer (`prp-offline-sales.md`). Phase 1 go/no-go adds: **cold start in airplane mode must render `/sin-conexion` from the service worker inside the Capacitor WebView**. If it fails, fall back to a TWA (real Chrome, guaranteed service worker; updates through a banner that opens the download).
 > - Inside the shell the offline queue uses `@capacitor/filesystem` through the `OfflineStore` interface (the WebView may clear web storage, a Kshop lesson).
@@ -81,6 +81,9 @@ iOS, Google Play, OTA web bundles (`@capgo/capacitor-updater` solves a problem w
 | D3 | `applicationId` (**cannot change after the first install**). | `com.fullkod.lensspace`. |
 | D4 | Vercel plan, and who keeps the keystore backup? | Confirm the plan. Vercel's docs restrict Hobby to non-commercial personal use, so a paid SaaS needs Pro or Enterprise regardless of this APK. Keep the keystore in a password manager outside the repo. |
 | D5 | Google developer verification (see Gotchas). | Accept for the pilot. Decide on registering before the 2027 global rollout. |
+| D6 | (2026-11-13) Where the APK and `latest.json` live. | **Supabase Storage**, like Kshop (`store-apps` bucket): the app already depends on Supabase from Cuba, while the Vercel Blob host is untested there and Hobby limits apply. Changes the 2026-11-09 «Vercel» decision, so Roberto decides. |
+
+**Answers (Roberto, 2026-11-13):** D1 APK first on Android, PWA kept as fallback (only path on iPhone). D2 manual `workflow_dispatch`. D3 `com.fullkod.lensspace`.
 
 ### Key architecture decisions
 
@@ -157,7 +160,7 @@ External cost for direct distribution: USD 0 on top of the current Vercel plan. 
 
 > Phases only. Subtasks are generated on entering each phase (`tf-bucle-agentico`).
 
-### Phase 1: Shell and go/no-go on a real phone
+### Phase 1: Shell and go/no-go on a real phone — BUILT (2026-11-13), go/no-go pending on a real phone
 **Objective**: Capacitor project loading production, with icons and error page, built as a debug APK by CI.
 **Validation**: On a real phone on a Cuban network: login persists after force-stop, a Server Action works, the plugin bridge exists after a service-worker navigation, the error page shows when offline, and the WebView version is recorded. **If this fails, stop and reassess TWA.**
 
@@ -194,6 +197,21 @@ External cost for direct distribution: USD 0 on top of the current Vercel plan. 
 ## Learnings (Self-Annealing)
 
 > Grows during implementation.
+
+### 2026-11-13: Phase 1 built
+- **Pieces:** `capacitor.config.json` (`com.fullkod.lensspace`, `server.url` https://lensspace.fullkod.com, `errorPath`
+  `error.html`, `appendUserAgent` LensSpaceAndroid, `minWebViewVersion` 111), `android-shell/www/` (placeholder and
+  the local error page), `android-shell/res/ic_launcher.xml` (maskable brand PNG inset 14 % as adaptive foreground),
+  `scripts/android-build.mjs` (generates the git-ignored `android/` with `cap add/sync`, version, icons, launch
+  screen on #07322F; `--assemble` builds the debug APK), `.github/workflows/android-app.yml` (manual, no secrets,
+  artifact `lensspace-android-<run>`). Capacitor 8.6.0 pinned exactly as devDependencies (8.6.2 was one day old);
+  `npm audit` count unchanged (15, all pre-existing; one critical in `next`).
+- **Decision:** like Kshop, `android/` is generated in CI instead of versioned; native code of later phases lives in
+  `android-shell/` and is copied by the script.
+- **Go/no-go to run on a phone (Roberto):** install the debug APK; open with signal, log in, wait a few seconds;
+  force-stop; airplane mode; open → must show «Venta sin conexión» served by the worker (not `error.html`); make a
+  sale; signal back → it uploads; login survives force-stop; a WhatsApp link opens WhatsApp. If the cold start shows
+  `error.html`, the WebView is not using the worker: reassess (TWA).
 
 ---
 

@@ -18,6 +18,9 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/cli": "8.6.0",
+    "@capacitor/core": "8.6.0",
     "@eslint/compat": "^2.1.1",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",

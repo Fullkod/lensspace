@@ -1,0 +1,13 @@
+{
+  "appId": "com.fullkod.lensspace",
+  "appName": "LensSpace",
+  "webDir": "android-shell/www",
+  "server": {
+    "url": "https://lensspace.fullkod.com",
+    "errorPath": "error.html"
+  },
+  "android": {
+    "appendUserAgent": "LensSpaceAndroid",
+    "minWebViewVersion": 111
+  }
+}

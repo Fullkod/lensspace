@@ -1,0 +1,51 @@
+# LEN0012 phase 1: builds the LensSpace Android shell (Capacitor, loads https://lensspace.fullkod.com)
+# as a debug APK for the go/no-go test on a real phone. Manual trigger only (decision D2): web changes
+# reach installed apps with every Vercel deploy, so a new APK is only needed when the shell changes.
+# No secrets yet; signing and publishing come in phase 2. Never add pull_request triggers: the repo is
+# public and the release job will hold the signing key.
+name: Android app
+run-name: "Android app ${{ inputs.version_name || format('1.0.{0}', github.run_number) }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: Versión visible (por defecto 1.0.<número de ejecución>)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+
+      - name: Build the debug APK
+        env:
+          VERSION_NAME: ${{ inputs.version_name }}
+        run: |
+          args=(--version-code "$GITHUB_RUN_NUMBER" --assemble)
+          [ -n "$VERSION_NAME" ] && args+=(--version-name "$VERSION_NAME")
+          node scripts/android-build.mjs "${args[@]}"
+          mkdir -p release
+          cp android/app/build/outputs/apk/debug/app-debug.apk "release/lensspace-${GITHUB_RUN_NUMBER}-debug.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lensspace-android-${{ github.run_number }}
+          path: release/
+          retention-days: 30
+          if-no-files-found: error
