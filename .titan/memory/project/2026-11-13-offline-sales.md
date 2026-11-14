@@ -29,3 +29,8 @@ Decision (Roberto, 2026-11-13). Plan: `.titan/plans/prp-offline-sales.md`. The A
   consent and **without payment** (retail orders and payments cannot be cancelled or deleted). Run
   `QA_UPLOAD=1 node scripts/qa-offline.mjs` against `ERROR_LOG_INGEST_SECRET= npx next start`. Left on
   2026-11-13: order `JAV-2026-000017`, customer `QA Offline 1794618423951`.
+- 2026-11-13 state: phases 1-7 built and tested in Playwright (`scripts/qa-offline.mjs`; `QA_UPLOAD=1` writes
+  to the demo org). Web not deployed yet; real Android test pending. Key files: `public/sw.js`,
+  `src/app/sin-conexion/`, `src/features/offline/`, `src/features/sales/load-sale-context.ts`, migrations
+  `20261113120000_offline_sales.sql` and `20261113130000_offline_sales_phone_match.sql`.
+- The saved `/manual` (`manual_documents`) does not include «Vender cuando no hay señal»; only the default does.

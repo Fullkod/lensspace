@@ -183,13 +183,13 @@ organizations, seller without permission refused, payment lands in the right day
 **Objective**: own recent orders readable offline; banner/entry to the offline desk when the app loses connection.
 **Validation**: offline list matches the last snapshot; banner appears and disappears with connectivity.
 
-### Phase 7: Docs, memory and final validation
+### Phase 7: Docs, memory and final validation — DONE except the real Android test (2026-11-13)
 **Objective**: end-user manual in plain Cuban Spanish (`clientDocsInput.ts`), memory updated, real-device test.
 **Validation**:
-- [ ] `npm run typecheck`, `npm run lint`, `npm run build`
-- [ ] Playwright evidence in `.titan/qa/`
-- [ ] Real Android phone in airplane mode (PWA and Chrome)
-- [ ] All success criteria met
+- [x] `npm run typecheck`, `npm run lint`, `npm run build`
+- [x] Playwright evidence in `.titan/qa/2026-11-13-offline-sales/`
+- [ ] Real Android phone in airplane mode (PWA and Chrome) — needs a person with the phone, after deploy
+- [x] All success criteria met in Playwright (Chrome at 390 px); real-device criteria pending
 
 ---
 
@@ -327,3 +327,10 @@ organizations, seller without permission refused, payment lands in the right day
   with `/sales` (plain `<a>`, served by the worker offline).
 - **Measured:** `qa-offline.mjs` 19/19 without upload: banner link opens the desk with no network, 14 orders saved and
   searchable; snapshot 8.1 KB with the demo data.
+
+### 2026-11-13: Phase 7 (docs)
+- **Manual:** default text in `clientDocsInput.ts` gained «Vender cuando no hay señal» (end-user) and three FAQs.
+  The manual saved in production (`manual_documents`, edited from `/manual`) overrides the default and does not have
+  them yet: whoever edits the manual must add them there (or reset that section to the default).
+- **Pending for Roberto:** deploy (push `main`), real Android test in airplane mode with an installed PWA and in
+  Chrome (cold start, sale, reload, upload when the signal returns, sign-out warning), then LEN0012.
