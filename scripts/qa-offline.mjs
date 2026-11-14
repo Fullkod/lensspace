@@ -92,7 +92,9 @@ if (process.env.QA_EMAIL && process.env.QA_PASSWORD) {
   await desk.locator('input[name="rightSphere"]').fill('-1.25')
   await desk.locator('input[name="leftSphere"]').fill('-1')
   await desk.getByRole('button', { name: 'Guardar y asociar' }).click()
-  await desk.getByLabel('Recibido').fill('100')
+  // With QA_UPLOAD the sale really reaches production: no payment, so the demo cashbox stays clean.
+  const upload = process.env.QA_UPLOAD === '1'
+  if (!upload) await desk.getByLabel('Recibido').fill('100')
   await desk.getByRole('button', { name: 'Guardar venta' }).click()
   await desk.getByText(/guardada en este teléfono/).waitFor({ timeout: 10_000 }).catch(() => undefined)
   check('offline sale saved before the screen frees', await desk.getByText(/guardada en este teléfono/).isVisible().catch(() => false))
@@ -111,8 +113,61 @@ if (process.env.QA_EMAIL && process.env.QA_PASSWORD) {
   // QA_PAYLOAD_OUT: keep the real payload to replay it against record_offline_sale in a rolled-back transaction.
   if (process.env.QA_PAYLOAD_OUT) (await import('node:fs')).writeFileSync(process.env.QA_PAYLOAD_OUT, JSON.stringify({ id: queued.at(-1)?.id, payload }))
   check('payload matches record_offline_sale', Boolean(payload?.holder?.new?.fullName === customerName && payload.pairs[0]?.prescription?.new?.rightSphere === -1.25
-    && payload.pairs[0].itemIds.length === 1 && payload.payment?.amount === 100 && payload.device?.cupEquivalent > 0 && /^SC-[0-9A-F]{4}-\d+$/.test(payload.localNumber)),
+    && payload.pairs[0].itemIds.length === 1 && (upload ? payload.payment === null : payload.payment?.amount === 100) && payload.device?.cupEquivalent > 0 && /^SC-[0-9A-F]{4}-\d+$/.test(payload.localNumber)),
     JSON.stringify(payload).slice(0, 200))
+
+  // Phase 5 (QA_UPLOAD=1 only: writes one order to the demo organization in production).
+  if (upload) {
+    check('new customer has no WhatsApp consent', payload?.holder?.new?.messagingConsent === false)
+    const saleId = queued.at(-1)?.id
+    // Lost response: the server records the sale but the phone never hears back.
+    let lost = 0
+    await seller.route('**/rest/v1/rpc/record_offline_sale', async (route) => {
+      if (lost++ === 0) { await route.fetch(); return route.abort('failed') }
+      return route.continue()
+    })
+    // The signed-in app tab would also upload on «online»; keep the desk the only uploader here.
+    await app.goto('about:blank')
+    await seller.setOffline(false)
+    await desk.waitForTimeout(4000)
+    check('lost response keeps the sale pending', lost >= 1 && await desk.getByText('Por subir').first().isVisible().catch(() => false))
+    await desk.reload()
+    await desk.getByText('Subida').first().waitFor({ timeout: 30_000 }).catch(() => undefined)
+    const orderNumber = await desk.getByText(/^[A-Z]+-\d{4}-\d{6} · /).first().textContent().catch(() => '')
+    check('second round uploads it with the real number', await desk.getByText('Subida').first().isVisible().catch(() => false) && /-\d{6}/.test(orderNumber ?? ''), orderNumber ?? '')
+    console.log(`QA_UPLOADED sale=${saleId} order=${(orderNumber ?? '').split(' · ')[0]}`)
+
+    // Refusal: the same sale aimed at an organization this user does not belong to (id 7).
+    await desk.evaluate((source) => new Promise((resolve) => {
+      const request = indexedDB.open('lensspace-offline')
+      request.onsuccess = () => {
+        const store = request.result.transaction('sales', 'readwrite').objectStore('sales')
+        const copy = { ...source, id: crypto.randomUUID(), status: 'pending', localNumber: `${source.localNumber}-X`, payload: { ...source.payload, organizationId: 7, branchId: 7 } }
+        store.put(copy).onsuccess = () => resolve(true)
+      }
+    }), queued.at(-1))
+    await desk.reload()
+    await desk.getByText('Retenida').first().waitFor({ timeout: 30_000 }).catch(() => undefined)
+    check('refused sale is retained with the reason', await desk.getByText('Retenida').first().isVisible().catch(() => false) && await desk.getByText(/no aceptó la venta/).first().isVisible().catch(() => false))
+    if (shots) await desk.screenshot({ path: `${shots}/upload-and-retained-390.png`, fullPage: true })
+
+    // Sign-out asks while a sale is waiting.
+    await app.goto(`${base}/dashboard`)
+    await app.getByRole('button', { name: 'Abrir menú principal' }).click().catch(() => undefined)
+    await app.getByRole('button', { name: 'Cerrar sesión' }).last().click()
+    await app.getByText('Tienes ventas sin subir').waitFor({ timeout: 10_000 }).catch(() => undefined)
+    check('sign-out warns about waiting sales', await app.getByText('Tienes ventas sin subir').isVisible().catch(() => false))
+    if (shots) await app.screenshot({ path: `${shots}/sign-out-guard-390.png` })
+    await app.getByRole('button', { name: 'Cancelar' }).click()
+
+    // Discard the retained copy (two steps, no browser dialog).
+    await desk.bringToFront()
+    await desk.getByRole('button', { name: 'Descartar' }).first().click()
+    await desk.getByRole('button', { name: 'Sí, descartar esta venta' }).click()
+    check('retained sale can be discarded', await desk.getByText('Descartada').first().isVisible().catch(() => false))
+    await seller.unroute('**/rest/v1/rpc/record_offline_sale')
+    await seller.setOffline(true)
+  }
 
   // Expiry (R3): pretend the server last answered 8 days ago.
   await desk.evaluate(() => new Promise((resolve) => {

@@ -7,6 +7,8 @@ import { LensSpaceLogo } from '@/shared/components/LensSpaceLogo'
 import { Alert, Badge, Button, buttonClasses, Card, PageContainer } from '@/shared/ui'
 
 import { useNetworkStatus } from '../hooks/use-network-status'
+import { useOfflineUpload } from '../hooks/use-offline-upload'
+import { discardSale, retrySale, uploadPendingSales } from '../queue/upload-sales'
 import { isOfflineAccessExpired, offlineAccessEndsAt, snapshotAge } from '../snapshot/expiry'
 import type { OfflineSalePayload } from '../sale/payload'
 import { saveOfflineSale } from '../sale/save-sale'
@@ -31,6 +33,7 @@ export function OfflineDesk() {
   const online = useNetworkStatus()
   const [state, setState] = useState<DeskState>({ kind: 'loading' })
   const [sales, setSales] = useState<OfflineSale[]>([])
+  const [needsLogin, setNeedsLogin] = useState(false)
   const userId = state.kind === 'ready' || state.kind === 'expired' ? state.snapshot.userId : null
 
   const reloadSales = useCallback(() => {
@@ -41,11 +44,24 @@ export function OfflineDesk() {
     loadDesk().then(setState, () => setState({ kind: 'empty' }))
   }, [])
   useEffect(reloadSales, [reloadSales])
+  // When the signal returns the desk uploads by itself, like the signed-in app.
+  useOfflineUpload(userId, (summary) => { setNeedsLogin(summary.needsLogin); reloadSales() })
+
+  async function retry(sale: OfflineSale) {
+    await retrySale(sale)
+    reloadSales()
+    if (userId && navigator.onLine) uploadPendingSales(userId).then((summary) => { setNeedsLogin(summary.needsLogin); reloadSales() }, () => undefined)
+  }
+  async function discard(sale: OfflineSale) {
+    await discardSale(sale)
+    reloadSales()
+  }
 
   async function save(build: (ids: { deviceId: string; localNumber: string; soldAt: string }) => OfflineSalePayload) {
     if (state.kind !== 'ready') throw new Error('offline desk not ready')
     const sale = await saveOfflineSale(indexedDbStore, state.snapshot.userId, build)
     reloadSales()
+    if (navigator.onLine) uploadPendingSales(sale.userId).then(reloadSales, () => undefined)
     return sale
   }
 
@@ -75,7 +91,7 @@ export function OfflineDesk() {
         <DeskData state={state} />
         {state.kind === 'ready' ? <OfflineSaleForm snapshot={state.snapshot} onSave={save} /> : null}
         {state.kind === 'ready' || state.kind === 'expired'
-          ? <OfflineSalesList sales={sales} customerName={(id) => state.snapshot.customers.find((entry) => entry.id === id)?.name ?? null} />
+          ? <OfflineSalesList sales={sales} needsLogin={needsLogin} onRetry={retry} onDiscard={discard} customerName={(id) => state.snapshot.customers.find((entry) => entry.id === id)?.name ?? null} />
           : null}
       </PageContainer>
     </main>

@@ -25,3 +25,7 @@ Decision (Roberto, 2026-11-13). Plan: `.titan/plans/prp-offline-sales.md`. The A
 - 2026-11-13: `record_offline_sale` and `offline_sales` are in production (migration
   `20261113120000_offline_sales.sql`). Roberto confirmed that an uploaded offline sale sends the same
   WhatsApp messages as an online one («pedido aceptado», «pago recibido»).
+- QA of real uploads: only in the demo organization «Óptica Javier Prueba», customer without WhatsApp
+  consent and **without payment** (retail orders and payments cannot be cancelled or deleted). Run
+  `QA_UPLOAD=1 node scripts/qa-offline.mjs` against `ERROR_LOG_INGEST_SECRET= npx next start`. Left on
+  2026-11-13: order `JAV-2026-000017`, customer `QA Offline 1794618423951`.

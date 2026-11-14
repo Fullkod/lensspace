@@ -62,4 +62,7 @@ export const indexedDbStore: OfflineStore = {
   async putSale(sale) {
     await run('sales', 'readwrite', (store) => { store.put(sale) })
   },
+  async deleteSale(id) {
+    await run('sales', 'readwrite', (store) => { store.delete(id) })
+  },
 }

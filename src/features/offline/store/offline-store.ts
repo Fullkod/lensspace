@@ -11,6 +11,7 @@ export interface OfflineStore {
   setMeta(key: MetaKey, value: string | null): Promise<void>
   listSales(userId: string): Promise<OfflineSale[]>
   putSale(sale: OfflineSale): Promise<void>
+  deleteSale(id: string): Promise<void>
 }
 
 // lastUserId: who the desk opens for offline. deviceId: prefix of provisional numbers.

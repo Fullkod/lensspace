@@ -3,8 +3,8 @@
 import { ArrowLeft, Banknote, CircleCheck, Hourglass, Lock, MessageCircle, PackageCheck } from 'lucide-react'
 import { useCallback, useState } from 'react'
 
+import { OfflineSaleNotice } from '@/features/offline/components/OfflineSaleNotice'
 import { OrderProductionPanel, type ProductionReadiness } from '@/features/production/components'
-
 import { Alert, Avatar, Badge, Button, Card, Dialog, ProgressBar, Tabs, Timeline, cx } from '@/shared/ui'
 
 import { formatAmount, formatDateTime, formatLongDate } from '../format'
@@ -105,6 +105,7 @@ export function OrderDetail({ order, summary, timeline, pairs, pending, error, o
           <Alert tone="success">{paidMessage}</Alert>
         )}
         {error ? <Alert tone="danger" role="alert">{error}</Alert> : null}
+        <OfflineSaleNotice orderId={order.id} />
 
         {pairs.length > 1 ? <OrderPairs pairs={pairs} /> : null}
 

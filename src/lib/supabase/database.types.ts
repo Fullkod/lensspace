@@ -1063,6 +1063,67 @@ export type Database = {
         }
         Relationships: []
       }
+      offline_sales: {
+        Row: {
+          branch_id: number
+          device_id: string
+          flags: Json
+          id: string
+          local_number: string
+          order_id: number
+          organization_id: number
+          seller_id: string
+          sold_at: string
+          uploaded_at: string
+        }
+        Insert: {
+          branch_id: number
+          device_id: string
+          flags?: Json
+          id: string
+          local_number: string
+          order_id: number
+          organization_id: number
+          seller_id: string
+          sold_at: string
+          uploaded_at?: string
+        }
+        Update: {
+          branch_id?: number
+          device_id?: string
+          flags?: Json
+          id?: string
+          local_number?: string
+          order_id?: number
+          organization_id?: number
+          seller_id?: string
+          sold_at?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offline_sales_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offline_sales_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offline_sales_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       optometrists: {
         Row: {
           created_at: string
@@ -3003,6 +3064,10 @@ export type Database = {
           request_id?: string
           target_account_id: number
         }
+        Returns: Json
+      }
+      record_offline_sale: {
+        Args: { sale: Json; sale_id: string }
         Returns: Json
       }
       record_server_error: {

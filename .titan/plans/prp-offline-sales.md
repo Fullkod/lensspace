@@ -1,6 +1,6 @@
 # PRP — Offline sales (LEN0011), then the Android APK
 
-> **Status**: APPROVED by Roberto (2026-11-13). Phases 1-2 done (web not deployed); Phase 3 migration applied to production 2026-11-13; Phase 4 done; phone-match fix migration written, not applied; next: Phase 5.
+> **Status**: APPROVED by Roberto (2026-11-13). Phases 1-2 done (web not deployed); Phase 3 migration applied to production 2026-11-13; Phases 4-5 done (web not deployed); phone-match fix applied 2026-11-13; next: Phase 6.
 > **Date**: 2026-11-13
 > **Project**: LensSpace
 > **Tasknic**: LEN0011 «trabajo Offline» (this plan). The Android APK follows as LEN0012 and its own plan
@@ -175,7 +175,7 @@ organizations, seller without permission refused, payment lands in the right day
 **Objective**: the seller completes a sale offline reusing `features/sales`, saved before the screen closes.
 **Validation**: Playwright offline at 390 px: new customer + prescription + 2 pairs + payment saved; reload offline keeps it.
 
-### Phase 5: Upload, retained and visibility
+### Phase 5: Upload, retained and visibility — DONE (2026-11-13, not deployed)
 **Objective**: automatic serial upload on reconnection, retained with reason, logout guard, flags visible in the order.
 **Validation**: Playwright with intermittent network, lost response after save (one order only), expired session retained.
 
@@ -299,4 +299,22 @@ organizations, seller without permission refused, payment lands in the right day
   **Fix:** `syncOfflineSnapshot` saves only if `meta.lastUserId` is still the same user. **Apply in:** any async write
   of per-user device data that can outlive the session.
 - **Error (phase 3 migration):** the duplicate-phone flag compared raw digits while `normalized_phone` prefixes 53 to
-  8-digit numbers. **Fix:** `20261113130000_offline_sales_phone_match.sql` (written, test covers it, not applied).
+  8-digit numbers. **Fix:** `20261113130000_offline_sales_phone_match.sql` (written, test covers it; applied 2026-11-13 with Roberto's OK, the suite that failed on production before passes after).
+
+### 2026-11-13: Phase 5 (upload, retained, visibility)
+- **Pieces:** `queue/upload-sales.ts` (serial upload, oldest first; network/5xx/40001 → stays pending and stops the
+  round; 42501/22023/P0002/other codes → retained with a Spanish reason; no session or another user's session → stays
+  pending with `needsLogin`; uploaded sales kept 7 days on the device; retry and discard), `hooks/use-offline-upload.ts`
+  (mount, `online`, tab focus), `OfflineSnapshotSync` now uploads first and then refreshes the saved data (forced when
+  something uploaded) and shows a toast, `OfflineSalesList` with Reintentar / two-step Descartar, `SignOutForm` dialog
+  when sales are waiting, `OfflineSaleNotice` in `OrderDetail` (sold/uploaded times and flags; one small read of
+  `offline_sales`). Types regenerated with `supabase gen types --linked --schema public` (only additions).
+- **Measured:** `QA_UPLOAD=1 qa-offline.mjs` 21/21 against production with the demo owner: the first upload's response
+  was dropped after the server recorded it (Playwright `route.fetch` + `abort`), the sale stayed «Por subir», the next
+  round returned the same order `JAV-2026-000017` (one order, one `offline_sales` row, dated at sale time, no flags);
+  a copy aimed at an organization the user is not in was retained with the reason and discarded; sign-out asked first.
+  The automatic «Pedido confirmado» WhatsApp was attempted and stopped with `missing_consent` (D12 works end to end).
+- **QA data left in production (demo org «Óptica Javier Prueba»):** order `JAV-2026-000017`, customer
+  `QA Offline 1794618423951` (no consent), no payment. Retail orders cannot be cancelled or deleted (business rule,
+  immutable payments), so QA uploads must go without payment and to the demo organization only.
+- **Not done:** blocking cashbox closing while sales wait on a device (late payments already land as post-close).

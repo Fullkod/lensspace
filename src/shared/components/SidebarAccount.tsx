@@ -17,7 +17,7 @@ export function SidebarAccount({ identity, onNavigate }: { identity: ShellIdenti
           <span className="block truncate text-xs text-on-ink-subtle">{identity.roleLabel}</span>
         </span>
       </Link>
-      <SignOutForm />
+      <SignOutForm userId={identity.userId} />
     </div>
   )
 }
