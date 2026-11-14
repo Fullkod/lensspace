@@ -1,8 +1,9 @@
-# LEN0012 phase 1: builds the LensSpace Android shell (Capacitor, loads https://lensspace.fullkod.com)
-# as a debug APK for the go/no-go test on a real phone. Manual trigger only (decision D2): web changes
-# reach installed apps with every Vercel deploy, so a new APK is only needed when the shell changes.
-# No secrets yet; signing and publishing come in phase 2. Never add pull_request triggers: the repo is
-# public and the release job will hold the signing key.
+# LEN0012: builds and signs the LensSpace Android app (Capacitor shell that loads
+# https://lensspace.fullkod.com). Manual trigger only (decision D2): web changes reach installed apps
+# with every Vercel deploy, so a new APK is only needed when the shell changes. Then run
+# `node scripts/android-publish.mjs` locally: it uploads the APK to Supabase Storage and keeps only
+# that version (D6). The only secrets are the signing key and its password (created with
+# `node scripts/android-keystore.mjs --github`). Never add pull_request triggers: the repo is public.
 name: Android app
 run-name: "Android app ${{ inputs.version_name || format('1.0.{0}', github.run_number) }}"
 
@@ -33,19 +34,35 @@ jobs:
           java-version: 21
       - run: npm ci
 
-      - name: Build the debug APK
+      - name: Keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE }}
+        run: |
+          [ -n "$KEYSTORE_B64" ] || { echo "::error::Missing secret ANDROID_KEYSTORE"; exit 1; }
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/lensspace.jks"
+
+      - name: Build and sign
         env:
           VERSION_NAME: ${{ inputs.version_name }}
+          LENSSPACE_KEYSTORE_FILE: ${{ runner.temp }}/lensspace.jks
+          LENSSPACE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           args=(--version-code "$GITHUB_RUN_NUMBER" --assemble)
           [ -n "$VERSION_NAME" ] && args+=(--version-name "$VERSION_NAME")
           node scripts/android-build.mjs "${args[@]}"
-          mkdir -p release
-          cp android/app/build/outputs/apk/debug/app-debug.apk "release/lensspace-${GITHUB_RUN_NUMBER}-debug.apk"
+
+      - name: Verify the signature
+        run: |
+          apksigner=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$apksigner" verify --print-certs release/*.apk
+
+      - name: Remove the keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/lensspace.jks"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: lensspace-android-${{ github.run_number }}
+          name: lensspace-android
           path: release/
           retention-days: 30
           if-no-files-found: error

@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      android_releases: {
+        Row: {
+          min_supported_version_code: number
+          notes: string | null
+          published_at: string
+          sha256: string
+          size_bytes: number
+          storage_path: string
+          version_code: number
+          version_name: string
+        }
+        Insert: {
+          min_supported_version_code?: number
+          notes?: string | null
+          published_at?: string
+          sha256: string
+          size_bytes: number
+          storage_path: string
+          version_code: number
+          version_name: string
+        }
+        Update: {
+          min_supported_version_code?: number
+          notes?: string | null
+          published_at?: string
+          sha256?: string
+          size_bytes?: number
+          storage_path?: string
+          version_code?: number
+          version_name?: string
+        }
+        Relationships: []
+      }
       audit_events: {
         Row: {
           actor_user_id: string | null

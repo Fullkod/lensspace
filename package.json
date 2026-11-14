@@ -10,6 +10,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/file-transfer": "2.0.6",
+    "@capacitor/filesystem": "8.1.5",
+    "@capawesome-team/capacitor-file-opener": "8.1.0",
     "@supabase/ssr": "^0.6.0",
     "@supabase/supabase-js": "^2.49.0",
     "lucide-react": "1.47.0",
@@ -20,7 +25,6 @@
   "devDependencies": {
     "@capacitor/android": "8.6.0",
     "@capacitor/cli": "8.6.0",
-    "@capacitor/core": "8.6.0",
     "@eslint/compat": "^2.1.1",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",

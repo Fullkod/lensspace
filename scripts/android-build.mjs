@@ -1,8 +1,11 @@
-// LEN0012: generates the Android shell (Capacitor, remote mode on lensspace.fullkod.com) and,
-// with --assemble, builds a debug APK. android/ is generated and git-ignored, as in Kshop.
-// CI runs it (.github/workflows/android-app.yml); locally `--assemble` needs JDK 21 and the
-// Android SDK. Usage: node scripts/android-build.mjs [--version-code N] [--version-name X] [--assemble]
+// LEN0012: generates the Android shell (Capacitor, remote mode on lensspace.fullkod.com) and, with
+// --assemble, builds the signed release APK in release/ with build.json (size, sha256). android/
+// and release/ are generated and git-ignored, as in Kshop. CI runs it (.github/workflows/
+// android-app.yml); locally --assemble needs JDK 21, the Android SDK and LENSSPACE_KEYSTORE_FILE /
+// LENSSPACE_KEYSTORE_PASSWORD.
+// Usage: node scripts/android-build.mjs [--version-code N] [--version-name X] [--assemble]
 import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -41,6 +44,13 @@ mkdirSync(join(res, 'mipmap-anydpi-v26'), { recursive: true })
 for (const name of ['ic_launcher.xml', 'ic_launcher_round.xml']) copyFileSync(join(root, 'android-shell/res/ic_launcher.xml'), join(res, 'mipmap-anydpi-v26', name))
 writeFileSync(join(res, 'values/ic_launcher_background.xml'), '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#07322F</color>\n</resources>\n')
 
+// Updates install from inside the app (Kshop KSH0008): Android asks the user once to allow it.
+const manifestPath = join(root, 'android/app/src/main/AndroidManifest.xml')
+const installPermission = '<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />'
+const manifest = readFileSync(manifestPath, 'utf8')
+if (!manifest.includes(installPermission)) writeFileSync(manifestPath, manifest.replace('</manifest>', `    ${installPermission}
+</manifest>`))
+
 // 4. Launch screen: the template ships Capacitor's logo (drawable*/splash.png). Replace it by the
 // brand icon centred on #07322F; Android 12+ draws its own splash from the app icon on that color.
 for (const dir of readdirSync(res).filter((name) => name.startsWith('drawable'))) {
@@ -64,8 +74,31 @@ if (!styles.includes('windowSplashScreenBackground')) {
 
 console.log(`LensSpace Android ${versionName} (${versionCode})`)
 
-// 5. Debug APK (phase 1: go/no-go on a real phone). Signed release builds come in phase 2.
+// 5. Signed release APK. The key must always be the same one (scripts/android-keystore.mjs):
+// Android refuses an update signed with another key.
 if (process.argv.includes('--assemble')) {
+  const keystore = process.env.LENSSPACE_KEYSTORE_FILE
+  const password = process.env.LENSSPACE_KEYSTORE_PASSWORD
+  if (!keystore || !existsSync(keystore) || !password) throw new Error('LENSSPACE_KEYSTORE_FILE / LENSSPACE_KEYSTORE_PASSWORD missing: the APK must be signed with the app key')
   const gradlew = process.platform === 'win32' ? 'gradlew.bat' : './gradlew'
-  run(gradlew, ['assembleDebug', '--no-daemon'], { cwd: join(root, 'android') })
+  run(gradlew, [
+    'assembleRelease', '--no-daemon',
+    `-Pandroid.injected.signing.store.file=${keystore}`,
+    `-Pandroid.injected.signing.store.password=${password}`,
+    '-Pandroid.injected.signing.key.alias=lensspace',
+    `-Pandroid.injected.signing.key.password=${password}`,
+  ], { cwd: join(root, 'android') })
+  const apkDir = join(root, 'android/app/build/outputs/apk/release')
+  const built = readdirSync(apkDir).find((name) => name.endsWith('.apk') && !name.includes('unsigned'))
+  if (!built) throw new Error(`No signed APK in ${apkDir}`)
+  const releaseDir = join(root, 'release')
+  rmSync(releaseDir, { recursive: true, force: true })
+  mkdirSync(releaseDir, { recursive: true })
+  const apkName = `lensspace-${versionCode}.apk`
+  copyFileSync(join(apkDir, built), join(releaseDir, apkName))
+  const apk = readFileSync(join(releaseDir, apkName))
+  const info = { versionCode, versionName, apk: apkName, sizeBytes: apk.length, sha256: createHash('sha256').update(apk).digest('hex') }
+  writeFileSync(join(releaseDir, 'build.json'), `${JSON.stringify(info, null, 2)}
+`)
+  console.log(`APK: ${join(releaseDir, apkName)} (${(apk.length / 1024 / 1024).toFixed(1)} MB)`)
 }

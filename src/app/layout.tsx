@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Source_Sans_3, Space_Grotesk } from 'next/font/google'
 
+import { AndroidUpdatePrompt } from '@/shared/components/AndroidUpdatePrompt'
 import { ServiceWorkerRegistration } from '@/shared/components/ServiceWorkerRegistration'
 import { siteConfig } from '@/shared/config/site'
 import { installPromptCaptureScript } from '@/shared/lib/pwa-install'
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: installPromptCaptureScript }} />
         {children}
         <ServiceWorkerRegistration />
+        <AndroidUpdatePrompt />
       </body>
     </html>
   )
